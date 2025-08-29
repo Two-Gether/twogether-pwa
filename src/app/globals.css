@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-grayScale-100: #FFFFFF;
+  --color-grayScale-200: #F9F9F9;
+  --color-grayScale-300: #EEEEEE;
+  --color-grayScale-400: #EEEEEE;
+  --color-grayScale-500: #767676;
+  --color-grayScale-600: #555555;
+  --color-grayScale-700: #333333;
+
+  --color-brand-100: #FFE4E8;
+  --color-brand-200: #FFCCD2;
+  --color-brand-300: #FF99A9;
+  --color-brand-400: #FF8094;
+  --color-brand-500: #FF6B81;
+  --color-brand-600: #E64E66;
+  --color-brand-700: #CC3A52;
+
+  --color-sub-100: #F4FBF4;
+  --color-sub-200: #DFF3DF;
+  --color-sub-300: #C8ECC8;
+  --color-sub-400: #B3E6B4;
+  --color-sub-500: #A2E2A4;
+  --color-sub-600: #74BF77;
+  --color-sub-700: #539C58;
+
+  --color-semantic-error:   #FF6B81;
+  --color-semantic-success: #2BAA67;
+  --color-semantic-info:    #3D9DF6;
+  --color-semantic-caution: #FFB648;
+}
+
+@font-face {
+    font-family: 'Catways';
+    src: url('/fonts/Catways.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'GowunBatang';
+    src: url('/fonts/GowunBatang-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'GowunBatang';
+    src: url('/fonts/GowunBatang-Bold.ttf') format('truetype');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'GowunDodum';
+    src: url('/fonts/GowunDodum-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, 'Helvetica Neue', 'Segoe UI', 'Apple SD Gothic Neo', 'Noto Sans KR', 'Malgun Gothic', 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', sans-serif;
+}
+
+/* 모바일 앱 스타일 컨테이너 */
+.mobile-app-container {
+  width: 100%;
+  min-height: 100vh;
+  background: #f3f4f6; /* gray-100 */
+  position: relative;
+}
+
+/* 스마트폰 프레임 효과 (선택사항) */
+.phone-frame {
+  position: relative;
+  max-width: 393px;
+  margin: 0 auto;
+}
+
+.phone-frame::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 4px;
+  background: #333;
+  border-radius: 2px;
+  z-index: 10;
+}
+
+/* 데스크톱에서만 max-width 제한 (760px 이상) */
+@media (min-width: 761px) {
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px;
+  }
+  
+  .mobile-app-container {
+    max-width: 393px;
+    margin: 0 auto;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+  
+  .phone-frame {
+    border-radius: 30px;
+    padding: 20px;
+    background: #1a1a1a;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  }
+  
+  .phone-frame .mobile-app-container {
+    border-radius: 20px;
+  }
+}
+
+/* 모바일/태블릿에서는 전체 화면 (760px 이하) */
+@media (max-width: 760px) {
+  .mobile-app-container {
+    max-width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  
+  .phone-frame {
+    max-width: 100%;
+    padding: 0;
+    background: none;
+    box-shadow: none;
+  }
+  
+  .phone-frame::before {
+    display: none;
+  }
+}
