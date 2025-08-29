@@ -42,7 +42,7 @@ export const useAuthStore = create<AuthState>()(
       })),
     }),
     {
-      name: 'auth-storage', // localStorage 키 이름
+      name: 'auth-storage',
       partialize: (state) => ({ 
         user: state.user, 
         accessToken: state.accessToken,

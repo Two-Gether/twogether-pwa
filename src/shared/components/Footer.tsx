@@ -22,7 +22,6 @@ export default function Footer() {
           />
           <span className="text-xs">홈</span>
         </button>
-        
         <button
           onClick={() => router.push('/calendar')}
           className="flex flex-col items-center py-2 px-3 text-gray-600 hover:text-brand-500"
