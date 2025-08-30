@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Script from 'next/script';
+import { useEffect } from 'react';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,6 +22,39 @@ const RootLayout = ({
   children: React.ReactNode;
 }>) => {
   const queryClient = new QueryClient();
+
+  // 카카오맵 스크립트 동적 로딩
+  useEffect(() => {
+    const loadKakaoMap = () => {
+      if (typeof window !== 'undefined' && !window.kakao) {
+        // 1단계: 기본 카카오맵 로드
+        const script = document.createElement('script');
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&autoload=true`;
+        script.async = true;
+        script.onload = () => {
+          console.log('✅ 카카오맵 기본 스크립트 로드 완료');
+          
+          // 2단계: services 라이브러리 로드
+          const servicesScript = document.createElement('script');
+          servicesScript.src = '//t1.daumcdn.net/mapjsapi/js/libs/services/1.0.2/services.js';
+          servicesScript.async = true;
+          servicesScript.onload = () => {
+            console.log('✅ 카카오맵 services 스크립트 로드 완료');
+          };
+          servicesScript.onerror = () => {
+            console.error('❌ 카카오맵 services 스크립트 로드 실패');
+          };
+          document.head.appendChild(servicesScript);
+        };
+        script.onerror = () => {
+          console.error('❌ 카카오맵 기본 스크립트 로드 실패');
+        };
+        document.head.appendChild(script);
+      }
+    };
+
+    loadKakaoMap();
+  }, []);
 
   return (
     <html lang="ko">

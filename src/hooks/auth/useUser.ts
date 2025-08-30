@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userService, GetUserProfileRequest, UpdateUserProfileRequest, UserProfile } from '../services/user';
+import { userService, GetUserProfileRequest, UpdateUserProfileRequest, UserProfile } from '../../services/user';
 
 // 사용자 프로필 조회 훅
 export const useUserProfile = (userId: string) => {

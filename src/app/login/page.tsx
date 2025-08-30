@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { useAuthStore } from '@/shared/hooks/useAuth';
-import { useKakaoAuth } from '@/shared/hooks/useKakaoAuth';
-import { useGoogleAuth } from '@/shared/hooks/useGoogleAuth';
-import Input from '@/shared/components/ui/Input';
-import Button from '@/shared/components/ui/Button';
+import { useAuthStore } from '@/hooks/auth/useAuth';
+import { useKakaoAuth } from '@/hooks/auth/useKakaoAuth';
+import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
 
 const LoginScreen = () => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);

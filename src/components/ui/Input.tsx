@@ -26,6 +26,7 @@ interface IconInputProps extends BaseInputProps, Omit<React.InputHTMLAttributes<
   icon?: React.ReactNode;
   helperText?: string;
   label?: string;
+  onIconClick?: () => void;
 }
 
 type InputProps = TextInputProps | IconInputProps;
@@ -92,7 +93,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
   /** icon 계열 */
   const renderIcon = (p: IconInputProps) => {
-    const { variant = 'default', helperText, label, ...iconProps } = p;
+    const { variant = 'default', helperText, label, onIconClick, ...iconProps } = p;
 
     const iconVariants: Record<IconVariant, string> = {
       placeholder: 'bg-gray-100 border border-gray-300 text-gray-500 placeholder:text-gray-500',
@@ -118,7 +119,10 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             disabled={isDisabled}
             {...iconProps}
           />
-          <div className={`absolute inset-y-0 right-0 flex items-center pr-4 ${iconColor}`}>
+          <div 
+            className={`absolute inset-y-0 right-0 flex items-center pr-4 ${iconColor} ${onIconClick ? 'cursor-pointer' : ''}`}
+            onClick={onIconClick}
+          >
             <img src="/images/common/search.svg" alt="Search" className="w-3.5 h-3.5" />
           </div>
         </div>

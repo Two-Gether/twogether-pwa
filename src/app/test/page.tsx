@@ -1,7 +1,7 @@
 'use client';
 import React, { useState } from 'react';
-import Button from '@/shared/components/ui/Button';
-import { Input, SearchBar, LocationItem, Toast, Tag, Dropdown } from '@/shared/components/ui';
+import Button from '@/components/ui/Button';
+import { Input, SearchBar, LocationItem, Toast, Tag, Dropdown } from '@/components/ui';
 import { ArrowRight, Search, User, MapPin } from 'lucide-react';
 
 export default function Demo() {

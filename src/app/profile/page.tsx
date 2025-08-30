@@ -1,6 +1,6 @@
 "use client";
 
-import Footer from '@/shared/components/Footer';
+import Footer from '@/components/Footer';
 
 const ProfileScreen = () => {
     return (

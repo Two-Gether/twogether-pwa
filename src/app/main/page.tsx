@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '../../shared/hooks/useAuth';
-import Header from '../../shared/components/Header';
-import Footer from '../../shared/components/Footer';
+import { useAuthStore } from '@/hooks/auth/useAuth';
+import Header from '../../components/Header';
+import Footer from '../../components/Footer';
 import Image from 'next/image';
 
 export default function MainPage() {

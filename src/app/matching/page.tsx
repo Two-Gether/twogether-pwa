@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '../../shared/hooks/useAuth';
+import { useAuthStore } from '@/hooks/auth/useAuth';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import Input from '@/shared/components/ui/Input';
-import Button from '@/shared/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
 
 
 export default function MatchingPage() {

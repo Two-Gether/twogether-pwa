@@ -1,151 +1,140 @@
 "use client";
 
-import { useEffect, useState, useRef } from 'react';
-import Footer from '@/shared/components/Footer';
-import Input from '@/shared/components/ui/Input';
-
-declare global {
-  interface Window {
-    kakao: {
-      maps: {
-        load: (callback: () => void) => void;
-        LatLng: new (lat: number, lng: number) => unknown;
-        Map: new (container: HTMLElement, options: unknown) => unknown;
-        Marker: new (options: unknown) => unknown;
-      };
-    };
-  }
-}
+import { useState, useEffect } from 'react';
+import Footer from '@/components/Footer';
+import Input from '@/components/ui/Input';
+import { useKakaoMap, usePlaceSearch } from '@/hooks/map';
+import { SearchResultsList } from '@/components/map/SearchResultsList';
+import { PlaceInfoModal } from '@/components/PlaceInfoModal';
+import { PlaceSearchResult } from '@/types/kakaoMap';
+import { PlaceInfo } from '@/types/placeInfo';
+import { getPlaceInfo, extractBasicInfoForDB } from '@/services/hybridPlaceService';
 
 const MapScreen = () => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const [map, setMap] = useState<unknown>(null);
-  const [currentPosition, setCurrentPosition] = useState<{lat: number, lng: number} | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchKeyword, setSearchKeyword] = useState<string>('');
+  const [selectedPlaceInfo, setSelectedPlaceInfo] = useState<PlaceInfo | null>(null);
+  const [showPlaceModal, setShowPlaceModal] = useState<boolean>(false);
+  
+  // 카카오맵 관련 hooks
+  const { 
+    mapRef, 
+    map, 
+    currentPosition, 
+    isLoading, 
+    error, 
+    clickPosition,
+    moveToLocation
+  } = useKakaoMap();
+  const { searchState, showResults, searchPlaces, clearSearchResults, setShowResults } = usePlaceSearch(map);
 
-  // 위치 정보 가져오기
-  const getCurrentLocation = (): Promise<GeolocationPosition> => {
-    return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
-        reject(new Error('Geolocation is not supported'));
-        return;
-      }
-
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve(position);
-        },
-        (error) => {
-          reject(error);
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 300000 // 5분 캐시
+  // 지도 클릭 시 장소 정보 조회
+  useEffect(() => {
+    if (clickPosition) {
+      const fetchPlaceInfo = async () => {
+        try {
+          console.log('🗺️ 지도 클릭:', clickPosition);
+          console.log('🔍 getPlaceInfo 함수 호출 시작...');
+          
+          const placeInfo = await getPlaceInfo(clickPosition.lat, clickPosition.lng);
+          console.log('📋 getPlaceInfo 결과:', placeInfo);
+          
+          if (placeInfo) {
+            console.log('✅ 장소 정보 조회 성공, 모달 표시');
+            console.log('📍 장소 정보:', {
+              name: placeInfo.name,
+              address: placeInfo.address,
+              category: placeInfo.category,
+              details: placeInfo.details
+            });
+            
+            setSelectedPlaceInfo(placeInfo);
+            setShowPlaceModal(true);
+            
+            console.log('🎯 모달 상태 업데이트 완료');
+          } else {
+            console.log('❌ 해당 위치의 장소 정보를 찾을 수 없습니다.');
+          }
+        } catch (error) {
+          console.error('❌ Error getting place info:', error);
         }
-      );
-    });
-  };
-
-  // 카카오맵 초기화
-  const initKakaoMap = (lat: number, lng: number) => {
-    if (!mapRef.current) {
-      console.error('Map container not found');
-      return;
-    }
-    
-    if (!window.kakao) {
-      console.error('Kakao object not available');
-      return;
-    }
-
-    const options = {
-      center: new window.kakao.maps.LatLng(lat, lng),
-      level: 3
-    };
-    
-    console.log('Creating Kakao Map with options:', options);
-    const kakaoMap = new window.kakao.maps.Map(mapRef.current, options);
-    setMap(kakaoMap);
-    
-    // 현재 위치 마커 추가
-    const marker = new window.kakao.maps.Marker({
-      position: new window.kakao.maps.LatLng(lat, lng)
-    }) as { setMap: (map: unknown) => void };
-    
-    marker.setMap(kakaoMap);
-    console.log('Kakao Map initialized successfully');
-  };
-
-  // 카카오맵 스크립트 로드
-  const loadKakaoMapScript = () => {
-    return new Promise<void>((resolve, reject) => {
-      if (window.kakao) {
-        console.log('Kakao script already loaded');
-        resolve();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&autoload=false`;
-      script.async = true;
-      
-      script.onload = () => {
-        console.log('Kakao script loaded, initializing maps...');
-        window.kakao.maps.load(() => {
-          console.log('Kakao maps initialized');
-          resolve();
-        });
       };
-      
-      script.onerror = () => {
-        console.error('Failed to load Kakao Map script');
-        reject(new Error('Failed to load Kakao Map script'));
-      };
-      
-      document.head.appendChild(script);
-    });
+
+      fetchPlaceInfo();
+    }
+  }, [clickPosition]);
+
+  // 검색어 입력 처리
+  const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchKeyword(value);
   };
 
-  // 카카오맵 스크립트 로드 및 위치 정보 가져오기
-  useEffect(() => {
-    const initializeMap = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+  // 검색 실행 (엔터키 또는 검색 버튼)
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    executeSearch();
+  };
 
-        // 카카오맵 스크립트 로드
-        await loadKakaoMapScript();
-        
-        // 위치 정보 가져오기
-        const position = await getCurrentLocation();
-        const { latitude, longitude } = position.coords;
-        
-        setCurrentPosition({ lat: latitude, lng: longitude });
-        
-      } catch (err) {
-        console.error('Map initialization error:', err);
-        setError(err instanceof Error ? err.message : '지도를 불러오는데 실패했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeMap();
-  }, []);
-
-  // 위치 정보가 있으면 카카오맵 초기화
-  useEffect(() => {
-    if (currentPosition && mapRef.current && window.kakao) {
-      console.log('Initializing map with position:', currentPosition);
-      initKakaoMap(currentPosition.lat, currentPosition.lng);
+  // 검색 실행 함수
+  const executeSearch = () => {
+    if (searchKeyword.trim()) {
+      searchPlaces(searchKeyword.trim());
     }
-  }, [currentPosition]);
+  };
+
+  // 검색 아이콘 클릭 처리
+  const handleIconClick = () => {
+    executeSearch();
+  };
+
+  // 엔터키 처리
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSearchSubmit(e);
+    }
+  };
+
+  // 장소 선택 처리
+  const handlePlaceSelect = (place: PlaceSearchResult) => {
+    console.log('📍 선택된 장소:', place);
+    if (place.y && place.x) {
+      moveToLocation(parseFloat(place.y), parseFloat(place.x), 3);
+    }
+  };
+
+  // 더보기 처리
+  const handleLoadMore = () => {
+    console.log('📄 더보기 클릭 - 다음 페이지 로드');
+    if (searchState.pagination && searchState.pagination.current < searchState.pagination.last) {
+      const nextPage = searchState.pagination.current + 1;
+      searchPlaces(searchKeyword, nextPage);
+    }
+  };
+
+  // 검색 결과 닫기
+  const handleCloseResults = () => {
+    setShowResults(false);
+    clearSearchResults();
+  };
+
+  // 장소 정보 모달 닫기
+  const handleClosePlaceModal = () => {
+    setShowPlaceModal(false);
+    setSelectedPlaceInfo(null);
+  };
+
+  // DB에 저장
+  const handleSaveToDB = (placeInfo: PlaceInfo) => {
+    const basicInfo = extractBasicInfoForDB(placeInfo);
+    console.log('💾 DB에 저장할 기본 정보:', basicInfo);
+    // TODO: 실제 DB 저장 로직 구현
+    handleClosePlaceModal();
+  };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 relative">
+      <div className="h-screen bg-gray-100 relative">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h2 className="text-lg font-semibold mb-2">지도를 불러오는 중...</h2>
@@ -158,7 +147,7 @@ const MapScreen = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-100 relative">
+      <div className="h-screen bg-gray-100 relative">
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h2 className="text-lg font-semibold mb-2 text-red-600">오류가 발생했습니다</h2>
@@ -180,11 +169,17 @@ const MapScreen = () => {
     <div className="h-screen relative">
       {/* 검색창 - 투명한 헤더 위에 고정 */}
       <div className="absolute top-0 left-0 right-0 z-20 pt-20 px-5">
-        <Input 
-          type="icon"
-          variant="placeholder"
-          placeholder="장소를 검색하세요"
-        />
+        <form onSubmit={handleSearchSubmit}>
+          <Input 
+            type="icon"
+            variant="placeholder"
+            placeholder="장소를 검색하세요"
+            value={searchKeyword}
+            onChange={handleSearchInput}
+            onKeyPress={handleKeyPress}
+            onIconClick={handleIconClick}
+          />
+        </form>
       </div>
       
       {/* 지도 - 전체 화면 */}
@@ -194,6 +189,29 @@ const MapScreen = () => {
           className="w-full h-full"
         />
       </div>
+      
+
+
+      {/* 검색 결과 리스트 */}
+      <SearchResultsList
+        searchKeyword={searchKeyword}
+        results={searchState.results}
+        showResults={showResults}
+        hasMore={searchState.hasMore}
+        isLoading={searchState.isLoading}
+        pagination={searchState.pagination}
+        onPlaceSelect={handlePlaceSelect}
+        onLoadMore={handleLoadMore}
+        onClose={handleCloseResults}
+      />
+
+      {/* 장소 정보 모달 */}
+      <PlaceInfoModal
+        placeInfo={selectedPlaceInfo}
+        isOpen={showPlaceModal}
+        onClose={handleClosePlaceModal}
+        onSaveToDB={handleSaveToDB}
+      />
       
       {/* 푸터 */}
       <div className="absolute bottom-0 left-0 right-0 z-10">
