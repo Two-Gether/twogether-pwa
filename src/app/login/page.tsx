@@ -120,7 +120,7 @@ const LoginScreen = () => {
 
                         <div className="flex justify-center space-x-4">
                             <Image 
-                                src="/images/navigation/kakao-logo.svg" 
+                                src="/images/social/kakao-logo.svg" 
                                 alt="Kakao Login" 
                                 width={48} 
                                 height={48} 
@@ -128,7 +128,7 @@ const LoginScreen = () => {
                                 onClick={() => handleSocialLogin('kakao')}
                             />
                             <Image 
-                                src="/images/navigation/google-logo.svg" 
+                                src="/images/social/google-logo.svg" 
                                 alt="Google Login" 
                                 width={48} 
                                 height={48} 

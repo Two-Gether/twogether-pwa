@@ -1,19 +1,27 @@
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
+"use client";
+
+import Footer from '@/shared/components/Footer';
 
 const MapScreen = () => {
     return (
-        <MapContainer style={{ height: '100vh', width: '100%' }} center={[37.5665, 126.9780]} zoom={13}>
-            <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution="&copy; <a href='https://osm.org/copyright'>OpenStreetMap</a> contributors"
-            />
-            <Marker position={[37.5665, 126.9780]}>
-                <Popup>
-                    A pretty CSS3 popup. <br /> Easily customizable.
-                </Popup>
-            </Marker>
-        </MapContainer>
+        <div className="min-h-screen bg-gray-100 relative">
+            {/* Header */}
+            <div className="w-full p-5 bg-white flex justify-between items-center">
+                <div className="text-center text-gray-800 font-gowun text-base font-normal">
+                    지도
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="px-6 py-8">
+                <div className="text-center text-gray-600">
+                    카카오맵 연동 예정
+                </div>
+            </div>
+
+            {/* Footer */}
+            <Footer />
+        </div>
     );
 };
 
