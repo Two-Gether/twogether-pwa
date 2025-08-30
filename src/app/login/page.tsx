@@ -7,6 +7,7 @@ import { useAuthStore } from '@/shared/hooks/useAuth';
 import { useKakaoAuth } from '@/shared/hooks/useKakaoAuth';
 import { useGoogleAuth } from '@/shared/hooks/useGoogleAuth';
 import Input from '@/shared/components/ui/Input';
+import Button from '@/shared/components/ui/Button';
 
 const LoginScreen = () => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
@@ -70,7 +71,7 @@ const LoginScreen = () => {
                             placeholder="비밀번호를 입력해주세요"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-pretendard"
+                            className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-pretendard text-sm leading-[19.6px] bg-gray-100 placeholder:text-gray-700"
                         />
                         <button
                             type="button"
@@ -89,25 +90,28 @@ const LoginScreen = () => {
 
                 <div className="flex flex-col justify-between h-full">
                     <div>
-                        <button
+                        <Button
+                            kind="functional"
+                            styleType="fill"
+                            tone="brand"
+                            fullWidth
                             onClick={handleLogin}
-                            className="w-full py-3 text-white bg-brand-500 rounded-lg hover:bg-brand-600 font-gowun font-medium transition-colors"
                         >
                             로그인
-                        </button>
+                        </Button>
 
-                        <div className="text-center mt-4 mb-12">
-                            <button onClick={handleSignup} className="text-brand-500 hover:underline font-pretendard text-sm">
-                                회원가입하기
+                        <div className="flex justify-between items-center mt-4 mb-12">
+                            <button 
+                                onClick={handleSignup} 
+                                className="text-brand-500 font-pretendard text-sm border-b border-brand-500 hover:font-semibold active:font-bold transition-all"
+                            >
+                                회원가입
                             </button>
+                            <button className="text-gray-500 hover:underline font-pretendard text-sm">아이디/비밀번호 찾기</button>
                         </div>
                     </div>
 
-                    <div className="mt-auto">
-                        <div className="flex justify-right space-x-6 mb-6">
-                            <button className="text-gray-500 hover:underline font-pretendard text-sm">아이디/비밀번호 찾기</button>
-                        </div>
-
+                    <div className="mt-10">
                         <div className="flex items-center justify-center mb-6">
                             <div className="flex-1 h-px bg-gray-300"></div>
                             <span className="px-4 text-gray-500 font-pretendard text-sm">or</span>

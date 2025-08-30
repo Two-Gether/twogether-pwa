@@ -2,7 +2,7 @@
 
 import React, { forwardRef } from 'react';
 
-type InputType = 'text' | 'icon';
+type InputType = 'text' | 'icon' | 'password';
 type TextVariant = 'placeholder' | 'disabled' | 'default' | 'textarea' | 'focus';
 type IconVariant = 'placeholder' | 'default' | 'disabled' | 'focus';
 
@@ -13,7 +13,7 @@ interface BaseInputProps {
 }
 
 interface TextInputProps extends BaseInputProps, Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
-  type: 'text';
+  type: 'text' | 'password';
   variant?: TextVariant;
   helperText?: string;
   label?: string;
@@ -111,9 +111,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             {label}
           </label>
         )}
-        <div className="relative">
-          <input
-            ref={ref}
+      <div className="relative">
+        <input
+          ref={ref}
             className={[base, iconVariants[variant], widthClass, 'pr-12', className].join(' ')}
             disabled={isDisabled}
             {...iconProps}
@@ -131,7 +131,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     );
   };
 
-  if (type === 'text') return renderText(props as TextInputProps);
+  if (type === 'text' || type === 'password') return renderText(props as TextInputProps);
   return renderIcon(props as IconInputProps);
 });
 
