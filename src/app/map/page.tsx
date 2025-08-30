@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import Footer from '@/shared/components/Footer';
+import Input from '@/shared/components/ui/Input';
 
 declare global {
   interface Window {
@@ -49,10 +50,6 @@ const MapScreen = () => {
 
   // 카카오맵 초기화
   const initKakaoMap = (lat: number, lng: number) => {
-    console.log('Initializing Kakao Map with:', { lat, lng });
-    console.log('Map ref:', mapRef.current);
-    console.log('Kakao object:', window.kakao);
-    
     if (!mapRef.current) {
       console.error('Map container not found');
       return;
@@ -90,7 +87,6 @@ const MapScreen = () => {
         return;
       }
 
-      console.log('Loading Kakao Map script...');
       const script = document.createElement('script');
       script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&autoload=false`;
       script.async = true;
@@ -112,6 +108,7 @@ const MapScreen = () => {
     });
   };
 
+  // 카카오맵 스크립트 로드 및 위치 정보 가져오기
   useEffect(() => {
     const initializeMap = async () => {
       try {
@@ -127,9 +124,6 @@ const MapScreen = () => {
         
         setCurrentPosition({ lat: latitude, lng: longitude });
         
-        // 카카오맵 초기화
-        initKakaoMap(latitude, longitude);
-        
       } catch (err) {
         console.error('Map initialization error:', err);
         setError(err instanceof Error ? err.message : '지도를 불러오는데 실패했습니다.');
@@ -140,6 +134,14 @@ const MapScreen = () => {
 
     initializeMap();
   }, []);
+
+  // 위치 정보가 있으면 카카오맵 초기화
+  useEffect(() => {
+    if (currentPosition && mapRef.current && window.kakao) {
+      console.log('Initializing map with position:', currentPosition);
+      initKakaoMap(currentPosition.lat, currentPosition.lng);
+    }
+  }, [currentPosition]);
 
   if (isLoading) {
     return (
@@ -175,12 +177,28 @@ const MapScreen = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 relative">
-      <div className="w-full h-[calc(100vh-80px)]">
-        <div ref={mapRef} className="w-full h-full" />
+    <div className="h-screen relative">
+      {/* 검색창 - 투명한 헤더 위에 고정 */}
+      <div className="absolute top-0 left-0 right-0 z-20 pt-20 px-5">
+        <Input 
+          type="icon"
+          variant="placeholder"
+          placeholder="장소를 검색하세요"
+        />
       </div>
       
-      <Footer />
+      {/* 지도 - 전체 화면 */}
+      <div className="w-full h-full">
+        <div 
+          ref={mapRef} 
+          className="w-full h-full"
+        />
+      </div>
+      
+      {/* 푸터 */}
+      <div className="absolute bottom-0 left-0 right-0 z-10">
+        <Footer />
+      </div>
     </div>
   );
 };
