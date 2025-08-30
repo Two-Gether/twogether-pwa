@@ -1,11 +1,17 @@
 "use client";
 
 import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { HomeIcon, MapIcon, WaypointIcon, CalendarIcon, ProfileIcon } from './icons';
 
 export default function Footer() {
   const router = useRouter();
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const isActive = (path: string) => {
     if (path === '/main') {
@@ -15,6 +21,20 @@ export default function Footer() {
   };
 
   const getIconClass = (path: string) => `mb-1 ${isActive(path) ? 'text-brand-500' : 'text-gray-500'}`;
+
+  if (!mounted) {
+    return (
+      <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-2" style={{ borderTop: '1px #EEEEEE solid' }}>
+        <div className="flex justify-around items-center">
+          <div className="w-6 h-6" />
+          <div className="w-6 h-6" />
+          <div className="w-6 h-6" />
+          <div className="w-6 h-6" />
+          <div className="w-6 h-6" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="absolute bottom-0 left-0 right-0 bg-white px-4 py-2" style={{ borderTop: '1px #EEEEEE solid' }}>

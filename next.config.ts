@@ -8,6 +8,7 @@ const nextConfig: NextConfig = {
     });
     return config;
   },
+
   async redirects() {
     return [
       {

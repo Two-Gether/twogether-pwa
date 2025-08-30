@@ -1,0 +1,9 @@
+{
+  "name": "TWOGETHER",
+  "short_name": "TWOGETHER",
+  "permissions": [
+    "geolocation"
+  ],
+  "display": "standalone",
+  "start_url": "/"
+}
