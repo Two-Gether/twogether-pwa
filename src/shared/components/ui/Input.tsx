@@ -119,7 +119,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             {...iconProps}
           />
           <div className={`absolute inset-y-0 right-0 flex items-center pr-4 ${iconColor}`}>
-            <img src="/src/assets/common/search.svg" alt="Search" className="w-3.5 h-3.5" />
+            <img src="/images/common/search.svg" alt="Search" className="w-3.5 h-3.5" />
           </div>
         </div>
         {helperText && (

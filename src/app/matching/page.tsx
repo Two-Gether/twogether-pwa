@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '../../shared/hooks/useAuth';
 import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Input from '@/shared/components/ui/Input';
+import Button from '@/shared/components/ui/Button';
+
 
 export default function MatchingPage() {
   const [partnerCode, setPartnerCode] = useState('');
@@ -12,17 +15,43 @@ export default function MatchingPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isClient, setIsClient] = useState(false);
+  const [myPartnerCode, setMyPartnerCode] = useState<string | null>(null);
   const router = useRouter();
-  const { user, updateUser } = useAuthStore();
+  const { user, accessToken, updateUser } = useAuthStore();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // 내 파트너 코드 (임시로 생성)
-  const myPartnerCode = isClient && user?.memberId ? `CD${user.memberId.toString().padStart(4, '0')}Z1` : 'CD35Z1';
+  // 내 파트너 코드 조회
+  useEffect(() => {
+    if (!isClient || !accessToken) return;
+    
+    fetch('/api/partner/code', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errorData => {
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        });
+      }
+      return response.text();
+    })
+    .then(code => {
+      setMyPartnerCode(code.trim());
+    })
+    .catch(error => {
+      console.log(error);
+      setMyPartnerCode('조회 실패');
+    });
+  }, [isClient, accessToken]);
 
-  const handleConnectPartner = async () => {
+  const handleConnectPartner = () => {
     if (!partnerCode.trim()) {
       setErrorMessage('파트너 코드를 입력해주세요.');
       return;
@@ -31,38 +60,43 @@ export default function MatchingPage() {
     setIsLoading(true);
     setErrorMessage('');
 
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/connect`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ partnerCode }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // 사용자 정보 업데이트
-        if (user) {
-          updateUser({
-            ...user,
-            partnerId: data.partnerId,
-            partnerNickname: data.partnerNickname,
-          });
-        }
-
-        // 메인 페이지로 이동
-        router.push('/main');
-      } else {
-        const errorData = await response.json();
-        setErrorMessage(errorData.message || '연인 연동에 실패했어요.');
+    fetch(`/api/partner/connect?code=${partnerCode}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        nickname: user?.nickname || '사용자',
+        partnerId: 1,
+        accessToken: accessToken,
+        partnerNickname: '연결한 파트너',
+        memberId: user?.memberId || 0,
+      }),
+    })
+    .then(response => {
+      if (!response.ok) {
+        return response.json().then(errorData => {
+          throw new Error(errorData.error || '연인 연동에 실패했어요.');
+        });
       }
-    } catch (error) {
-      setErrorMessage('연인 연동에 실패했어요.');
-    } finally {
-      setIsLoading(false);
-    }
+      return response.json();
+    })
+    .then(data => {
+      if (user) {
+        updateUser({
+          ...user,
+          partnerId: data.partnerId,
+          partnerNickname: data.partnerNickname,
+        });
+      }
+      router.push('/main');
+    })
+    .catch(error => {
+      console.log(error);
+      setErrorMessage(error.message || '연인 연동에 실패했어요.');
+    })
+    .finally(() => setIsLoading(false));
   };
 
   return (
@@ -107,11 +141,13 @@ export default function MatchingPage() {
           <h3 className="font-semibold mb-3 leading-[19.2px] text-gray-800 font-gowun text-base">
             내 연인 코드
           </h3>
-          <div className="flex items-center justify-center p-4 rounded-lg bg-gray-100 border border-gray-200">
-            <div className="text-center text-gray-800 font-gowun text-base font-normal">
-              {myPartnerCode}
-            </div>
-          </div>
+          <Input 
+            type="text"
+            variant="disabled"
+            value={myPartnerCode || '로딩 중...'}
+            readOnly
+            style={{ textAlign: 'center' }}
+          />
         </div>
 
         {/* Partner Code Registration */}
@@ -147,7 +183,7 @@ export default function MatchingPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold font-gowun">연인 코드 등록</h3>
+              <h3 className="text-lg font-semibold font-pretendard">연인 코드 등록</h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-gray-500 text-xl"
@@ -156,21 +192,25 @@ export default function MatchingPage() {
               </button>
             </div>
             
-            <input
+            <Input 
               type="text"
+              variant="placeholder"
               placeholder="연인 코드를 입력하세요"
               value={partnerCode}
               onChange={(e) => setPartnerCode(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent font-gowun"
+              style={{ marginBottom: '20px' }}
             />
             
-            <button
+            <Button
+              kind="functional"
+              styleType="fill"
+              tone="brand"
+              fullWidth
               onClick={handleConnectPartner}
               disabled={isLoading}
-              className="w-full bg-brand-500 text-white py-3 rounded-lg font-medium hover:bg-brand-600 disabled:opacity-50 transition-colors font-gowun"
             >
               {isLoading ? '연동 중...' : '연동하기'}
-            </button>
+            </Button>
           </div>
         </div>
       )}
