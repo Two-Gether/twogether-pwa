@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/hooks/auth/useAuth';
-import Header from '../../components/Header';
+import MainHeader from '../../components/MainHeader';
 import Footer from '../../components/Footer';
 import Image from 'next/image';
 
@@ -53,7 +53,7 @@ export default function MainPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 pb-16">
-      <Header />
+      <MainHeader />
       <div className="px-6 py-6">
         {/* Main Content */}
         <div className="mb-8">

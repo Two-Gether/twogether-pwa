@@ -75,7 +75,7 @@ export const useKakaoMap = () => {
     if (!mapRef.current) {
       return;
     }
-
+    
     // 카카오맵 SDK가 완전히 로드될 때까지 대기
     const waitForKakaoMap = () => {
       if (window.kakao && window.kakao.maps && window.kakao.maps.Map) {
@@ -88,21 +88,21 @@ export const useKakaoMap = () => {
           };
 
           const kakaoMap = new window.kakao.maps.Map(container, options); // 지도 생성 및 객체 리턴
-          setMap(kakaoMap);
-          
-          // 현재 위치 마커 추가
-          const marker = new window.kakao.maps.Marker({
-            position: new window.kakao.maps.LatLng(lat, lng)
-          }) as { setMap: (map: unknown) => void };
-          
-          marker.setMap(kakaoMap);
-
-          // 지도 클릭 이벤트 등록
-          window.kakao.maps.event.addListener(kakaoMap, 'click', (mouseEvent: { latLng: { getLat: () => number; getLng: () => number } }) => {
-            const lat = mouseEvent.latLng.getLat();
-            const lng = mouseEvent.latLng.getLng();
-            setClickPosition({ lat, lng });
-          });
+      setMap(kakaoMap);
+      
+      // 현재 위치 마커 추가
+      const marker = new window.kakao.maps.Marker({
+        position: new window.kakao.maps.LatLng(lat, lng)
+      }) as { setMap: (map: unknown) => void };
+      
+      marker.setMap(kakaoMap);
+      
+      // 지도 클릭 이벤트 등록
+      window.kakao.maps.event.addListener(kakaoMap, 'click', (mouseEvent: { latLng: { getLat: () => number; getLng: () => number } }) => {
+        const lat = mouseEvent.latLng.getLat();
+        const lng = mouseEvent.latLng.getLng();
+        setClickPosition({ lat, lng });
+      });
         } catch {
           setError('카카오맵 초기화에 실패했습니다.');
         }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Input from '@/components/ui/Input';
 
@@ -19,6 +20,10 @@ interface PlaceSearchResult {
   y: string;
   distance: string;
   category_name: string;
+  phone?: string;
+  place_url?: string;
+  category_group_code?: string;
+  category_group_name?: string;
 }
 
 interface GeocoderResult {
@@ -27,6 +32,7 @@ interface GeocoderResult {
 }
 
 const MapScreen = () => {
+  const router = useRouter();
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<unknown>(null);
   const [geocoder, setGeocoder] = useState<unknown>(null);
@@ -37,6 +43,7 @@ const MapScreen = () => {
   const [showResults, setShowResults] = useState(false);
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [userLocation, setUserLocation] = useState<unknown>(null);
+  const [isLocationInfoSheetOpen, setIsLocationInfoSheetOpen] = useState(false);
 
   // 사용자 현재 위치 가져오기
   const getUserLocation = useCallback(() => {
@@ -142,6 +149,26 @@ const MapScreen = () => {
     setShowResults(true);
   };
 
+  // 장소 정보 시트 토글 함수
+  const toggleLocationInfoSheet = useCallback(() => {
+    setIsLocationInfoSheetOpen(prev => !prev);
+  }, []);
+
+  // 장소 정보 시트 닫기 함수
+  const closeLocationInfoSheet = useCallback(() => {
+    setIsLocationInfoSheetOpen(false);
+    // 완전히 사라지지 않고 접힌 상태로 유지
+  }, []);
+
+  // 장소 정보 시트 완전히 닫기 함수
+  const closeLocationInfoSheetCompletely = useCallback(() => {
+    setIsLocationInfoSheetOpen(false);
+    // 애니메이션 완료 후 locationInfo를 null로 설정
+    setTimeout(() => {
+      setLocationInfo(null);
+    }, 300);
+  }, []);
+
   // 검색 결과 항목 클릭 처리
   const handlePlaceClick = (place: PlaceSearchResult) => {
     const { id, road_address_name, place_name } = place;
@@ -154,6 +181,11 @@ const MapScreen = () => {
     };
     
     setLocationInfo(newLocationInfo);
+    setIsLocationInfoSheetOpen(true);
+    
+    // 검색 결과창 닫기
+    setShowResults(false);
+    setSearchResults([]);
     
     // 주소로 좌표 검색
     if (geocoder && address) {
@@ -172,12 +204,6 @@ const MapScreen = () => {
         position: coords,
       });
       (marker as { setMap: (map: unknown) => void }).setMap(map);
-
-      // 인포 윈도우에 장소명 표시
-      const infowindow = new window.kakao.maps.InfoWindow({
-        content: `<div class='info_window__content'>${locationInfo?.placeName}</div>`,
-      });
-      infowindow.open(map, marker);
 
       // 지도의 중심을 결과값으로 받은 위치로 이동
       (map as { setCenter: (coords: unknown) => void }).setCenter(coords);
@@ -218,6 +244,21 @@ const MapScreen = () => {
   const closeSearchResults = () => {
     setShowResults(false);
     setSearchResults([]);
+  };
+
+  // 자세히 보기 버튼 클릭 핸들러
+  const handleDetailClick = () => {
+    if (locationInfo) {
+      const params = new URLSearchParams({
+        id: locationInfo.id,
+        name: locationInfo.placeName,
+        address: locationInfo.address,
+        phone: '', // 전화번호는 나중에 추가
+        placeUrl: '' // place_url은 나중에 추가
+      });
+      
+      router.push(`/map/detail?${params.toString()}`);
+    }
   };
 
   // 컴포넌트 마운트 시 현재 위치 가져오기
@@ -301,31 +342,42 @@ const MapScreen = () => {
       {locationInfo && (
         <div 
           id="locationinfo"
-          className="absolute bottom-20 left-0 right-0 z-30 bg-white border-t border-[#EEEEEE] rounded-t-[20px] shadow-[0px_-4px_12px_rgba(0,0,0,0.08)] p-5"
+          className={`
+            absolute left-0 right-0 z-10 bg-white border-t border-[#EEEEEE] rounded-t-[20px] shadow-[0px_-4px_12px_rgba(0,0,0,0.08)]
+            transition-transform duration-300 ease-out
+            ${isLocationInfoSheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-45px)]'}
+            bottom-14
+          `}
         >
           {/* 핸들 바 */}
-          <div className="flex justify-center mb-2">
-            <div className="w-[74px] h-1 bg-[#CCCCCC] rounded-full" />
+          <div className="flex justify-center my-5" onClick={toggleLocationInfoSheet}>
+            <div className="w-[74px] h-1 bg-[#CCCCCC] rounded-full cursor-pointer" />
           </div>
           
-          {/* 장소 정보 */}
-          <div className="mb-6">
-            <h3 className="text-[#333333] text-xl font-semibold leading-6 mb-1">
-              {locationInfo.placeName}
-            </h3>
-            <p className="text-[#767676] text-sm leading-[19.6px]">
-              {locationInfo.address}
-            </p>
-          </div>
-          
-          {/* 버튼 */}
-          <div className="space-y-2">
-            <button className="w-full py-4 bg-[#F9F9F9] rounded-lg text-[#333333] text-sm font-normal">
-              자세히 보기
-            </button>
-            <button className="w-full py-4 bg-[#FF6B81] rounded-lg text-white text-sm font-semibold">
-              웨이포인트 지정
-            </button>
+          {/* 장소 정보 내용 */}
+          <div className="px-5">
+            {/* 장소 정보 */}
+            <div className="mb-6">
+              <h3 className="text-[#333333] text-xl font-semibold leading-6 mb-1">
+                {locationInfo.placeName}
+              </h3>
+              <p className="text-[#767676] text-sm leading-[19.6px]">
+                {locationInfo.address}
+              </p>
+            </div>
+            
+            {/* 버튼 */}
+            <div className="flex gap-2 mb-6">
+              <button 
+                className="w-[30%] py-4 bg-[#F9F9F9] rounded-lg text-[#333333] text-sm font-normal"
+                onClick={handleDetailClick}
+              >
+                자세히 보기
+              </button>
+              <button className="flex-1 py-4 bg-[#FF6B81] rounded-lg text-white text-sm font-semibold">
+                웨이포인트 지정
+              </button>
+            </div>
           </div>
         </div>
       )}
