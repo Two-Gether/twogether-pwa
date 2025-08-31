@@ -27,27 +27,36 @@ const RootLayout = ({
   useEffect(() => {
     const loadKakaoMap = () => {
       if (typeof window !== 'undefined' && !window.kakao) {
-        // 1단계: 기본 카카오맵 로드
+        // 카카오맵 SDK 로드 (autoload=false로 설정)
         const script = document.createElement('script');
-        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&autoload=true`;
+        script.type = 'text/javascript';
+        script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&autoload=false`;
         script.async = true;
         script.onload = () => {
-          console.log('✅ 카카오맵 기본 스크립트 로드 완료');
+          console.log('✅ 카카오맵 SDK 로드 완료');
           
-          // 2단계: services 라이브러리 로드
-          const servicesScript = document.createElement('script');
-          servicesScript.src = '//t1.daumcdn.net/mapjsapi/js/libs/services/1.0.2/services.js';
-          servicesScript.async = true;
-          servicesScript.onload = () => {
-            console.log('✅ 카카오맵 services 스크립트 로드 완료');
-          };
-          servicesScript.onerror = () => {
-            console.error('❌ 카카오맵 services 스크립트 로드 실패');
-          };
-          document.head.appendChild(servicesScript);
+          // SDK 로드 후 maps 라이브러리 로드
+          if (window.kakao && window.kakao.maps) {
+            window.kakao.maps.load(() => {
+              console.log('✅ 카카오맵 maps 라이브러리 로드 완료');
+              
+              // services 라이브러리 로드
+              const servicesScript = document.createElement('script');
+              servicesScript.type = 'text/javascript';
+              servicesScript.src = '//t1.daumcdn.net/mapjsapi/js/libs/services/1.0.2/services.js';
+              servicesScript.async = true;
+              servicesScript.onload = () => {
+                console.log('✅ 카카오맵 services 스크립트 로드 완료');
+              };
+              servicesScript.onerror = () => {
+                console.error('❌ 카카오맵 services 스크립트 로드 실패');
+              };
+              document.head.appendChild(servicesScript);
+            });
+          }
         };
         script.onerror = () => {
-          console.error('❌ 카카오맵 기본 스크립트 로드 실패');
+          console.error('❌ 카카오맵 SDK 로드 실패');
         };
         document.head.appendChild(script);
       }

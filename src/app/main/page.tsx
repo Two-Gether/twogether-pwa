@@ -9,7 +9,7 @@ import Image from 'next/image';
 
 export default function MainPage() {
   const router = useRouter();
-  const { user, accessToken, isAuthenticated, logout } = useAuthStore();
+  const { user, accessToken, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     // 인증되지 않은 사용자는 로그인 페이지로 리다이렉트
@@ -54,7 +54,6 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-gray-100 pb-16">
       <Header />
-      
       <div className="px-6 py-6">
         {/* Main Content */}
         <div className="mb-8">
