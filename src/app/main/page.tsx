@@ -20,7 +20,7 @@ export default function MainPage() {
     
     // 파트너 ID가 null인 경우 매칭 페이지로 리다이렉트
     if (user && user.partnerId === null) {
-      router.push('/matching');
+      router.push('/connect');
     }
   }, [isAuthenticated, user, router]);
 

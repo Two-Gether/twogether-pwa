@@ -30,7 +30,7 @@ export const useGoogleAuth = () => {
         
         // 파트너 ID나 파트너 닉네임이 null이면 매칭 페이지로
         if (data.partnerId === null || data.partnerNickname === null) {
-          router.push('/matching');
+          router.push('/connect');
         } else {
           router.push('/main');
         }

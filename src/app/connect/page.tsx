@@ -9,7 +9,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 
 
-export default function MatchingPage() {
+export default function ConnectPage() {
   const [partnerCode, setPartnerCode] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
