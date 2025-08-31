@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Input from '@/components/ui/Input';
+import Image from 'next/image';
 
 interface LocationInfo {
   id: string;
@@ -381,7 +382,36 @@ const MapScreen = () => {
           </div>
         </div>
       )}
-      
+
+      {/* Camera Button - 장소 정보창 상태에 따라 위치 조정 */}
+      {!locationInfo ? (
+        // 장소 정보창이 없을 때 - 기존 위치
+        <div className="absolute bottom-20 right-4 z-10">
+          <div className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg">
+            <Image 
+              src="/images/common/camera.svg" 
+              alt="Camera" 
+              className="w-6 h-6"
+              width={24}
+              height={24}
+            />
+          </div>
+        </div>
+      ) : !isLocationInfoSheetOpen ? (
+        // 장소 정보창이 닫힐 때 - 핸들 바 위쪽에 위치
+        <div className="absolute bottom-32 right-4 z-10">
+          <div className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg">
+            <Image 
+              src="/images/common/camera.svg" 
+              alt="Camera" 
+              className="w-6 h-6"
+              width={24}
+              height={24}
+            />
+          </div>
+        </div>
+      ) : null}
+
       {/* 푸터 */}
       <div className="absolute bottom-0 left-0 right-0 z-10">
         <Footer />
