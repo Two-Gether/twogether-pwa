@@ -16,8 +16,9 @@ export default function ConnectPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [myPartnerCode, setMyPartnerCode] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
-  const { user, accessToken, updateUser } = useAuthStore();
+  const { user, accessToken, updateUser, login } = useAuthStore();
 
   useEffect(() => {
     setIsClient(true);
@@ -99,6 +100,36 @@ export default function ConnectPage() {
     .finally(() => setIsLoading(false));
   };
 
+  const handleRefreshToken = async () => {
+    if (!user) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    try {
+      setIsRefreshing(true);
+      const res = await fetch('/api/token/refresh', {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        alert(`재발급 실패 (${res.status})`);
+        return;
+      }
+      const data = await res.json();
+      const newToken = data.accessToken || data.token || data.data?.accessToken;
+      if (!newToken) {
+        alert('재발급 토큰이 없습니다.');
+        return;
+      }
+      login({ user, accessToken: newToken });
+      alert('토큰이 재발급되었습니다.');
+    } catch {
+      alert('토큰 재발급 중 오류가 발생했습니다.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Header */}
@@ -113,6 +144,17 @@ export default function ConnectPage() {
           <div className="text-center text-gray-800 font-gowun text-base font-normal">
             연동하기
           </div>
+        </div>
+        <div>
+          <Button
+            kind="functional"
+            styleType="outline"
+            tone="brand"
+            onClick={handleRefreshToken}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? '재발급 중...' : '토큰 재발급'}
+          </Button>
         </div>
       </div>
 
