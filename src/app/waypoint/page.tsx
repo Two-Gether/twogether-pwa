@@ -8,7 +8,7 @@ import PlusIcon from '@/components/icons/PlusIcon';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { getAuthToken } from '@/auth';
-import { Waypoint, CreateWaypointResponse, GetWaypointsResponse } from '@/types/waypoint';
+import { Waypoint, CreateWaypointResponse } from '@/types/waypoint';
 
 export default function WaypointPage() {
   const [waypointLists, setWaypointLists] = useState<Waypoint[]>([]);
@@ -37,15 +37,39 @@ export default function WaypointPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        if (errorData.error) {
+          throw new Error(errorData.error);
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       }
 
-      const data: GetWaypointsResponse = await response.json();
-      if (data.success) {
-        setWaypointLists(data.data);
-        setWaypointCount(data.data.length);
+      const data = await response.json();
+      
+      // 실제 서버 응답 구조에 맞게 처리
+      if (data && data.waypointSummaryResponses && Array.isArray(data.waypointSummaryResponses)) {
+        // { waypointName, waypointSummaryResponses } 구조
+        const waypoints: Waypoint[] = data.waypointSummaryResponses.map((item: { name: string; imageUrl: string; memo: string; order: number }, index: number) => ({
+          id: index + 1, // 임시 ID
+          name: item.name,
+          imageUrl: item.imageUrl,
+          memo: item.memo,
+          order: item.order
+        }));
+        setWaypointLists(waypoints);
+        setWaypointCount(waypoints.length);
+      } else if (Array.isArray(data)) {
+        // 배열로 응답하는 경우
+        setWaypointLists(data);
+        setWaypointCount(data.length);
+      } else {
+        // 기타 응답 구조
+        setWaypointLists([]);
+        setWaypointCount(0);
       }
-    } catch {
+    } catch (error) {
+      console.error('웨이포인트 조회 에러:', error);
       // 에러 발생 시에도 빈 배열로 초기화하여 페이지가 정상 렌더링되도록 함
       setWaypointLists([]);
       setWaypointCount(0);
@@ -76,22 +100,34 @@ export default function WaypointPage() {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const errorData = await response.json();
+        if (errorData.error) {
+          throw new Error(errorData.error);
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
       }
 
       const data: CreateWaypointResponse = await response.json();
       if (data.waypointId) {
         // 새로 생성된 웨이포인트를 목록에 추가
-        setWaypointLists(prev => [...prev, { id: parseInt(data.waypointId, 10), name: waypointName.trim(), placeCount: 0, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]);
+        setWaypointLists(prev => [...prev, { 
+          id: parseInt(data.waypointId, 10), 
+          name: waypointName.trim(), 
+          imageUrl: '', 
+          memo: '', 
+          order: prev.length + 1 
+        }]);
         setWaypointCount(prev => prev + 1);
         setShowModal(false);
         setWaypointName('');
         // 생성 후 바로 새로고침
         fetchWaypoints();
       }
-    } catch {
+    } catch (error) {
       // 에러 처리 (토스트 메시지 등)
-      alert('웨이포인트 생성에 실패했습니다.');
+      const errorMessage = error instanceof Error ? error.message : '웨이포인트 생성에 실패했습니다.';
+      alert(errorMessage);
     } finally {
       setIsCreating(false);
     }
@@ -160,7 +196,7 @@ export default function WaypointPage() {
                       {waypoint.name}
                     </h3>
                     <p className="text-[#767676] text-sm font-gowun font-normal leading-[19.6px]">
-                      보관중인 장소 {waypoint.placeCount}
+                      보관중인 장소 {waypointLists.length}
                     </p>
                   </div>
                   <div className="w-5 h-5 flex items-center justify-center">

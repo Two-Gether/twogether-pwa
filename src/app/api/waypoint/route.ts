@@ -13,22 +13,22 @@ export async function GET(request: NextRequest) {
     }
 
     const accessToken = authHeader.replace('Bearer ', '');
-    console.log('🔍 GET 요청 시작');
-    console.log('🔑 토큰 길이:', accessToken.length);
 
-    // 실제 서버에 웨이포인트 목록 요청
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, {
+    // fetch 요청 설정 객체 생성
+    const fetchOptions = {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-    });
+    };
+
+    // 실제 서버에 웨이포인트 목록 요청
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, fetchOptions);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('서버 응답 에러:', response.status, response.statusText);
-      console.error('에러 내용:', errorText);
+      console.error('웨이포인트 조회 실패:', response.status, errorText);
       return NextResponse.json(
         { error: `웨이포인트 조회 실패: ${response.status}` },
         { status: response.status }
@@ -61,20 +61,22 @@ export async function POST(request: NextRequest) {
     const accessToken = authHeader.replace('Bearer ', '');
     const body = await request.json();
 
-    // 실제 서버에 웨이포인트 생성 요청
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, {
+    // fetch 요청 설정 객체 생성
+    const fetchOptions = {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
-    });
+    };
+
+    // 실제 서버에 웨이포인트 생성 요청
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, fetchOptions);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('서버 응답 에러:', response.status, response.statusText);
-      console.error('에러 내용:', errorText);
+      console.error('웨이포인트 생성 실패:', response.status, errorText);
       return NextResponse.json(
         { error: `웨이포인트 생성 실패: ${response.status}` },
         { status: response.status }

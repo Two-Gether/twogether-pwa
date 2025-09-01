@@ -1,10 +1,24 @@
 // 웨이포인트 관련 타입 정의
+export interface WaypointItem {
+  name: string;
+  imageUrl: string;
+  memo: string;
+  order: number;
+}
+
+// 서버 응답 타입
+export interface WaypointServerResponse {
+  waypointName: string;
+  waypointSummaryResponses: WaypointItem[];
+}
+
+// 프론트엔드에서 사용할 타입
 export interface Waypoint {
   id: number;
   name: string;
-  placeCount: number;
-  createdAt: string;
-  updatedAt: string;
+  imageUrl: string;
+  memo: string;
+  order: number;
 }
 
 export interface CreateWaypointRequest {
@@ -16,7 +30,6 @@ export interface CreateWaypointResponse {
 }
 
 export interface GetWaypointsResponse {
-  success: boolean;
-  data: Waypoint[];
-  message?: string;
+  waypointName: string;
+  waypointSummaryResponses: WaypointItem[];
 }
