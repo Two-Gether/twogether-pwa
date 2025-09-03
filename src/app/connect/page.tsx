@@ -4,10 +4,9 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import Image from 'next/image';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
-
 
 export default function ConnectPage() {
   const [partnerCode, setPartnerCode] = useState('');
@@ -111,7 +110,6 @@ export default function ConnectPage() {
         method: 'POST',
       });
       if (!res.ok) {
-        const text = await res.text();
         alert(`재발급 실패 (${res.status})`);
         return;
       }
@@ -141,20 +139,9 @@ export default function ConnectPage() {
           >
             <ChevronLeft size={14} className="text-gray-700" />
           </button>
-          <div className="text-center text-gray-800 font-gowun text-base font-normal">
-            연동하기
-          </div>
-        </div>
-        <div>
-          <Button
-            kind="functional"
-            styleType="outline"
-            tone="brand"
-            onClick={handleRefreshToken}
-            disabled={isRefreshing}
-          >
-            {isRefreshing ? '재발급 중...' : '토큰 재발급'}
-          </Button>
+                      <div className="text-center text-gray-800 font-pretendard text-base font-normal">
+              연동하기
+            </div>
         </div>
       </div>
 
@@ -173,14 +160,14 @@ export default function ConnectPage() {
             <span className="text-brand-500">잠깐! </span>
             <span className="text-gray-800">아직 내 연인과<br/>연결이 안 된 상태에요!</span>
           </h2>
-          <p className="text-sm leading-[19.6px] text-gray-500 font-gowun">
+          <p className="text-sm leading-[19.6px] text-gray-500 font-pretendard">
             연인과의 데이트를 위한 특화어플로<br/>상대 연인과 연동이 안되면 이용할 수 없어요..
           </p>
         </div>
 
         {/* My Partner Code */}
-        <div className="mb-6 text-center mt-20">
-          <h3 className="font-semibold mb-3 leading-[19.2px] text-gray-800 font-gowun text-base">
+        <div className="mb-3 text-center mt-20">
+          <h3 className="font-semibold mb-3 leading-[19.2px] text-gray-800 font-pretendard text-base">
             내 연인 코드
           </h3>
           <Input 
@@ -196,23 +183,38 @@ export default function ConnectPage() {
         <div>
           <button
             onClick={() => setShowModal(true)}
-            className="w-full text-center flex items-center justify-center gap-2 text-gray-500 font-gowun text-sm"
+            className="w-full text-center flex items-center justify-center gap-2 text-gray-500 font-pretendard text-sm"
           >
-            연인 코드 등록
-            <ChevronRight size={14} className="text-gray-800" />
+            연인 코드 직접등록
           </button>
         </div>
       </div>
 
       {/* Footer Illustration */}
-      <div className="absolute bottom-6 right-6 mb-10">
+      <div className="absolute bottom-6 left-0 mb-10 w-80 h-auto">
         <Image 
-          src="/images/illust/cats/sad_cat.svg" 
-          alt="Sad Cat" 
-          width={300} 
-          height={300}
+          src="/images/illust/cats/sadCouple.png" 
+          alt="Sad Couple" 
+          width={255} 
+          height={255}
         />
       </div>
+      
+      {/* 토큰 재발급 키 - 오른쪽 하단 고정 */}
+      <button
+        onClick={handleRefreshToken}
+        disabled={isRefreshing}
+        className="absolute bottom-6 right-6 mb-10 w-12 h-12 bg-brand-500 rounded-full flex items-center justify-center shadow-lg hover:bg-brand-600 transition-colors disabled:opacity-50 z-50"
+      >
+        <div className="relative w-6 h-6">
+          <Image 
+            src="/images/common/reload.svg" 
+            alt="Reload" 
+            width={50} 
+            height={50}
+          />
+        </div>
+      </button>
 
       {/* Modal */}
       {showModal && (

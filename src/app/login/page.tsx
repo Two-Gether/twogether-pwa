@@ -55,7 +55,7 @@ const LoginScreen = () => {
     return (
         <div className="min-h-screen flex items-center justify-center px-5 py-8 bg-gray-100">
             <div className="w-full max-w-sm">
-                <h2 className="text-2xl font-bold text-center text-gray-800 font-gowun my-8">로그인</h2>
+                <h2 className="text-2xl font-bold text-center text-gray-800 font-pretendard my-8">로그인</h2>
                 
                 <div className="space-y-4 my-6">
                     <Input 

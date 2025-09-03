@@ -41,8 +41,7 @@ const Dropdown = forwardRef<HTMLDivElement, DropdownComponentProps>(function Dro
     ...rest
   } = props;
 
-  const base = 'font-gowun text-sm leading-[19.6px] text-gray-700';
-  const widthClass = fullWidth ? 'w-full' : '';
+  const base = 'font-pretendard text-sm leading-[19.6px] text-gray-700';
 
   /** selector 계열 */
   const renderSelector = (p: SelectorProps) => {

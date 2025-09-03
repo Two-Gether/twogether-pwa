@@ -2,8 +2,8 @@
 export const typography = {
     // Font Families
     fontFamily: {
-        // 기본 폰트 - Gowun Dodum
-        base: 'GowunDodum-Regular',
+        // 기본 폰트
+        base: 'Pretendard-Regular',
 
         // 로고용 폰트 - Catways Font
         logo: 'Catways',
@@ -54,93 +54,93 @@ export const typography = {
 
     // Text Styles
     textStyles: {
-        // Headings (Gowun Dodum 사용)
+        // Headings
         h1: {
             fontSize: 32,
             fontWeight: 'bold',
             lineHeight: 1.2,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         h2: {
             fontSize: 28,
             fontWeight: 'bold',
             lineHeight: 1.3,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         h3: {
             fontSize: 24,
             fontWeight: 'semibold',
             lineHeight: 1.4,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         h4: {
             fontSize: 20,
             fontWeight: 'semibold',
             lineHeight: 1.4,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         h5: {
             fontSize: 18,
             fontWeight: 'medium',
             lineHeight: 1.5,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         h6: {
             fontSize: 16,
             fontWeight: 'medium',
             lineHeight: 1.5,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
 
-        // Body Text (Gowun Dodum 사용)
+        // Body Text
         body1: {
             fontSize: 16,
             fontWeight: 'normal',
             lineHeight: 1.6,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         body2: {
             fontSize: 14,
             fontWeight: 'normal',
             lineHeight: 1.5,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         caption: {
             fontSize: 12,
             fontWeight: 'normal',
             lineHeight: 1.4,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
 
-        // Button Text (Gowun Dodum 사용)
+        // Button Text
         button: {
             fontSize: 16,
             fontWeight: 'medium',
             lineHeight: 1.5,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         buttonSmall: {
             fontSize: 14,
             fontWeight: 'medium',
             lineHeight: 1.4,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
 
-        // Navigation (Gowun Dodum 사용)
+        // Navigation
         navTitle: {
             fontSize: 18,
             fontWeight: 'semibold',
             lineHeight: 1.3,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
         navLabel: {
             fontSize: 12,
             fontWeight: 'medium',
             lineHeight: 1.2,
-            fontFamily: 'GowunDodum-Regular',
+            fontFamily: 'Pretendard-Regular',
         },
 
-        // Logo Text (Catways Font 사용)
+        // Logo Text
         logo: {
             fontSize: 24,
             fontWeight: 'bold',

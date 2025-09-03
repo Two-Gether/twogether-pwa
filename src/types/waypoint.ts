@@ -1,35 +1,43 @@
-// 웨이포인트 관련 타입 정의
+// 웨이포인트 목록 아이템 타입 (간단한 정보)
+export interface WaypointSummary {
+  waypointId: number;
+  name: string;
+  itemCount: number;
+}
+
+// 웨이포인트 상세 아이템 타입
 export interface WaypointItem {
+  itemId: number;
   name: string;
   imageUrl: string;
   memo: string;
   order: number;
 }
 
-// 서버 응답 타입
-export interface WaypointServerResponse {
+// 웨이포인트 상세 응답 타입
+export interface WaypointDetailResponse {
   waypointName: string;
-  waypointSummaryResponses: WaypointItem[];
+  waypointInfoResponse: WaypointItem[];
 }
 
-// 프론트엔드에서 사용할 타입
+// 프론트엔드에서 사용할 웨이포인트 타입
 export interface Waypoint {
-  id: number;
+  waypointId: number;
   name: string;
-  imageUrl: string;
-  memo: string;
-  order: number;
+  itemCount: number;
 }
 
+// 웨이포인트 생성 요청 타입
 export interface CreateWaypointRequest {
   name: string;
 }
 
+// 웨이포인트 생성 응답 타입
 export interface CreateWaypointResponse {
   waypointId: string;
 }
 
+// 웨이포인트 목록 응답 타입
 export interface GetWaypointsResponse {
-  waypointName: string;
-  waypointSummaryResponses: WaypointItem[];
+  waypointSummaryResponses: WaypointSummary[];
 }

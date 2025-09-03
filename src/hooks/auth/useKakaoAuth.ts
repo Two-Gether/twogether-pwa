@@ -53,7 +53,7 @@ export const useKakaoAuth = () => {
           } else if (typeof errorData === 'string') {
             errorMessage += `: ${errorData}`;
           }
-        } catch (e) {
+        } catch {
           const errorText = await response.text();
           errorMessage += `: ${errorText}`;
         }

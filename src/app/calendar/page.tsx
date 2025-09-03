@@ -9,7 +9,7 @@ const CalendarScreen = () => {
 
             {/* Main Content */}
             <div className="px-6 py-8 flex justify-center items-center">
-                <span className="text-2xl font-gowun text-gray-700">
+                <span className="text-2xl font-pretendard text-gray-700">
                     캘린더 페이지입니다~
                 </span>
             </div>

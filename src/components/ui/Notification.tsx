@@ -65,7 +65,7 @@ const Notification: React.FC<NotificationProps> = ({
   // Toast Bar (기본)
   if (variant === 'toast') {
     return (
-      <div className={`w-full h-[52px] px-4 py-3 ${config.bgColor} ${config.textColor} ${config.borderColor} shadow-[0px_1px_3px_rgba(0,0,0,0.12)] rounded-lg font-gowun text-sm leading-[19.6px] flex justify-start items-center ${className}`}>
+      <div className={`w-full h-[52px] px-4 py-3 ${config.bgColor} ${config.textColor} ${config.borderColor} shadow-[0px_1px_3px_rgba(0,0,0,0.12)] rounded-lg font-pretendard text-sm leading-[19.6px] flex justify-start items-center ${className}`}>
         {children}
       </div>
     );
@@ -74,7 +74,7 @@ const Notification: React.FC<NotificationProps> = ({
   // Snack Bar (close 또는 text)
   return (
     <div className={`w-full h-[52px] px-4 py-3 ${config.bgColor} ${config.textColor} ${config.borderColor} shadow-[0px_1px_3px_rgba(0,0,0,0.12)] rounded-lg flex justify-between items-center ${className}`}>
-      <div className="font-gowun text-sm leading-[19.6px]">
+      <div className="font-pretendard text-sm leading-[19.6px]">
         {children}
       </div>
       {variant === 'close' && onClose && (

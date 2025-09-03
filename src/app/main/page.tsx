@@ -57,10 +57,10 @@ export default function MainPage() {
       <div className="px-6 py-6">
         {/* Main Content */}
         <div className="mb-8">
-          <p className="text-base text-gray-700 mb-2 font-gowun">
+          <p className="text-base text-gray-700 mb-2 font-pretendard">
             우리가 함께한 지<br />
-            <span className="text-2xl text-brand-500 font-gowun font-bold">350일</span>
-            <span className="text-2xl text-gray-700 font-gowun font-bold">이 지났어요!</span>
+            <span className="text-2xl text-brand-500 font-pretendard font-bold">350일</span>
+            <span className="text-2xl text-gray-700 font-pretendard font-bold">이 지났어요!</span>
           </p>
         </div>
 
@@ -87,20 +87,20 @@ export default function MainPage() {
 
         {/* Recommendation Section */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-4 font-gowun">
+          <h2 className="text-xl font-semibold text-gray-700 mb-4 font-pretendard">
             대충 놀만한 것 추천 리스트
           </h2>
 
           {/* Recommendation Item */}
           <div className="flex items-center mb-4">
             <div className="w-12 h-12 bg-brand-500 rounded-full mr-3 flex justify-center items-center">
-              <span className="text-white font-bold text-lg font-gowun">H</span>
+              <span className="text-white font-bold text-lg font-pretendard">H</span>
             </div>
             <div className="flex-1">
-              <p className="text-gray-700 font-medium font-gowun">
+              <p className="text-gray-700 font-medium font-pretendard">
                 추천 활동
               </p>
-              <p className="text-gray-500 text-sm font-gowun">
+              <p className="text-gray-500 text-sm font-pretendard">
                 함께 즐길 수 있는 활동
               </p>
             </div>

@@ -53,7 +53,6 @@ module.exports = {
       },
       fontFamily: {
         'catways': ['Catways', 'sans-serif'],
-        'gowun': ['GowunBatang', 'sans-serif'],
         'pretendard': ['Pretendard', 'sans-serif'],
       },
     },
