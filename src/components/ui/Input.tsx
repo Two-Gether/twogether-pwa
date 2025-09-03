@@ -42,7 +42,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     ...rest
   } = props;
 
-  const base = 'font-pretendard text-sm leading-[19.6px] px-4 py-3 rounded-lg border transition-colors focus:outline-none text-sm';
+  const base = 'font-pretendard text-sm leading-[19.6px] px-4 h-[52px] rounded-lg border transition-colors focus:outline-none text-sm';
   const widthClass = fullWidth ? 'w-full' : '';
 
   /** text 계열 */

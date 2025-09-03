@@ -1,101 +1,105 @@
 'use client';
 
-import React, { forwardRef } from 'react';
-import { ChevronDown } from 'lucide-react';
-
-type DropdownType = 'selector' | 'option' | 'dropdown';
+import React, { forwardRef, useState } from 'react';
+import Image from 'next/image';
 
 interface BaseDropdownProps {
-  type?: DropdownType;
   className?: string;
   fullWidth?: boolean;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-interface SelectorProps extends BaseDropdownProps {
-  type: 'selector';
-  children: React.ReactNode;
-  onClick?: () => void;
-}
-
-interface OptionProps extends BaseDropdownProps {
-  type: 'option';
-  children: React.ReactNode;
-  onClick?: () => void;
-}
-
-interface DropdownProps extends BaseDropdownProps {
-  type: 'dropdown';
-  children: React.ReactNode;
-}
-
-type DropdownComponentProps = SelectorProps | OptionProps | DropdownProps;
-
-const Dropdown = forwardRef<HTMLDivElement, DropdownComponentProps>(function Dropdown(
+const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(function Dropdown(
   props,
   ref
 ) {
   const {
-    type = 'selector',
     className = '',
     fullWidth = true,
-    ...rest
+    options,
+    value,
+    onChange,
+    placeholder = '선택해주세요'
   } = props;
 
-  const base = 'font-pretendard text-sm leading-[19.6px] text-gray-700';
+  const [isOpen, setIsOpen] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
 
-  /** selector 계열 */
-  const renderSelector = (p: SelectorProps) => {
-    const { children, onClick, ...selectorProps } = p;
+  const selectedOption = options.find(option => option.value === value);
+  const displayValue = selectedOption ? selectedOption.label : placeholder;
 
-    return (
+  const handleToggle = () => {
+    setIsOpen(!isOpen);
+    setIsFocused(!isOpen);
+  };
+
+  const handleOptionClick = (optionValue: string) => {
+    onChange(optionValue);
+    setIsOpen(false);
+    setIsFocused(false);
+  };
+
+  const handleBlur = () => {
+    // 약간의 지연을 두어 옵션 클릭이 가능하도록
+    setTimeout(() => {
+      setIsOpen(false);
+      setIsFocused(false);
+    }, 150);
+  };
+
+  return (
+    <div className="relative" ref={ref} onBlur={handleBlur}>
+      {/* Integrated Selector with Options */}
       <div
-        ref={ref}
-        className={`w-[168px] h-[52px] px-4 py-3 bg-white rounded-lg border border-gray-300 flex justify-between items-center ${className}`}
-        onClick={onClick}
-        {...selectorProps}
+        className={`w-[168px] bg-white rounded-lg border transition-all duration-200 overflow-hidden ${
+          isFocused 
+            ? 'border-brand-500 shadow-[2px_4px_8px_rgba(0,0,0,0.08)]' 
+            : 'border-gray-300'
+        } ${className}`}
+        style={isFocused ? { outline: '1px text-brand-500 solid', outlineOffset: '-1px' } : {}}
       >
-        <div className={base}>
-          {children}
+        {/* Selected Option (Always visible) */}
+        <div
+          className="h-[52px] px-4 py-3 flex justify-between items-center cursor-pointer"
+          onClick={handleToggle}
+          tabIndex={0}
+        >
+          <div className="font-pretendard text-sm leading-[19.6px] text-gray-700">
+            {displayValue}
+          </div>
+          <Image 
+            src="/images/common/arrowTop.svg"
+            alt="arrow"
+            width={12}
+            height={12}
+            style={{transform: 'rotate(180deg)'}}
+          />
         </div>
-        <ChevronDown className="w-4 h-4 text-gray-700" />
-      </div>
-    );
-  };
 
-  /** option 계열 */
-  const renderOption = (p: OptionProps) => {
-    const { children, onClick, ...optionProps } = p;
-    return (
-      <div
-        ref={ref}
-        className={`w-[168px] h-[52px] px-4 py-3 bg-white border-b border-gray-300 flex justify-start items-center ${className}`}
-        onClick={onClick}
-        {...optionProps}
-      >
-        <div className={base}>
-          {children}
-        </div>
+        {/* Options (Only visible when open) */}
+        {isOpen && options.map((option, index) => (
+          <div
+            key={option.value}
+            className={`px-4 py-3 cursor-pointer transition-colors duration-200 ${
+              index < options.length - 1 ? 'border-t border-gray-200' : ''
+            } ${
+              option.value === value 
+                ? 'bg-gray-50 text-brand-500' 
+                : 'text-gray-700 hover:bg-gray-50'
+            }`}
+            onClick={() => handleOptionClick(option.value)}
+          >
+            <div className="font-pretendard text-sm leading-[19.6px]">
+              {option.label}
+            </div>
+          </div>
+        ))}
       </div>
-    );
-  };
-
-  /** dropdown 계열 */
-  const renderDropdown = (p: DropdownProps) => {
-    const { children, ...dropdownProps } = p;
-    return (
-      <div
-        ref={ref}
-        className={`w-[168px] shadow-lg overflow-hidden rounded-lg border border-brand-500 flex flex-col justify-start items-start ${className}`}
-        {...dropdownProps}
-      >
-        {children}
-      </div>
-    );
-  };
-
-  if (type === 'selector') return renderSelector(props as SelectorProps);
-  if (type === 'option') return renderOption(props as OptionProps);
-  return renderDropdown(props as DropdownProps);
+    </div>
+  );
 });
 
 Dropdown.displayName = 'Dropdown';

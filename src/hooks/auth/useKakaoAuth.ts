@@ -28,9 +28,6 @@ export const useKakaoAuth = () => {
     try {
       // 카카오 SDK를 통해 액세스 토큰을 받아옴
       const accessToken = await getKakaoAccessToken();
-      console.log('🟡 카카오SDK accessToken length:', accessToken.length);
-      console.log('🟡 카카오SDK accessToken:', accessToken);
-
       // 서버에 액세스 토큰을 전송하여 사용자 정보를 받아옴
       const response = await fetch(`/api/auth/kakao`, {
         method: 'POST',
@@ -62,10 +59,7 @@ export const useKakaoAuth = () => {
       }
 
       const userData = await response.json();
-      console.log('✅ 서버 200: 카카오 인증 성공');
-      console.log('🔑 서비스 accessToken length:', userData?.accessToken ? userData.accessToken.length : 0);
-      console.log('📋 서비스 accessToken:', userData?.accessToken);
-      
+
       // 로그인 상태 업데이트
       login({
         user: {

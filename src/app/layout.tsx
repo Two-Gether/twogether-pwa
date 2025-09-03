@@ -33,30 +33,21 @@ const RootLayout = ({
         script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_JS_KEY}&autoload=false`;
         script.async = true;
         script.onload = () => {
-          console.log('✅ 카카오맵 SDK 로드 완료');
-          
           // SDK 로드 후 maps 라이브러리 로드
           if (window.kakao && window.kakao.maps) {
             window.kakao.maps.load(() => {
-              console.log('✅ 카카오맵 maps 라이브러리 로드 완료');
-              
+
               // services 라이브러리 로드
               const servicesScript = document.createElement('script');
               servicesScript.type = 'text/javascript';
               servicesScript.src = '//t1.daumcdn.net/mapjsapi/js/libs/services/1.0.2/services.js';
               servicesScript.async = true;
-              servicesScript.onload = () => {
-                console.log('✅ 카카오맵 services 스크립트 로드 완료');
-              };
-              servicesScript.onerror = () => {
-                console.error('❌ 카카오맵 services 스크립트 로드 실패');
-              };
               document.head.appendChild(servicesScript);
             });
           }
         };
         script.onerror = () => {
-          console.error('❌ 카카오맵 SDK 로드 실패');
+          console.error('카카오맵 SDK 로드 실패');
         };
         document.head.appendChild(script);
       }
@@ -82,7 +73,7 @@ const RootLayout = ({
           src="https://developers.kakao.com/sdk/js/kakao.js"
           onLoad={() => {
             if (typeof window !== 'undefined' && window.Kakao) {
-              window.Kakao.init('97c4c671192a58fd0eee40998189121b'); // JavaScript 키
+              window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY as string);
             }
           }}
         />

@@ -183,7 +183,7 @@ export default function ConnectPage() {
         <div>
           <button
             onClick={() => setShowModal(true)}
-            className="w-full text-center flex items-center justify-center gap-2 text-gray-500 font-pretendard text-sm"
+            className="w-full text-center flex items-center justify-center gap-2 text-gray-500 font-pretendard text-sm underline hover:no-underline transition-all"
           >
             연인 코드 직접등록
           </button>

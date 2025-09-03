@@ -135,16 +135,6 @@ export default function Demo() {
         <h2 className="text-xl font-semibold text-gray-700">Dropdown 컴포넌트</h2>
         <div className="space-y-4">
           <h3 className="text-lg font-medium">Selector</h3>
-          <Dropdown type="selector">남자</Dropdown>
-          
-          <h3 className="text-lg font-medium">Option</h3>
-          <Dropdown type="option">여자</Dropdown>
-          
-          <h3 className="text-lg font-medium">Dropdown Container</h3>
-          <Dropdown type="dropdown">
-            <Dropdown type="option">남자</Dropdown>
-            <Dropdown type="option">여자</Dropdown>
-          </Dropdown>
         </div>
       </section>
 

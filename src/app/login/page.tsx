@@ -49,7 +49,7 @@ const LoginScreen = () => {
     };
 
     const handleSignup = () => {
-        // Navigate to signup page
+        window.location.href = '/signup';
     };
 
     return (

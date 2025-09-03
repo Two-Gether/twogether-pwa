@@ -95,23 +95,26 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     const fixed = 'w-[113px] h-[52px]';
 
     const byState: Record<AuthState, string> = {
-      default: 'bg-gray-100 text-gray-700 font-normal hover:bg-gray-200',
+      default: 'bg-gray-200 border border-gray-200 text-gray-700 font-normal hover:bg-gray-50',
       loading: 'bg-white text-gray-700 font-normal',
       active:
         'bg-brand-500 text-white font-bold hover:bg-brand-600 active:bg-brand-700',
       success:
-        'bg-semantic-success text-white font-bold hover:brightness-95',
+        'bg-semantic-success text-white font-bold',
     };
+
+    const currentState = state || 'default';
+    const stateClass = byState[currentState];
 
     return (
       <button
         ref={ref}
-        className={[base, fixed, byState[state], className].join(' ')}
-        disabled={disabled || state === 'loading' || loading}
-        aria-busy={loading || state === 'loading' || undefined}
+        className={[base, fixed, stateClass, className].join(' ')}
+        disabled={disabled || currentState === 'loading' || loading}
+        aria-busy={loading || currentState === 'loading' || undefined}
         {...btnProps}
       >
-        {loading || state === 'loading' ? <Spinner /> : null}
+        {loading || currentState === 'loading' ? <Spinner /> : null}
         {children}
       </button>
     );

@@ -5,3 +5,4 @@ export { default as SearchBar } from './SearchBar';
 export { default as LocationItem } from './LocationItem';
 export { default as Tag } from './Tag';
 export { default as Dropdown } from './Dropdown';
+export { default as Header } from './Header';
