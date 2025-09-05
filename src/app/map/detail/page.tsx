@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/ui/Header';
+import { addressToPnu } from '@/utils/createPNU';
 
 interface PlaceDetail {
   place_name: string;
@@ -134,6 +135,29 @@ export default function DetailPage() {
     window.open(placeUrl, '_blank');
   };
 
+  // 웨이포인트 저장(=PNU 계산) 핸들러
+  const handleSaveWaypoint = async () => {
+    const addr = (kakaoApiResponse?.address_name || kakaoApiResponse?.road_address_name || placeDetail?.road_address_name || placeDetail?.address_name || '').trim();
+    if (!addr) {
+      alert('주소 정보를 찾을 수 없습니다.');
+      return;
+    }
+    try {
+      const pnu = await addressToPnu(addr);
+      if (!pnu) {
+        alert('PNU 생성에 실패했습니다. 다른 주소로 시도해주세요.');
+        return;
+      }
+      // 재사용 가능한 형태: 여기서는 우선 표시만
+      alert(`PNU: ${pnu}`);
+      console.log('Waypoint PNU:', pnu);
+      // TODO: 서버 저장 필요 시 이곳에서 API 호출
+    } catch (e) {
+      console.error('PNU 생성 오류:', e);
+      alert('PNU 생성 중 오류가 발생했습니다.');
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="w-full h-full bg-gray-100">
@@ -190,7 +214,7 @@ export default function DetailPage() {
           </div>
 
           {/* 장소명 */}
-          <h1 className="text-[#333333] text-2xl font-semibold leading-[28.8px] mb-4">
+          <h1 className="text-gray-900 text-2xl font-semibold leading-[28.8px] mb-4">
             {displayData.place_name}
           </h1>
 
@@ -206,7 +230,7 @@ export default function DetailPage() {
                     height={16}
                   />
               </div>
-              <span className="text-[#333333] text-sm font-normal leading-[19.6px]">
+              <span className="text-gray-900 text-sm font-normal leading-[19.6px]">
                 {displayData.road_address_name || displayData.address_name}
               </span>
               {displayData.place_url && (
@@ -233,7 +257,7 @@ export default function DetailPage() {
                 <div className="flex items-center gap-1">
                   {displayData.category_name.split(' > ').map((category, index, array) => (
                     <div key={index} className="flex items-center gap-1">
-                      <span className="text-[#333333] text-sm font-normal leading-[19.6px]">
+                      <span className="text-gray-900 text-sm font-normal leading-[19.6px]">
                         {category}
                       </span>
                       {index < array.length - 1 && (
@@ -264,7 +288,7 @@ export default function DetailPage() {
                     height={16}
                   />
                 </div>
-                <span className="text-[#333333] text-sm font-normal leading-[19.6px]">
+                <span className="text-gray-900 text-sm font-normal leading-[19.6px]">
                   {displayData.phone}
                 </span>
               </div>
@@ -273,13 +297,13 @@ export default function DetailPage() {
 
           {/* 웨이포인트 지정 버튼 */}
           <div className="flex items-center gap-4 mb-8">
-            <button className="flex-1 py-4 bg-white border border-[#CCCCCC] rounded-lg text-[#333333] text-sm font-normal">
+            <button onClick={handleSaveWaypoint} className="flex-1 py-4 bg-white border border-[#CCCCCC] rounded-lg text-gray-900 text-sm font-normal">
               웨이포인트 지정
             </button>
           </div>
 
           {/* 하이라이트 섹션 */}
-          <h2 className="text-[#333333] text-xl font-semibold leading-6 mb-8">
+          <h2 className="text-gray-900 text-xl font-semibold leading-6 mb-8">
             하이라이트
           </h2>
 
