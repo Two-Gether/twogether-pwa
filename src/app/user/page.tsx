@@ -4,18 +4,39 @@ import Header from '@/components/ui/Header';
 import Footer from '@/components/Footer';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import { useRouter } from 'next/navigation';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import Image from 'next/image';
 import { getRelationshipDaysText } from '@/utils/calculateDays';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
 
 export default function MyPage() {
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const [showModal, setShowModal] = useState(false);
+  const [modalTitle, setModalTitle] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleLogout = useCallback(() => {
     logout();
     router.replace('/login');
   }, [logout, router]);
+
+  const handleItemClick = useCallback((title: string) => {
+    setModalTitle(title);
+    setInputValue('');
+    setShowModal(true);
+  }, []);
+
+  const handleSubmit = useCallback(async () => {
+    setIsLoading(true);
+    // TODO: API 호출 로직 추가
+    setTimeout(() => {
+      setIsLoading(false);
+      setShowModal(false);
+    }, 1000);
+  }, []);
 
   return (
     <div className="w-full h-screen bg-white flex flex-col">
@@ -69,7 +90,10 @@ export default function MyPage() {
         <div className="mb-8">
           <h3 className="text-xl text-gray-700 font-pretendard font-semibold mb-3">연인 정보</h3>
           <div className="bg-white rounded-lg border-b border-gray-300">
-            <div className="py-3 border-b border-gray-300 flex justify-between items-center">
+            <div 
+              className="py-3 border-b border-gray-300 flex justify-between items-center cursor-pointer"
+              onClick={() => handleItemClick('우리가 만난 날짜')}
+            >
               <span className="text-sm text-gray-700 font-pretendard">우리가 만난 날짜</span>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-gray-500 font-pretendard">미입력</span>
@@ -82,7 +106,10 @@ export default function MyPage() {
                 />
               </div>
             </div>
-            <div className="py-3 flex justify-between items-center">
+            <div 
+              className="py-3 flex justify-between items-center cursor-pointer"
+              onClick={() => handleItemClick('상대방 별명 지어주기')}
+            >
               <span className="text-sm text-gray-700 font-pretendard">상대방 별명 지어주기</span>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-gray-500 font-pretendard">미입력</span>
@@ -129,6 +156,49 @@ export default function MyPage() {
         </div>
       </main>
       <Footer />
+
+      {/* 하단 모달 */}
+      {showModal && (
+        <div 
+          className="absolute inset-0 flex items-end justify-center z-50 bg-black bg-opacity-20"
+          onClick={() => setShowModal(false)}
+        >
+          <div 
+            className="bg-white rounded-t-lg w-full max-w-md p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold font-pretendard">{modalTitle}</h3>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-gray-500 text-xl"
+              >
+                ×
+              </button>
+            </div>
+            
+            <Input 
+              type="text"
+              variant="placeholder"
+              placeholder={modalTitle === '우리가 만난 날짜' ? '날짜를 입력하세요 (YYYY-MM-DD)' : '별명을 입력하세요'}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              style={{ marginBottom: '20px' }}
+            />
+            
+            <Button
+              kind="functional"
+              styleType="fill"
+              tone="brand"
+              fullWidth
+              onClick={handleSubmit}
+              disabled={isLoading}
+            >
+              {isLoading ? '저장 중...' : '저장하기'}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
