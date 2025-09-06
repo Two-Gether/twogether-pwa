@@ -170,14 +170,15 @@ export default function ConnectPage() {
           <h3 className="font-semibold mb-3 leading-[19.2px] text-gray-800 font-pretendard text-base">
             내 연인 코드
           </h3>
-          <div className="flex items-stretch gap-2">
+          <div className="relative">
             <Input 
               type="text"
               variant="disabled"
               value={myPartnerCode || '로딩 중...'}
               readOnly
-              style={{ textAlign: 'center', flex: 1 }}
+              style={{ textAlign: 'center' }}
             />
+            {/* 투명한 복사 버튼 */}
             <button
               onClick={async (e) => {
                 e.preventDefault();
@@ -214,23 +215,9 @@ export default function ConnectPage() {
                   alert("복사 실패!");
                 }
               }}
-              className="flex items-center justify-center w-[52px] h-[52px] bg-brand-500 hover:bg-brand-600 rounded-lg transition-colors duration-200 shadow-sm"
-              title="복사하기"
-            >
-              <svg 
-                width="16" 
-                height="16" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="white" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-              >
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-            </button>
+              className="absolute inset-0 w-full h-full bg-transparent cursor-pointer z-10"
+              title="클릭하여 복사하기"
+            />
           </div>
         </div>
 
