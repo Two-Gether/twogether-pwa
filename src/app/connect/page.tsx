@@ -23,32 +23,77 @@ export default function ConnectPage() {
     setIsClient(true);
   }, []);
 
-  // 내 파트너 코드 조회
+  // 내 파트너 코드 조회 (3시간마다 새로 요청)
   useEffect(() => {
     if (!isClient || !accessToken) return;
     
-    fetch('/api/partner/code', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    })
-    .then(response => {
-      if (!response.ok) {
-        return response.json().then(errorData => {
-          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    const fetchPartnerCode = async () => {
+      try {
+        const response = await fetch('/api/partner/code', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
         });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+        
+        const code = await response.text();
+        const trimmedCode = code.trim();
+        setMyPartnerCode(trimmedCode);
+        
+        // localStorage에 코드와 시간 저장
+        const codeData = {
+          code: trimmedCode,
+          timestamp: Date.now()
+        };
+        localStorage.setItem('partnerCode', JSON.stringify(codeData));
+        
+        // 3시간 후에 다시 요청하도록 타이머 설정
+        const threeHours = 3 * 60 * 60 * 1000; // 3시간을 밀리초로 변환
+        setTimeout(() => {
+          fetchPartnerCode();
+        }, threeHours);
+        
+      } catch (error) {
+        console.log(error);
+        setMyPartnerCode('조회 실패');
       }
-      return response.text();
-    })
-    .then(code => {
-      setMyPartnerCode(code.trim());
-    })
-    .catch(error => {
-      console.log(error);
-      setMyPartnerCode('조회 실패');
-    });
+    };
+    
+    // localStorage에서 이전 코드 확인
+    const cachedCodeData = localStorage.getItem('partnerCode');
+    if (cachedCodeData) {
+      try {
+        const { code, timestamp } = JSON.parse(cachedCodeData);
+        const threeHours = 3 * 60 * 60 * 1000;
+        const now = Date.now();
+        
+        if (now - timestamp < threeHours) {
+          // 3시간이 지나지 않았으면 캐시된 코드 사용
+          setMyPartnerCode(code);
+          
+          // 남은 시간 후에 새로 요청
+          const remainingTime = threeHours - (now - timestamp);
+          setTimeout(() => {
+            fetchPartnerCode();
+          }, remainingTime);
+        } else {
+          // 3시간이 지났으면 새로 요청
+          fetchPartnerCode();
+        }
+      } catch (error) {
+        console.log('캐시된 코드 파싱 실패:', error);
+        fetchPartnerCode();
+      }
+    } else {
+      // 캐시된 코드가 없으면 새로 요청
+      fetchPartnerCode();
+    }
   }, [isClient, accessToken]);
 
   const handleConnectPartner = () => {

@@ -19,7 +19,7 @@ export async function GET(
     const { id: waypointId } = await params;
 
     // 실제 서버에 웨이포인트 상세 조회 요청
-    const response = await fetch(`${process.env.API_BASE_URL}/waypoint/${waypointId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -66,7 +66,7 @@ export async function DELETE(
     const { id: waypointId } = await params;
 
     // 실제 서버에 웨이포인트 삭제 요청
-    const response = await fetch(`${process.env.API_BASE_URL}/waypoint/${waypointId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

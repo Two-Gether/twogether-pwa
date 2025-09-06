@@ -17,7 +17,9 @@ export default function Footer() {
     if (path === '/main') {
       return pathname === '/main' || pathname === '/';
     }
-    return pathname === path;
+    // 경로에서 슬래시를 제거한 탭 이름 추출
+    const tabName = path.replace('/', '');
+    return pathname.includes(`/${tabName}`);
   };
 
   const getIconClass = (path: string) => `mb-1 ${isActive(path) ? 'text-brand-500' : 'text-gray-500'}`;

@@ -223,7 +223,7 @@ export default function WaypointPage() {
           </h1>
           
           {/* Cat Image Container */}
-          <div className="absolute right-0 top-0 w-[134px] h-[105px] -z-10">
+          <div className="absolute right-0 top-[-8px] w-[134px] h-[105px]">
             <Image
               src="/images/illust/cats/playCat.png"
               alt="Play Cat"
@@ -235,7 +235,7 @@ export default function WaypointPage() {
         </div>
 
         {/* Add Waypoint Button */}
-        <div className="mb-4 flex-shrink-0">
+        <div className="mb-4 flex-shrink-0 z-10">
           <Button
             kind="functional"
             styleType="outline"
@@ -263,7 +263,7 @@ export default function WaypointPage() {
             waypointLists.map((waypoint) => (
               <div 
                 key={waypoint.waypointId} 
-                className="w-full p-4 bg-gray-100 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                className="w-full p-4 bg-gray-200 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
                 onClick={() => handleWaypointClick(waypoint.waypointId)}
               >
                 <div className="flex justify-between items-start gap-4">
@@ -294,7 +294,7 @@ export default function WaypointPage() {
                     {/* 드롭다운 메뉴 */}
                     {openMenuId === waypoint.waypointId && (
                       <div 
-                        className="absolute right-0 top-6 w-32 bg-gray-100 border border-gray-300 rounded-lg shadow-lg z-50"
+                        className="absolute right-0 top-6 w-36 bg-gray-100 border border-gray-300 rounded-lg shadow-lg z-50"
                         data-menu-id={waypoint.waypointId}
                       >
                         <button
@@ -302,10 +302,11 @@ export default function WaypointPage() {
                             e.stopPropagation();
                             showDeleteConfirmModal(waypoint);
                           }}
-                          className="w-full px-4 py-3 text-left text-red-500 hover:bg-gray-50 border-b border-gray-100"
+                          className="w-full px-4 py-3 text-left text-brand-500 hover:bg-gray-50 border-b border-gray-100"
                         >
                           웨이포인트 삭제
                         </button>
+                        <div className="h-px bg-gray-300" />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();

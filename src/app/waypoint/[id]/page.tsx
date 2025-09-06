@@ -2,21 +2,36 @@
 
 import Header from '@/components/ui/Header';
 import Footer from '@/components/Footer';
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Waypoint } from '@/types/waypoint';
 import { useParams } from 'next/navigation';
 import { getAuthToken } from '@/auth';
 
+// 장소 데이터 타입 정의
+interface WaypointItem {
+  itemId: number;
+  name: string;
+  imageUrl: string;
+  memo?: string;
+  order: number;
+}
+
+interface WaypointDetailResponse {
+  waypointName: string;
+  waypointInfoResponse: WaypointItem[];
+}
+
 export default function WaypointDetailPage() {
   const params = useParams();
   const waypointId = params.id as string;
   
-  const [waypoint, setWaypoint] = useState<Waypoint | null>(null);
+  const [waypointData, setWaypointData] = useState<WaypointDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // 웨이포인트 상세 정보 조회
-  const fetchWaypointDetail = async (id: string): Promise<Waypoint> => {
+  const fetchWaypointDetail = async (id: string): Promise<WaypointDetailResponse> => {
     const token = getAuthToken();
     if (!token) {
       throw new Error('인증 토큰이 없습니다.');
@@ -45,7 +60,7 @@ export default function WaypointDetailPage() {
         setError(null);
         
         const data = await fetchWaypointDetail(waypointId);
-        setWaypoint(data);
+        setWaypointData(data);
       } catch (error) {
         console.error('웨이포인트 상세 조회 에러:', error);
         setError(error instanceof Error ? error.message : '웨이포인트를 불러오는데 실패했습니다.');
@@ -86,7 +101,7 @@ export default function WaypointDetailPage() {
     );
   }
 
-  if (!waypoint) {
+  if (!waypointData) {
     return (
       <div className="w-full h-screen bg-white flex flex-col">
         <Header title="웨이포인트 상세" showBackButton={true} />
@@ -99,32 +114,102 @@ export default function WaypointDetailPage() {
   }
 
   return (
-    <div className="w-full h-screen bg-gray-100 flex flex-col">
+    <div className="w-full h-screen bg-white flex flex-col relative overflow-hidden">
       {/* Header */}
-      <Header title={waypoint.name} showBackButton={true} />
+      <Header title="웨이포인트 상세" showBackButton={true} />
 
       {/* Main Content */}
-      <div className="flex-1 px-5 pt-6 bg-gray-100 flex flex-col min-h-0">
-        {/* 웨이포인트 정보 */}
-        <div className="mb-8">
-          <h1 className="text-gray-700 text-2xl font-pretendard font-normal leading-[39.2px] mb-4">
-            {waypoint.name}
+      <div className="flex-1 pt-6 bg-white flex flex-col min-h-0">
+        {/* 웨이포인트 제목 */}
+        <div className="px-6 flex items-center gap-2 mb-8">
+          <h1 className="text-gray-700 text-xl font-pretendard font-normal leading-7">
+            {waypointData.waypointName}
           </h1>
-          
-          <div className="bg-gray-100 border border-gray-300 rounded-lg p-4">
-            <div className="text-gray-500 text-sm font-pretendard font-normal leading-[19.6px]">
-              보관중인 장소 {waypoint.itemCount}개
-            </div>
-          </div>
+          <Image 
+            src="/images/common/arrowTop.svg"
+            alt="arrow"
+            width={12}
+            height={12}
+            className="transform rotate-180"
+          />
         </div>
 
-        {/* 장소 목록 (추후 구현) */}
-        <div className="flex-1">
-          <div className="text-center text-gray-500 py-20">
-            <div className="mb-2">장소 목록 기능은 준비 중입니다</div>
-            <div className="text-sm">곧 만나보실 수 있어요!</div>
+        {/* 장소 목록 */}
+        <div className="flex-1 flex flex-col gap-3">
+          {/* 전체 선택 헤더 */}
+          <div className="px-6 flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <div className="w-5 h-5 bg-white rounded-full border border-gray-300" />
+              <div className="flex items-center gap-1">
+                <span className="text-gray-700 text-base font-pretendard font-normal leading-[22.4px]">전체</span>
+                <span className="text-brand-500 text-base font-pretendard font-normal leading-[22.4px]">{waypointData.waypointInfoResponse.length}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">순서변경</span>
+              <Image
+                src="/images/common/align.svg"
+                alt="align"
+                width={16}
+                height={16}
+              />
+            </div>
+          </div>
+
+          {/* 장소 목록 */}
+          <div className="flex-1 flex flex-col">
+            {waypointData.waypointInfoResponse.map((item) => (
+              <div key={item.itemId} className="w-full px-6 py-3 bg-white flex items-center gap-2">
+                {/* 체크박스 */}
+                <div className="w-5 h-5 bg-white rounded-full border border-gray-300" />
+                
+                {/* 장소 정보 컨테이너 */}
+                <div className="flex-1 flex items-start">
+                  {/* 장소 이미지들 */}
+                  <img 
+                    src={item.imageUrl || '/images/placeholder.png'} 
+                    alt={item.name}
+                    width={75}
+                    height={75}
+                    className="rounded-lg border border-gray-200"
+                  />
+                  <div className="w-[13.04px] h-[13.04px] rounded-lg" />
+                  
+                  {/* 장소 텍스트 정보 */}
+                  <div className="flex-1 flex flex-col gap-4">
+                    {/* 장소명 */}
+                    <div className="flex flex-col">
+                      <div className="text-gray-700 text-base font-pretendard font-normal leading-[22.4px]">
+                        {item.name}
+                      </div>
+                    </div>
+                    
+                    {/* 메모 (조건부 렌더링) */}
+                    {item.memo && (
+                      <div className="flex items-center">
+                        <span className="text-gray-500 text-sm font-pretendard font-normal leading-[19.6px]">메모</span>
+                        <span className="text-gray-500 text-sm font-pretendard font-normal leading-[19.6px] mx-1">ㅣ</span>
+                        <span className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">
+                          {item.memo}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
+      </div>
+
+      {/* 하단 버튼들 */}
+      <div className="absolute bottom-20 left-5 right-5 flex gap-3">
+        <button className="flex-1 py-4 bg-gray-100 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center">
+          <span className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">뒤로가기</span>
+        </button>
+        <button className="flex-1 py-4 bg-brand-500 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center">
+          <span className="text-white text-sm font-pretendard font-semibold leading-[19.6px]">장소 추가하기</span>
+        </button>
       </div>
 
       {/* Footer */}

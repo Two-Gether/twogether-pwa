@@ -10,6 +10,8 @@ interface BaseDropdownProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  openUpward?: boolean;
+  style?: React.CSSProperties;
 }
 
 const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(function Dropdown(
@@ -22,7 +24,9 @@ const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(function Dropdown
     options,
     value,
     onChange,
-    placeholder = '선택해주세요'
+    placeholder = '선택해주세요',
+    openUpward = false,
+    style
   } = props;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -52,6 +56,29 @@ const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(function Dropdown
 
   return (
     <div className="relative" ref={ref} onBlur={handleBlur}>
+      {/* Options (Only visible when open) - 위로 열림 */}
+      {isOpen && openUpward && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 bg-white rounded-lg border border-gray-300 shadow-lg max-h-48 overflow-y-auto z-10">
+          {options.map((option, index) => (
+            <div
+              key={option.value}
+              className={`px-4 py-3 cursor-pointer transition-colors duration-200 ${
+                index < options.length - 1 ? 'border-b border-gray-200' : ''
+              } ${
+                option.value === value 
+                  ? 'bg-gray-50 text-brand-500' 
+                  : 'text-gray-700 hover:bg-gray-50'
+              }`}
+              onClick={() => handleOptionClick(option.value)}
+            >
+              <div className="font-pretendard text-sm leading-[19.6px]">
+                {option.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* Integrated Selector with Options */}
       <div
         className={`w-[168px] bg-white rounded-lg border transition-all duration-200 overflow-hidden ${
@@ -59,7 +86,10 @@ const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(function Dropdown
             ? 'border-brand-500 shadow-[2px_4px_8px_rgba(0,0,0,0.08)]' 
             : 'border-gray-300'
         } ${className}`}
-        style={isFocused ? { outline: '1px text-brand-500 solid', outlineOffset: '-1px' } : {}}
+        style={{
+          ...(isFocused ? { outline: '1px text-brand-500 solid', outlineOffset: '-1px' } : {}),
+          ...style
+        }}
       >
         {/* Selected Option (Always visible) */}
         <div
@@ -79,8 +109,8 @@ const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(function Dropdown
           />
         </div>
 
-        {/* Options (Only visible when open) */}
-        {isOpen && options.map((option, index) => (
+        {/* Options (Only visible when open) - 아래로 열림 */}
+        {isOpen && !openUpward && options.map((option, index) => (
           <div
             key={option.value}
             className={`px-4 py-3 cursor-pointer transition-colors duration-200 ${

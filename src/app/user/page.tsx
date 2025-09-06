@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { getRelationshipDaysText } from '@/utils/calculateDays';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import Dropdown from '@/components/ui/Dropdown';
 
 export default function MyPage() {
   const { user, logout } = useAuthStore();
@@ -17,6 +18,9 @@ export default function MyPage() {
   const [modalTitle, setModalTitle] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear().toString());
+  const [selectedMonth, setSelectedMonth] = useState('8');
+  const [selectedDay, setSelectedDay] = useState('1');
 
   const handleLogout = useCallback(() => {
     logout();
@@ -28,6 +32,25 @@ export default function MyPage() {
     setInputValue('');
     setShowModal(true);
   }, []);
+
+  // 연도 옵션 생성 (이번 연도 기준 전 15년)
+  const currentYear = new Date().getFullYear();
+  const yearOptions = Array.from({ length: 16 }, (_, i) => {
+    const year = currentYear - 15 + i;
+    return { value: year.toString(), label: `${year}년` };
+  });
+
+  // 월 옵션 생성 (1-12)
+  const monthOptions = Array.from({ length: 12 }, (_, i) => {
+    const month = i + 1;
+    return { value: month.toString(), label: `${month}월` };
+  });
+
+  // 일 옵션 생성 (1-31)
+  const dayOptions = Array.from({ length: 31 }, (_, i) => {
+    const day = i + 1;
+    return { value: day.toString(), label: `${day}일` };
+  });
 
   const handleSubmit = useCallback(async () => {
     setIsLoading(true);
@@ -160,7 +183,7 @@ export default function MyPage() {
       {/* 하단 모달 */}
       {showModal && (
         <div 
-          className="absolute inset-0 flex items-end justify-center z-50 bg-black bg-opacity-20"
+          className="fixed inset-0 flex items-end justify-center z-50 bg-black bg-opacity-20"
           onClick={() => setShowModal(false)}
         >
           <div 
@@ -168,7 +191,9 @@ export default function MyPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold font-pretendard">{modalTitle}</h3>
+              <h3 className="text-lg font-semibold font-pretendard">
+                {modalTitle === '우리가 만난 날짜' ? '만남을 시작한 날짜를 선택하세요' : modalTitle}
+              </h3>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-gray-500 text-xl"
@@ -177,25 +202,78 @@ export default function MyPage() {
               </button>
             </div>
             
-            <Input 
-              type="text"
-              variant="placeholder"
-              placeholder={modalTitle === '우리가 만난 날짜' ? '날짜를 입력하세요 (YYYY-MM-DD)' : '별명을 입력하세요'}
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              style={{ marginBottom: '20px' }}
-            />
-            
-            <Button
-              kind="functional"
-              styleType="fill"
-              tone="brand"
-              fullWidth
-              onClick={handleSubmit}
-              disabled={isLoading}
-            >
-              {isLoading ? '저장 중...' : '저장하기'}
-            </Button>
+            {modalTitle === '우리가 만난 날짜' ? (
+              <>
+                <div className="flex gap-2 mb-6 relative">
+                  <div className="basis-1/2">
+                      <Dropdown
+                        options={yearOptions}
+                        value={selectedYear}
+                        onChange={(value) => setSelectedYear(value)}
+                        placeholder="년도"
+                        openUpward={true}
+                        className="relative"
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+                    <div className="flex gap-2 basis-1/2">
+                      <div className="basis-1/2">
+                        <Dropdown
+                          options={monthOptions}
+                          value={selectedMonth}
+                          onChange={(value) => setSelectedMonth(value)}
+                          placeholder="월"
+                          openUpward={true}
+                          className="relative"
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                      <div className="basis-1/2">
+                        <Dropdown
+                          options={dayOptions}
+                          value={selectedDay}
+                          onChange={(value) => setSelectedDay(value)}
+                          placeholder="일"
+                          openUpward={true}
+                          className="relative"
+                          style={{ width: '100%' }}
+                        />
+                      </div>
+                    </div>
+                </div>
+                <Button
+                  kind="functional"
+                  styleType="fill"
+                  tone="brand"
+                  fullWidth
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                >
+                  {isLoading ? '저장 중...' : '등록하기'}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Input 
+                  type="text"
+                  variant="placeholder"
+                  placeholder="별명을 입력하세요"
+                  value={inputValue}
+                  onChange={(e) => setInputValue(e.target.value)}
+                  style={{ marginBottom: '20px' }}
+                />
+                <Button
+                  kind="functional"
+                  styleType="fill"
+                  tone="brand"
+                  fullWidth
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                >
+                  {isLoading ? '저장 중...' : '저장하기'}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
