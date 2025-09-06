@@ -92,15 +92,15 @@ export default function Footer() {
         </button>
         
         <button
-          onClick={() => router.push('/profile')}
+          onClick={() => router.push('/user')}
           className={`flex flex-col items-center py-2 px-3 transition-colors ${
-            isActive('/profile') ? 'text-brand-500' : 'text-gray-600 hover:text-brand-500'
+            isActive('/user') ? 'text-brand-500' : 'text-gray-600 hover:text-brand-500'
           }`}
         >
           <ProfileIcon 
             width={24} 
             height={24} 
-            className={getIconClass('/profile')}
+            className={getIconClass('/user')}
           />
         </button>
       </div>

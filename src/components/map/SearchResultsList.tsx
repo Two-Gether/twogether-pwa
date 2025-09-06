@@ -35,7 +35,7 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
     <div className="absolute top-32 left-0 right-0 z-30 bg-white rounded-lg shadow-lg mx-5 max-h-96 overflow-y-auto">
       <div className="p-4 border-b border-gray-200 flex justify-between items-center">
         <h3 className="font-semibold text-gray-800">
-          "{searchKeyword}" 검색 결과 ({results.length}개)
+          &ldquo;{searchKeyword}&rdquo; 검색 결과 ({results.length}개)
         </h3>
         <button
           onClick={onClose}

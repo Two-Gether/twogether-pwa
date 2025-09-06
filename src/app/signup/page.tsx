@@ -125,9 +125,8 @@ export default function SignupPage() {
       const signupData = {
         email: email,
         password: password,
-        nickname: name,
-        phoneNumber: phone,
-        birthday: "2000-01-01",
+        name: name,
+        phoneNumber: phone.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3'), // 하이픈 추가
         gender: gender === "남자" ? "MALE" : "FEMALE",
         ageRange: ageRange.match(/^(\d+)세/)?.[1] || "20" // 첫 번째 숫자만 추출
       };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/ui/Header';
@@ -32,7 +32,7 @@ interface KakaoMapApiResponse {
   [key: string]: unknown; // 추가 속성들을 위한 인덱스 시그니처
 }
 
-export default function DetailPage() {
+function DetailPageContent() {
   const searchParams = useSearchParams();
   const [placeDetail, setPlaceDetail] = useState<PlaceDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -349,5 +349,13 @@ export default function DetailPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+export default function DetailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <DetailPageContent />
+    </Suspense>
   );
 }

@@ -67,6 +67,7 @@ export const useKakaoAuth = () => {
           nickname: userData.nickname,
           partnerId: userData.partnerId,
           partnerNickname: userData.partnerNickname,
+          relationshipStartDate: userData.relationshipStartDate,
         },
         accessToken: userData.accessToken,
       });

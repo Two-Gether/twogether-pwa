@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export default function KakaoCallback() {
+function KakaoCallbackContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -35,5 +35,13 @@ export default function KakaoCallback() {
         <p className="text-gray-600">잠시만 기다려주세요.</p>
       </div>
     </div>
+  );
+}
+
+export default function KakaoCallback() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <KakaoCallbackContent />
+    </Suspense>
   );
 }

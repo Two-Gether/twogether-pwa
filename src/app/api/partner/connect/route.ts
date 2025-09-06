@@ -37,9 +37,9 @@ export async function POST(request: NextRequest) {
       const errorData = await response.json().catch(() => ({}));
       console.error('실제 서버 응답 에러:', response.status, errorData);
       
-      let errorMessage = '연인 연동에 실패했어요.';
+      // let errorMessage = '연인 연동에 실패했어요.';
       if (response.status === 400) {
-        errorMessage = '잘못된 코드입니다.';
+        // errorMessage = '잘못된 코드입니다.';
       } else if (errorData.message) {
         console.log(errorData.message);
       }

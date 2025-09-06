@@ -217,16 +217,20 @@ export default function WaypointPage() {
       <div className="flex-1 px-5 pt-6 bg-gray-100 flex flex-col min-h-0">
         {/* Main Title */}
         <div className="relative mb-8 flex-shrink-0">
-          <h1 className="text-gray-700 text-2xl font-pretendard font-normal leading-[39.2px]">
+          <h1 className="text-gray-900 text-2xl font-pretendard font-semibold leading-[28.80px]">
             우리의<br />
             웨이포인트 {waypointCount}
           </h1>
           
           {/* Cat Image Container */}
-          <div className="absolute right-0 top-0 w-[134px] h-[105px]">
-            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
-              <span className="text-gray-500 text-sm">고양이 이미지</span>
-            </div>
+          <div className="absolute right-0 top-0 w-[134px] h-[105px] -z-10">
+            <Image
+              src="/images/illust/cats/playCat.png"
+              alt="Play Cat"
+              width={134}
+              height={105}
+              className="w-full h-full object-cover rounded-lg"
+            />
           </div>
         </div>
 

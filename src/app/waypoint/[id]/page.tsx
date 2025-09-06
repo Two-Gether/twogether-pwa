@@ -99,12 +99,12 @@ export default function WaypointDetailPage() {
   }
 
   return (
-    <div className="w-full h-screen bg-white flex flex-col">
+    <div className="w-full h-screen bg-gray-100 flex flex-col">
       {/* Header */}
       <Header title={waypoint.name} showBackButton={true} />
 
       {/* Main Content */}
-      <div className="flex-1 px-5 pt-6 bg-white flex flex-col min-h-0">
+      <div className="flex-1 px-5 pt-6 bg-gray-100 flex flex-col min-h-0">
         {/* 웨이포인트 정보 */}
         <div className="mb-8">
           <h1 className="text-gray-700 text-2xl font-pretendard font-normal leading-[39.2px] mb-4">

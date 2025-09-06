@@ -6,6 +6,7 @@ interface User {
   nickname: string;
   partnerId: number | null;
   partnerNickname: string | null;
+  relationshipStartDate: string | null;
 }
 
 interface AuthState {

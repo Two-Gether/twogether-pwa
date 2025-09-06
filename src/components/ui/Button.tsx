@@ -40,7 +40,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
     className = '',
     disabled,
     children,
-    ...rest
+    // ...rest
   } = props as ButtonProps;
 
   const base =

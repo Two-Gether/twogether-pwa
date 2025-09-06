@@ -18,7 +18,7 @@ const Dropdown = forwardRef<HTMLDivElement, BaseDropdownProps>(function Dropdown
 ) {
   const {
     className = '',
-    fullWidth = true,
+    // fullWidth = true,
     options,
     value,
     onChange,

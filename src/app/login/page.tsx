@@ -12,6 +12,7 @@ const LoginScreen = () => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const { login } = useAuthStore();
     const { kakaoLogin } = useKakaoAuth();
     const { googleLogin } = useGoogleAuth();
 
@@ -20,8 +21,45 @@ const LoginScreen = () => {
             window.alert('이메일과 비밀번호를 입력해주세요.');
             return;
         }
-        // 일반 로그인 로직 구현 필요
-        console.log('일반 로그인:', { email, password });
+        
+        try {
+            const res = await fetch('/api/member/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password }),
+            });
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `HTTP ${res.status}`);
+            }
+
+            const data = await res.json();
+            console.log('Login success:', data);
+            
+            // Auth store에 사용자 정보와 토큰 저장
+            login({
+                user: {
+                    memberId: data.memberId,
+                    nickname: data.nickname,
+                    partnerId: data.partnerId,
+                    partnerNickname: data.partnerNickname,
+                    relationshipStartDate: data.relationshipStartDate,
+                },
+                accessToken: data.accessToken,
+            });
+            
+            // 파트너 연결 상태 확인
+            if (data.partnerId === null) {
+                window.location.href = '/connect';
+            } else {
+                window.location.href = '/main';
+            }
+            
+        } catch (error) {
+            console.error('Login error:', error);
+            window.alert('로그인에 실패했습니다. 다시 시도해주세요.');
+        }
     };
 
     const handleKakaoLogin = async () => {

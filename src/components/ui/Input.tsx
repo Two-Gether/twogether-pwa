@@ -39,7 +39,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
     type = 'text',
     className = '',
     fullWidth = true,
-    ...rest
+    // ...rest
   } = props;
 
   const base = 'font-pretendard text-sm leading-[19.6px] px-4 h-[52px] rounded-lg border transition-colors focus:outline-none text-sm';

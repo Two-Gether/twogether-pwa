@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const accessToken = authHeader.replace('Bearer ', '');
 
     // 실제 서버에 웨이포인트 목록 요청
-    const response = await fetch(`${process.env.API_BASE_URL}/waypoint`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // 실제 서버에 웨이포인트 생성 요청
-    const response = await fetch(`${process.env.API_BASE_URL}/waypoint`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,

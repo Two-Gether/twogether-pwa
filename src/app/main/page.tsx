@@ -9,7 +9,8 @@ import Image from 'next/image';
 
 export default function MainPage() {
   const router = useRouter();
-  const { user, accessToken, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated } = useAuthStore();
+  const [relationshipDays, setRelationshipDays] = useState(0);
 
   useEffect(() => {
     // 인증되지 않은 사용자는 로그인 페이지로 리다이렉트
@@ -30,6 +31,17 @@ export default function MainPage() {
   useEffect(() => {
     setIsLoading(false);
   }, []);
+
+  // 관계 시작일 계산
+  useEffect(() => {
+    if (user?.relationshipStartDate) {
+      const startDate = new Date(user.relationshipStartDate);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - startDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      setRelationshipDays(diffDays);
+    }
+  }, [user]);
 
   if (isLoading) {
     return (
@@ -54,67 +66,221 @@ export default function MainPage() {
   return (
     <div className="min-h-screen bg-gray-100 pb-16">
       <MainHeader />
-      <div className="px-6 py-6">
-        {/* Main Content */}
-        <div className="mb-8">
-          <p className="text-base text-gray-700 mb-2 font-pretendard">
-            우리가 함께한 지<br />
-            <span className="text-2xl text-brand-500 font-pretendard font-bold">350일</span>
-            <span className="text-2xl text-gray-700 font-pretendard font-bold">이 지났어요!</span>
-          </p>
-        </div>
-
-        <div className="flex justify-end mb-16">
-          <div className="relative">
-            <div className="ml-10 z-10">
+      <div className="px-5 pt-6">
+        {/* Relationship Status Card */}
+        {user?.relationshipStartDate ? (
+          <div className="mb-6 p-5 bg-gray-200 rounded-lg border border-gray-300 relative">
+            {/* Cat Image - positioned on top of the card */}
+            <div className="absolute left-0 top-10 z-10">
               <Image 
-                src="/images/illust/cats/main_cat.svg" 
-                alt="Main Cat" 
-                width={250} 
-                height={150}
+                src="/images/illust/cats/coupleCats.png"
+                alt="Couple Cats"
+                width={139}
+                height={125}
+                className="transform scale-x-[-1]"
               />
             </div>
-            <div className="mt-[-13px] z-0">
+            <div className="text-right">
+              <div className="text-base text-gray-700 font-pretendard font-normal">
+                우리가 함께한 지
+              </div>
+              <div className="flex justify-end items-center gap-1 mb-6">
+                <span className="text-xl text-brand-500 font-pretendard font-semibold leading-6">
+                  {relationshipDays}일
+                </span>
+                <span className="text-xl text-gray-700 font-pretendard font-semibold leading-6">
+                  이 지났어요!
+                </span>
+              </div>
+              <div className="flex justify-end items-center gap-1">
+                <span className="text-sm text-gray-500 font-pretendard font-normal leading-[19.60px]">
+                  우리의 발자국 살펴보기
+                </span>
+                  <Image 
+                    src="/images/common/arrowTop.svg"
+                    alt="arrow"
+                    width={8}
+                    height={8}
+                    className="transform rotate-90"
+                  />
+              </div>
+            </div>
+        </div>
+        ) : (
+          <div className="mb-6 p-5 bg-gray-200 rounded-lg border border-gray-300 relative">
+            {/* Cat Image - positioned on top of the card */}
+            <div className="absolute left-0 top-5 z-10">
               <Image 
-                src="/images/illust/cats/main_shadow.svg" 
-                alt="Main Shadow" 
-                width={300} 
-                height={15}
+                src="/images/illust/cats/sadCat.png"
+                alt="Sad Cat"
+                width={139}
+                height={125}
+                className="transform scale-x-[-1]"
               />
+        </div>
+            <div className="text-right">
+              <div className="text-base text-gray-700 font-pretendard font-normal leading-[22.40px]">
+                서로 함께한 시간 알고있나요?
+              </div>
+              <div className="flex justify-end items-center">
+                <button 
+                  onClick={() => router.push('/my')}
+                  className="text-xl text-brand-500 font-pretendard font-semibold underline leading-6 hover:no-underline"
+                >
+                  연인 정보 입력
+                </button>
+              </div>
+            </div>
+            
+            {/* 말풍선 */}
+            <div className="absolute -bottom-12 right-0">
+              <div className="relative">
+                {/* 말풍선 본체 */}
+                <div className="px-3 py-2 bg-brand-500 rounded-lg">
+                  <div className="text-right text-white text-xs font-pretendard font-semibold leading-[16.80px]">
+                    입력 후에도 보이지 않는다면 새로고침!
+                  </div>
+                </div>
+                {/* 말풍선 꼬리 (위쪽 화살표) */}
+                <div className="absolute -top-1 right-4">
+                  <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-b-[8px] border-l-transparent border-r-transparent border-b-brand-500"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Upcoming Schedule Section */}
+        <div className="mb-6 mt-28">
+          <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
+            다가오는 데이트 일정
+          </h2>
+
+          <div className="space-y-3">
+            {/* Schedule Item 1 */}
+            <div className="p-4 bg-gray-100 rounded-lg border border-gray-300">
+              <div className="flex justify-between items-center mb-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-base text-gray-700 font-pretendard font-semibold leading-[19.20px]">
+                    일정 제목
+                  </span>
+                  <div className="px-2 bg-brand-500 rounded-full w-10 flex items-center justify-center">
+                    <span className="text-xs text-white font-pretendard font-semibold leading-[16.80px]">
+                      D-5
+                    </span>
+                  </div>
+                </div>
+                <Image 
+                    src="/images/common/arrowTop.svg"
+                    alt="arrow"
+                    width={12}
+                    height={12}
+                    className="transform rotate-90"
+                  />
+              </div>
+              <div className="text-sm text-gray-500 font-pretendard font-normal leading-[19.60px]">
+                2025/03/18(목) ~ 2025/03/18(목)
+              </div>
+            </div>
+
+            {/* Schedule Item 2 */}
+            <div className="p-4 bg-gray-100 rounded-lg border border-gray-300">
+              <div className="flex justify-between items-center mb-1">
+                <div className="flex items-center gap-1">
+                  <span className="text-base text-gray-700 font-pretendard font-semibold leading-[19.20px]">
+                    일정 제목
+                  </span>
+                  <div className="px-2 bg-brand-500 rounded-full w-10 flex items-center justify-center">
+                    <span className="text-xs text-white font-pretendard font-semibold leading-[16.80px]">
+                      D-7
+                    </span>
+                  </div>
+                </div>
+                <Image 
+                    src="/images/common/arrowTop.svg"
+                    alt="arrow"
+                    width={12}
+                    height={12}
+                    className="transform rotate-90"
+                  />
+              </div>
+              <div className="text-sm text-gray-500 font-pretendard font-normal leading-[19.60px]">
+                2025/03/18(목) ~ 2025/03/18(목)
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Recommendation Section */}
-        <div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-4 font-pretendard">
-            대충 놀만한 것 추천 리스트
-          </h2>
 
-          {/* Recommendation Item */}
-          <div className="flex items-center mb-4">
-            <div className="w-12 h-12 bg-brand-500 rounded-full mr-3 flex justify-center items-center">
-              <span className="text-white font-bold text-lg font-pretendard">H</span>
+        {/* Today's Recommendations */}
+        <div className="mb-6 mt-12">
+          <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
+            오늘의 추천 장소/행사
+          </h2>
+            <div className="flex gap-3 overflow-x-auto w-full pb-2" style={{ scrollBehavior: 'smooth' }}>
+            {/* Recommendation Card 1 */}
+            <div className="w-[230px] h-[314px] p-3 bg-gradient-to-b from-transparent to-black/50 rounded-lg relative flex-shrink-0" 
+                 style={{backgroundImage: 'url(https://placehold.co/230x314)'}}>
+              <div className="absolute top-3 left-3 px-2 py-1 bg-gray-100 rounded">
+                <span className="text-xs text-sub-700 font-pretendard font-semibold leading-[16.80px]">
+                  서울시 동작구
+                </span>
+              </div>
+              <div className="absolute bottom-3 left-3 right-3">
+                <div className="text-base text-white font-pretendard font-semibold leading-[19.20px] mb-1">
+                  2025 누구나 세종썸머페스티벌
+                </div>
+                <div className="text-sm text-white font-pretendard font-normal leading-[19.60px]">
+                  2025.08.28 ~ 2025.08.31
+                </div>
+              </div>
             </div>
-            <div className="flex-1">
-              <p className="text-gray-700 font-medium font-pretendard">
-                추천 활동
-              </p>
-              <p className="text-gray-500 text-sm font-pretendard">
-                함께 즐길 수 있는 활동
-              </p>
+
+            {/* Recommendation Card 2 */}
+            <div className="w-[230px] h-[314px] p-3 bg-gradient-to-b from-transparent to-black/50 rounded-lg relative flex-shrink-0"
+                 style={{backgroundImage: 'url(https://placehold.co/230x314)'}}>
+              <div className="absolute top-3 left-3 px-2 py-1 bg-white rounded">
+                <span className="text-xs text-sub-700 font-pretendard font-semibold leading-[16.80px]">
+                  인천시 남동구
+                </span>
+              </div>
+              <div className="absolute bottom-3 left-3 right-3">
+                <div className="text-base text-white font-pretendard font-semibold leading-[19.20px] mb-1">
+                  2025 누구나 세종썸머페스티벌
+                </div>
+                <div className="text-sm text-white font-pretendard font-normal leading-[19.60px]">
+                  2025.08.28 ~ 2025.08.31
+                </div>
+              </div>
+            </div>
+            
+            {/* Recommendation Card 3 */}
+            <div className="w-[230px] h-[314px] p-3 bg-gradient-to-b from-transparent to-black/50 rounded-lg relative flex-shrink-0" 
+                 style={{backgroundImage: 'url(https://placehold.co/230x314)'}}>
+              <div className="absolute top-3 left-3 px-2 py-1 bg-gray-100 rounded">
+                <span className="text-xs text-sub-700 font-pretendard font-semibold leading-[16.80px]">
+                  서울시 강남구
+                </span>
+              </div>
+              <div className="absolute bottom-3 left-3 right-3">
+                <div className="text-base text-white font-pretendard font-semibold leading-[19.20px] mb-1">
+                  2025 강남 썸머 페스티벌
+                </div>
+                <div className="text-sm text-white font-pretendard font-normal leading-[19.60px]">
+                  2025.09.15 ~ 2025.09.18
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
       
-      {/* Upload Button - positioned behind footer with z-index */}
+      {/* Upload Button */}
       <div className="absolute bottom-20 right-4 z-10">
         <div className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg">
           <Image 
             src="/images/common/upload.svg" 
             alt="Upload" 
-            className="w-6 h-6"
             width={24}
             height={24}
           />
@@ -122,6 +288,23 @@ export default function MainPage() {
       </div>
       
       <Footer />
+      
+      <style jsx>{`
+        .overflow-x-auto::-webkit-scrollbar {
+          height: 4px; /* 스크롤바 높이 */
+        }
+        .overflow-x-auto::-webkit-scrollbar-track {
+          background: #f1f1f1; /* 스크롤바 트랙 색상 */
+          border-radius: 2px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+          background: #c1c1c1; /* 스크롤바 색상 */
+          border-radius: 2px;
+        }
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+          background: #a8a8a8; /* 스크롤바 호버 색상 */
+        }
+      `}</style>
     </div>
   );
 }

@@ -170,13 +170,68 @@ export default function ConnectPage() {
           <h3 className="font-semibold mb-3 leading-[19.2px] text-gray-800 font-pretendard text-base">
             내 연인 코드
           </h3>
-          <Input 
-            type="text"
-            variant="disabled"
-            value={myPartnerCode || '로딩 중...'}
-            readOnly
-            style={{ textAlign: 'center' }}
-          />
+          <div className="flex items-stretch gap-2">
+            <Input 
+              type="text"
+              variant="disabled"
+              value={myPartnerCode || '로딩 중...'}
+              readOnly
+              style={{ textAlign: 'center', flex: 1 }}
+            />
+            <button
+              onClick={async (e) => {
+                e.preventDefault();
+                if (!myPartnerCode) return;
+                
+                try {
+                  // 권한 요청 및 복사
+                  if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(myPartnerCode);
+                    alert("클립보드에 복사되었습니다!");
+                  } else {
+                    // fallback 방법
+                    const textArea = document.createElement('textarea');
+                    textArea.value = myPartnerCode;
+                    textArea.style.position = 'fixed';
+                    textArea.style.left = '-999999px';
+                    textArea.style.top = '-999999px';
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    
+                    try {
+                      document.execCommand('copy');
+                      alert("클립보드에 복사되었습니다!");
+                    } catch (err) {
+                      console.error("복사 실패:", err);
+                      alert("복사 실패!");
+                    } finally {
+                      document.body.removeChild(textArea);
+                    }
+                  }
+                } catch (err) {
+                  console.error("복사 실패:", err);
+                  alert("복사 실패!");
+                }
+              }}
+              className="flex items-center justify-center w-[52px] h-[52px] bg-brand-500 hover:bg-brand-600 rounded-lg transition-colors duration-200 shadow-sm"
+              title="복사하기"
+            >
+              <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="white" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Partner Code Registration */}

@@ -24,6 +24,7 @@ export const useGoogleAuth = () => {
             nickname: data.nickname,
             partnerId: data.partnerId,
             partnerNickname: data.partnerNickname,
+            relationshipStartDate: data.relationshipStartDate || null,
           },
           accessToken: data.accessToken,
         });
