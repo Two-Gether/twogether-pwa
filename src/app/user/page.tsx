@@ -6,9 +6,10 @@ import { useAuthStore } from '@/hooks/auth/useAuth';
 import { useRouter } from 'next/navigation';
 import { useCallback } from 'react';
 import Image from 'next/image';
+import { getRelationshipDaysText } from '@/utils/calculateDays';
 
 export default function MyPage() {
-  const logout = useAuthStore((s) => s.logout);
+  const { user, logout } = useAuthStore();
   const router = useRouter();
 
   const handleLogout = useCallback(() => {
@@ -35,10 +36,13 @@ export default function MyPage() {
         </div>
 
         {/* 상태 배지 */}
-        <div className="flex justify-center mb-4">
-          <div className="px-2 py-1 bg-brand-500 rounded">
+        <div className="flex justify-center mb-2">
+          <div className="px-2 py-auto bg-brand-500 rounded">
             <span className="text-xs text-white font-pretendard font-semibold">
-              연인 정보를 입력해주세요/디데이 표시
+              {user?.relationshipStartDate 
+                ? getRelationshipDaysText(user.relationshipStartDate)
+                : '연인 정보를 입력해주세요'
+              }
             </span>
           </div>
         </div>
@@ -46,17 +50,26 @@ export default function MyPage() {
         {/* 닉네임과 상태 배지 */}
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-1">
-            <span className="text-xl text-gray-700 font-pretendard font-semibold">본명</span>
-            <div className="w-4 h-4 bg-brand-500 rounded-full"></div>
-            <span className="text-xl text-gray-700 font-pretendard font-semibold">본명</span>
+            <span className="text-xl text-gray-700 font-pretendard font-semibold">
+              {user?.nickname || '본명'}
+            </span>
+            <Image 
+              src="/images/common/like.svg"
+              alt="like"
+              width={16}
+              height={16}
+            />
+            <span className="text-xl text-gray-700 font-pretendard font-semibold">
+              {user?.partnerNickname || '본명'}
+            </span>
           </div>
         </div>
 
         {/* 연인 정보 섹션 */}
         <div className="mb-8">
           <h3 className="text-xl text-gray-700 font-pretendard font-semibold mb-3">연인 정보</h3>
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+          <div className="bg-white rounded-lg border-b border-gray-300">
+            <div className="py-3 border-b border-gray-300 flex justify-between items-center">
               <span className="text-sm text-gray-700 font-pretendard">우리가 만난 날짜</span>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-gray-500 font-pretendard">미입력</span>
@@ -69,7 +82,7 @@ export default function MyPage() {
                 />
               </div>
             </div>
-            <div className="px-4 py-3 flex justify-between items-center">
+            <div className="py-3 flex justify-between items-center">
               <span className="text-sm text-gray-700 font-pretendard">상대방 별명 지어주기</span>
               <div className="flex items-center gap-1">
                 <span className="text-sm text-gray-500 font-pretendard">미입력</span>
@@ -88,8 +101,8 @@ export default function MyPage() {
         {/* 계정 정보 섹션 */}
         <div className="mb-8">
           <h3 className="text-xl text-gray-700 font-pretendard font-semibold mb-3">계정 정보</h3>
-          <div className="bg-white rounded-lg border border-gray-200">
-            <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+          <div className="bg-white rounded-lg border-b border-gray-300">
+            <div className="py-3 border-b border-gray-300 flex justify-between items-center">
               <span className="text-sm text-gray-700 font-pretendard">로그인 정보</span>
               <Image 
                 src="/images/common/arrowTop.svg"
@@ -99,7 +112,7 @@ export default function MyPage() {
                 className="transform rotate-90"
               />
             </div>
-            <div className="px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+            <div className="py-3 border-b border-gray-300 flex justify-between items-center">
               <span className="text-sm text-gray-700 font-pretendard">로그아웃</span>
               <Image 
                 src="/images/common/arrowTop.svg"
@@ -109,15 +122,8 @@ export default function MyPage() {
                 className="transform rotate-90"
               />
             </div>
-            <div className="px-4 py-3 flex justify-between items-center">
+            <div className="py-3 flex justify-between items-center">
               <span className="text-sm text-brand-500 font-pretendard">연인 연동 해제</span>
-              <Image 
-                src="/images/common/arrowTop.svg"
-                alt="arrow"
-                width={12}
-                height={12}
-                className="transform rotate-90"
-              />
             </div>
           </div>
         </div>
