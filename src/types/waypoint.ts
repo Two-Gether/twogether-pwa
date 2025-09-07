@@ -10,6 +10,7 @@ export interface WaypointItem {
   itemId: number;
   name: string;
   imageUrl: string;
+  address: string;
   memo: string;
   order: number;
 }

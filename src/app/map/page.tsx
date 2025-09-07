@@ -5,32 +5,10 @@ import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Input from '@/components/ui/Input';
 import Image from 'next/image';
-
-interface LocationInfo {
-  id: string;
-  address: string;
-  placeName: string;
-}
-
-interface PlaceSearchResult {
-  id: string;
-  place_name: string;
-  address_name: string;
-  road_address_name: string;
-  x: string;
-  y: string;
-  distance: string;
-  category_name: string;
-  phone?: string;
-  place_url?: string;
-  category_group_code?: string;
-  category_group_name?: string;
-}
-
-interface GeocoderResult {
-  y: string;
-  x: string;
-}
+import { LocationInfo, PlaceSearchResult, GeocoderResult } from '@/types/map';
+import { Waypoint } from '@/types/waypoint';
+import { getAuthToken } from '@/auth';
+import { addLocationToWaypoint } from '@/services/waypointService';
 
 const MapScreen = () => {
   const router = useRouter();
@@ -45,6 +23,12 @@ const MapScreen = () => {
   const [currentLocation, setCurrentLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [userLocation, setUserLocation] = useState<unknown>(null);
   const [isLocationInfoSheetOpen, setIsLocationInfoSheetOpen] = useState(false);
+  const [isWaypointModalOpen, setIsWaypointModalOpen] = useState(false);
+  const [waypointLists, setWaypointLists] = useState<Waypoint[]>([]);
+  const [isLoadingWaypoints, setIsLoadingWaypoints] = useState(false);
+  const [isMemoModalOpen, setIsMemoModalOpen] = useState(false);
+  const [memoText, setMemoText] = useState('');
+  const [selectedWaypointId, setSelectedWaypointId] = useState<number | null>(null);
 
   // 사용자 현재 위치 가져오기
   const getUserLocation = useCallback(() => {
@@ -154,6 +138,116 @@ const MapScreen = () => {
   const toggleLocationInfoSheet = useCallback(() => {
     setIsLocationInfoSheetOpen(prev => !prev);
   }, []);
+
+  // 웨이포인트 목록 조회
+  const fetchWaypoints = useCallback(async () => {
+    try {
+      setIsLoadingWaypoints(true);
+      const token = getAuthToken();
+      
+      if (!token) {
+        throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
+      }
+
+      const response = await fetch('/api/waypoint', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.error) {
+          throw new Error(errorData.error);
+        } else {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+      }
+
+      const data = await response.json();
+      
+      // 실제 서버 응답 구조에 맞게 처리
+      if (data && data.waypointSummaryResponses && Array.isArray(data.waypointSummaryResponses)) {
+        // { waypointSummaryResponses } 구조
+        const waypoints: Waypoint[] = data.waypointSummaryResponses.map((item: { waypointId: number; name: string; itemCount: number }) => ({
+          waypointId: item.waypointId,
+          name: item.name,
+          itemCount: item.itemCount
+        }));
+        setWaypointLists(waypoints);
+      } else if (Array.isArray(data)) {
+        // 배열로 응답하는 경우
+        setWaypointLists(data);
+      } else {
+        // 기타 응답 구조
+        setWaypointLists([]);
+      }
+    } catch (error) {
+      console.error('웨이포인트 조회 에러:', error);
+      // 에러 발생 시에도 빈 배열로 초기화하여 페이지가 정상 렌더링되도록 함
+      setWaypointLists([]);
+    } finally {
+      setIsLoadingWaypoints(false);
+    }
+  }, []);
+
+  // 웨이포인트 모달 토글 함수
+  const toggleWaypointModal = useCallback(() => {
+    setIsWaypointModalOpen(prev => {
+      const newState = !prev;
+      // 모달이 열릴 때 웨이포인트 목록을 가져옴
+      if (newState) {
+        fetchWaypoints();
+      }
+      return newState;
+    });
+  }, [fetchWaypoints]);
+
+  // 웨이포인트 추가 핸들러
+  const handleAddWaypoint = useCallback(() => {
+    // 웨이포인트 추가 페이지로 이동
+    router.push('/waypoint/add');
+  }, [router]);
+
+  // 웨이포인트 선택 핸들러 (메모 입력 모달 열기)
+  const handleSelectWaypoint = useCallback((waypointId: number) => {
+    setSelectedWaypointId(waypointId);
+    setMemoText('');
+    setIsMemoModalOpen(true);
+  }, []);
+
+  // 메모 모달 닫기
+  const closeMemoModal = useCallback(() => {
+    setIsMemoModalOpen(false);
+    setSelectedWaypointId(null);
+    setMemoText('');
+  }, []);
+
+  // 웨이포인트에 장소 추가 (메모 포함)
+  const handleAddToWaypoint = useCallback(async () => {
+    if (!locationInfo || !selectedWaypointId) {
+      console.error('장소 정보 또는 웨이포인트 ID가 없습니다.');
+      return;
+    }
+
+    // 웨이포인트 서비스를 통해 장소 추가
+    const result = await addLocationToWaypoint(selectedWaypointId, locationInfo, memoText);
+    
+    if (result.success) {
+      // 성공 시 모든 모달 닫기 및 성공 메시지
+      setIsWaypointModalOpen(false);
+      setIsMemoModalOpen(false);
+      alert(result.message);
+      
+      // 웨이포인트 목록 새로고침
+      fetchWaypoints();
+    } else {
+      // 실패 시 에러 메시지 표시
+      alert(result.message);
+    }
+  }, [locationInfo, selectedWaypointId, memoText, fetchWaypoints]);
 
   // 장소 정보 시트 닫기 함수
   const closeLocationInfoSheet = useCallback(() => {
@@ -344,7 +438,7 @@ const MapScreen = () => {
         <div 
           id="locationinfo"
           className={`
-            absolute left-0 right-0 z-10 bg-white border-t border-[#EEEEEE] rounded-t-[20px] shadow-[0px_-4px_12px_rgba(0,0,0,0.08)]
+            absolute left-0 right-0 z-10 bg-white border-t border-gray-200 rounded-t-[20px] shadow-[0px_-4px_12px_rgba(0,0,0,0.08)]
             transition-transform duration-300 ease-out
             ${isLocationInfoSheetOpen ? 'translate-y-0' : 'translate-y-[calc(100%-45px)]'}
             bottom-14
@@ -352,17 +446,17 @@ const MapScreen = () => {
         >
           {/* 핸들 바 */}
           <div className="flex justify-center my-5" onClick={toggleLocationInfoSheet}>
-            <div className="w-[74px] h-1 bg-[#CCCCCC] rounded-full cursor-pointer" />
+            <div className="w-[74px] h-1 bg-gray-300 rounded-full cursor-pointer" />
           </div>
           
           {/* 장소 정보 내용 */}
           <div className="px-5">
             {/* 장소 정보 */}
             <div className="mb-6">
-              <h3 className="text-[#333333] text-xl font-semibold leading-6 mb-1">
+              <h3 className="text-gray-700 text-xl font-semibold leading-6 mb-1">
                 {locationInfo.placeName}
               </h3>
-              <p className="text-[#767676] text-sm leading-[19.6px]">
+              <p className="text-gray-500 text-sm leading-[19.6px]">
                 {locationInfo.address}
               </p>
             </div>
@@ -375,8 +469,130 @@ const MapScreen = () => {
               >
                 자세히 보기
               </button>
-              <button className="flex-1 py-4 bg-[#FF6B81] rounded-lg text-white text-sm font-semibold">
+              <button 
+                onClick={toggleWaypointModal}
+                className="flex-1 py-4 bg-[#FF6B81] rounded-lg text-white text-sm font-semibold"
+              >
                 웨이포인트 지정
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 웨이포인트 지정 모달 */}
+      {isWaypointModalOpen && locationInfo && !isMemoModalOpen && (
+        <div 
+          className="absolute left-0 right-0 z-10 bg-white border-t border-gray-200 rounded-t-[20px] shadow-[0px_-4px_12px_rgba(0,0,0,0.08)] bottom-14 pb-6 px-5 flex flex-col gap-5"
+        >
+          {/* 핸들 바 */}
+          <div className="flex justify-center pt-4" onClick={toggleWaypointModal}>
+            <div className="w-[74px] h-1 bg-gray-300 rounded-full cursor-pointer" />
+          </div>
+          
+          {/* 웨이포인트 지정 내용 */}
+          <div className="flex flex-col gap-1">
+            {/* 제목 */}
+            <div className="text-gray-700 text-xl font-pretendard font-semibold leading-6">
+              웨이포인트 지정하기
+            </div>
+            
+            {/* 웨이포인트 목록 */}
+            <div className="flex flex-col">
+              {/* 웨이포인트 추가 */}
+              <div 
+                className="py-5 border-b border-gray-200 flex items-end gap-3 cursor-pointer hover:bg-gray-50"
+                onClick={handleAddWaypoint}
+              >
+                <div className="flex items-center gap-2">
+                  <div className="text-brand-500 text-base font-pretendard font-normal leading-[22.4px]">
+                    웨이포인트 추가
+                  </div>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-brand-500">
+                    <path d="M20.6272 12.3137H3.99977" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12.3135 4V20.6274" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+              
+              {/* 웨이포인트 목록 렌더링 */}
+              {isLoadingWaypoints ? (
+                <div className="py-5 text-center text-gray-500">
+                  웨이포인트를 불러오는 중...
+                </div>
+              ) : waypointLists.length > 0 ? (
+                waypointLists.map((waypoint, index) => (
+                  <div 
+                    key={waypoint.waypointId} 
+                    className={`py-5 flex items-end gap-3 cursor-pointer hover:bg-gray-50 ${index < waypointLists.length - 1 ? 'border-b border-gray-200' : ''}`}
+                    onClick={() => handleSelectWaypoint(waypoint.waypointId)}
+                  >
+                    <div className="text-gray-700 text-base font-pretendard font-normal leading-[22.4px]">
+                      {waypoint.name}
+                    </div>
+                    <div className="min-w-[21px] px-1.5 py-0.5 bg-gray-200 rounded flex items-center justify-center">
+                      <div className="text-gray-700 text-xs font-pretendard font-semibold leading-[16.8px]">
+                        {waypoint.itemCount}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-5 text-center text-gray-500">
+                  등록된 웨이포인트가 없습니다.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 메모 입력 모달 */}
+      {isMemoModalOpen && (
+        <div 
+          className="absolute left-0 right-0 z-20 bg-white border-t border-gray-200 rounded-t-[20px] shadow-[0px_-4px_12px_rgba(0,0,0,0.08)] bottom-14 pb-6 px-5 flex flex-col gap-5"
+        >
+          {/* 핸들 바 */}
+          <div className="flex justify-center pt-4" onClick={closeMemoModal}>
+            <div className="w-[74px] h-1 bg-gray-300 rounded-full cursor-pointer" />
+          </div>
+          
+          {/* 메모 입력 내용 */}
+          <div className="flex flex-col gap-4">
+            {/* 제목 */}
+            <div className="flex items-end gap-2">
+              <div className="text-gray-700 text-xl font-pretendard font-semibold leading-6">
+                메모하기
+              </div>
+              <div className="text-xs text-gray-500 font-pretendard">
+                {memoText.length}/40
+              </div>
+            </div>
+            {/* 메모 입력 영역 */}
+            <div className="flex flex-col gap-2">
+              <textarea
+                value={memoText}
+                onChange={(e) => setMemoText(e.target.value)}
+                placeholder="이 장소에 대한 메모를 입력해주세요"
+                maxLength={40}
+                className="w-full h-24 p-3 border border-gray-200 rounded-lg resize-none text-sm font-pretendard placeholder-gray-400 focus:outline-none focus:border-brand-500"
+              />
+             
+            </div>
+            
+            {/* 버튼들 */}
+            <div className="flex gap-3">
+              <button 
+                onClick={closeMemoModal}
+                className="flex-1 py-4 bg-gray-100 rounded-lg text-gray-700 text-sm font-normal"
+              >
+                취소
+              </button>
+              <button 
+                onClick={handleAddToWaypoint}
+                className="flex-1 py-4 bg-brand-500 rounded-lg text-white text-sm font-semibold"
+              >
+                저장하기
               </button>
             </div>
           </div>

@@ -1,11 +1,11 @@
 "use client";
 
 import Header from '@/components/ui/Header';
-import Footer from '@/components/Footer';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { Waypoint } from '@/types/waypoint';
-import { useParams } from 'next/navigation';
+import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
+import { useParams, useRouter } from 'next/navigation';
 import { getAuthToken } from '@/auth';
 
 // 장소 데이터 타입 정의
@@ -24,11 +24,13 @@ interface WaypointDetailResponse {
 
 export default function WaypointDetailPage() {
   const params = useParams();
+  const router = useRouter();
   const waypointId = params.id as string;
   
   const [waypointData, setWaypointData] = useState<WaypointDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [itemImageUrls, setItemImageUrls] = useState<Record<number, string>>({});
 
   // 웨이포인트 상세 정보 조회
   const fetchWaypointDetail = async (id: string): Promise<WaypointDetailResponse> => {
@@ -61,6 +63,28 @@ export default function WaypointDetailPage() {
         
         const data = await fetchWaypointDetail(waypointId);
         setWaypointData(data);
+        
+        // 각 장소의 이미지를 구글 플레이스에서 가져오기
+        if (data.waypointInfoResponse && data.waypointInfoResponse.length > 0) {
+          const imagePromises = data.waypointInfoResponse.map(async (item) => {
+            try {
+              const imageUrl = await getPlaceImageUrl(item.name);
+              return { itemId: item.itemId, imageUrl };
+            } catch (error) {
+              console.error(`장소 ${item.name} 이미지 가져오기 실패:`, error);
+              return { itemId: item.itemId, imageUrl: '' };
+            }
+          });
+          
+          const imageResults = await Promise.all(imagePromises);
+          const imageUrlMap: Record<number, string> = {};
+          imageResults.forEach(({ itemId, imageUrl }) => {
+            if (imageUrl) {
+              imageUrlMap[itemId] = imageUrl;
+            }
+          });
+          setItemImageUrls(imageUrlMap);
+        }
       } catch (error) {
         console.error('웨이포인트 상세 조회 에러:', error);
         setError(error instanceof Error ? error.message : '웨이포인트를 불러오는데 실패했습니다.');
@@ -81,7 +105,6 @@ export default function WaypointDetailPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-gray-500">로딩 중...</div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -96,7 +119,6 @@ export default function WaypointDetailPage() {
             <div className="text-sm">{error}</div>
           </div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -108,7 +130,6 @@ export default function WaypointDetailPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-gray-500">웨이포인트를 찾을 수 없습니다</div>
         </div>
-        <Footer />
       </div>
     );
   }
@@ -159,20 +180,28 @@ export default function WaypointDetailPage() {
           {/* 장소 목록 */}
           <div className="flex-1 flex flex-col">
             {waypointData.waypointInfoResponse.map((item) => (
-              <div key={item.itemId} className="w-full px-6 py-3 bg-white flex items-center gap-2">
+              <div key={item.itemId} className="w-full px-6 py-3 bg-white flex items-center gap-4">
                 {/* 체크박스 */}
                 <div className="w-5 h-5 bg-white rounded-full border border-gray-300" />
                 
                 {/* 장소 정보 컨테이너 */}
                 <div className="flex-1 flex items-start">
                   {/* 장소 이미지들 */}
-                  <img 
-                    src={item.imageUrl || '/images/placeholder.png'} 
-                    alt={item.name}
-                    width={75}
-                    height={75}
-                    className="rounded-lg border border-gray-200"
-                  />
+                  {itemImageUrls[item.itemId] ? (
+                    <div className="w-[75px] h-[75px] rounded-lg border border-gray-200 overflow-hidden">
+                      <Image
+                        src={itemImageUrls[item.itemId]}
+                        alt={item.name}
+                        width={75}
+                        height={75}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-[75px] h-[75px] bg-gray-200 rounded-lg border border-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500 text-xs">이미지</span>
+                    </div>
+                  )}
                   <div className="w-[13.04px] h-[13.04px] rounded-lg" />
                   
                   {/* 장소 텍스트 정보 */}
@@ -182,6 +211,11 @@ export default function WaypointDetailPage() {
                       <div className="text-gray-700 text-base font-pretendard font-normal leading-[22.4px]">
                         {item.name}
                       </div>
+                    </div>
+                    
+                    {/* 장소 주소 */}
+                    <div className="w-full text-[#767676] text-xs font-pretendard font-normal leading-[16.8px] break-words">
+                      {item.address}
                     </div>
                     
                     {/* 메모 (조건부 렌더링) */}
@@ -203,17 +237,14 @@ export default function WaypointDetailPage() {
       </div>
 
       {/* 하단 버튼들 */}
-      <div className="absolute bottom-20 left-5 right-5 flex gap-3">
-        <button className="flex-1 py-4 bg-gray-100 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center">
-          <span className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">뒤로가기</span>
-        </button>
-        <button className="flex-1 py-4 bg-brand-500 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center">
+      <div className="absolute bottom-5 left-5 right-5 flex gap-3">
+        <button 
+          onClick={() => router.push('/map')}
+          className="flex-1 py-4 bg-brand-500 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center"
+        >
           <span className="text-white text-sm font-pretendard font-semibold leading-[19.6px]">장소 추가하기</span>
         </button>
       </div>
-
-      {/* Footer */}
-      <Footer />
     </div>
   );
 }
