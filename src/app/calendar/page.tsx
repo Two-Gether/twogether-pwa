@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect, type ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Header from '@/components/ui/Header';
 import PlusIcon from '@/components/icons/PlusIcon';
 
 const CalendarScreen = () => {
+    const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<number | null>(null);
     const [currentDate, setCurrentDate] = useState(new Date());
     const touchStartYRef = useRef<number | null>(null);
@@ -277,9 +279,12 @@ const CalendarScreen = () => {
 
             {/* Upload Button */}
             <div className="absolute bottom-20 right-4 z-10">
-              <div className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg">
+              <button 
+                onClick={() => router.push('/calendar/create')}
+                className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg hover:bg-brand-600 transition-colors"
+              >
                 <PlusIcon className="w-6 h-6 text-white" />
-              </div>
+              </button>
             </div>
 
             {/* Footer */}
