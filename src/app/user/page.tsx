@@ -262,16 +262,16 @@ export default function MyPage() {
                   onChange={(e) => setInputValue(e.target.value)}
                   style={{ marginBottom: '20px' }}
                 />
-                <Button
-                  kind="functional"
-                  styleType="fill"
-                  tone="brand"
-                  fullWidth
+          <Button
+            kind="functional"
+            styleType="fill"
+            tone="brand"
+            fullWidth
                   onClick={handleSubmit}
                   disabled={isLoading}
-                >
+          >
                   {isLoading ? '저장 중...' : '저장하기'}
-                </Button>
+          </Button>
               </>
             )}
           </div>

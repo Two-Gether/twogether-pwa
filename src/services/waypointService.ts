@@ -1,6 +1,5 @@
 import { getAuthToken } from '@/auth';
 import { LocationInfo } from '@/types/map';
-import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
 
 // 웨이포인트 아이템 추가 요청 타입
 export interface AddWaypointItemRequest {
