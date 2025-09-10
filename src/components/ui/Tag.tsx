@@ -10,6 +10,7 @@ interface TagProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: TagVariant;
   children: React.ReactNode;
   className?: string;
+  onClick?: () => void;
 }
 
 const Tag = forwardRef<HTMLDivElement, TagProps>(function Tag(
@@ -21,6 +22,7 @@ const Tag = forwardRef<HTMLDivElement, TagProps>(function Tag(
     variant = 'default',
     children,
     className = '',
+    onClick,
     ...rest
   } = props;
 
@@ -44,6 +46,8 @@ const Tag = forwardRef<HTMLDivElement, TagProps>(function Tag(
     <div
       ref={ref}
       className={[base, styleClass, className].join(' ')}
+      onClick={onClick}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
       {...rest}
     >
       {children}

@@ -20,10 +20,10 @@ const SearchBar = forwardRef<HTMLInputElement, SearchBarProps>(
     className = '', 
     ...props 
   }, ref) => {
-    const baseClasses = `w-full h-[52px] px-4 py-3 bg-white shadow-lg rounded-lg font-pretendard text-sm leading-[19.6px] transition-colors focus:outline-none focus:ring-0 focus:border-0`;
+    const baseClasses = `w-full h-[52px] px-4 py-3 bg-white border border-gray-300 rounded-lg font-pretendard text-sm leading-[19.6px] transition-colors focus:outline-none focus:ring-0 focus:border-brand-500`;
     
     const variantClasses = {
-      default: "text-gray-500 placeholder:text-gray-500",
+      default: "text-gray-900 placeholder:text-gray-500",
       error: "text-semantic-error placeholder:text-semantic-error border border-brand-500",
       success: "text-semantic-success placeholder:text-semantic-success",
       disabled: "text-gray-500 placeholder:text-gray-500 cursor-not-allowed"

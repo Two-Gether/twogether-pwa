@@ -603,7 +603,10 @@ const MapScreen = () => {
       {!locationInfo ? (
         // 장소 정보창이 없을 때 - 기존 위치
         <div className="absolute bottom-20 right-4 z-10">
-          <div className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg">
+          <button 
+            className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg hover:bg-brand-600 transition-colors"
+            onClick={() => router.push('/highlight')}
+          >
             <Image 
               src="/images/common/camera.svg" 
               alt="Camera" 
@@ -611,12 +614,15 @@ const MapScreen = () => {
               width={24}
               height={24}
             />
-          </div>
+          </button>
         </div>
       ) : !isLocationInfoSheetOpen ? (
         // 장소 정보창이 닫힐 때 - 핸들 바 위쪽에 위치
         <div className="absolute bottom-32 right-4 z-10">
-          <div className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg">
+          <button 
+            className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg hover:bg-brand-600 transition-colors"
+            onClick={() => router.push('/highlight')}
+          >
             <Image 
               src="/images/common/camera.svg" 
               alt="Camera" 
@@ -624,7 +630,7 @@ const MapScreen = () => {
               width={24}
               height={24}
             />
-          </div>
+          </button>
         </div>
       ) : null}
 
