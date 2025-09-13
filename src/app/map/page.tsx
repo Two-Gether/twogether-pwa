@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Input from '@/components/ui/Input';
 import Image from 'next/image';
@@ -12,6 +12,7 @@ import { addLocationToWaypoint } from '@/services/waypointService';
 
 const MapScreen = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<unknown>(null);
   const [geocoder, setGeocoder] = useState<unknown>(null);
@@ -306,7 +307,7 @@ const MapScreen = () => {
   };
 
   // 키워드 검색
-  const searchPlaces = () => {
+  const searchPlaces = useCallback(() => {
     if (!places || !searchKeyword.trim()) {
       alert('장소명을 입력해 주세요!');
       return;
@@ -322,7 +323,7 @@ const MapScreen = () => {
       }, {
         location: userLocation,
       });
-  };
+  }, [places, searchKeyword, displayPlaces, userLocation]);
 
   // 검색어 입력 처리
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -367,6 +368,39 @@ const MapScreen = () => {
       init();
     }
   }, [currentLocation, init]);
+
+  // URL 파라미터에서 검색어 가져와서 자동 검색
+  useEffect(() => {
+    const searchQuery = searchParams.get('search');
+    const lat = searchParams.get('lat');
+    const lng = searchParams.get('lng');
+    
+    if (searchQuery) {
+      // 검색어가 있으면 searchKeyword에 설정하고 검색 실행
+      setSearchKeyword(searchQuery);
+      
+      // 지도와 places가 준비되면 검색 실행
+      if (places && searchQuery.trim()) {
+        setTimeout(() => {
+          searchPlaces();
+        }, 500); // 지도 초기화 완료 후 검색
+      }
+    } else if (lat && lng) {
+      // 좌표가 있으면 해당 위치로 이동
+      const latNum = parseFloat(lat);
+      const lngNum = parseFloat(lng);
+      
+      if (!isNaN(latNum) && !isNaN(lngNum)) {
+        setCurrentLocation({ lat: latNum, lng: lngNum });
+        
+        // 지도가 준비되면 해당 위치로 이동
+        if (map && window.kakao && window.kakao.maps) {
+          const coords = new window.kakao.maps.LatLng(latNum, lngNum);
+          (map as { setCenter: (coords: unknown) => void }).setCenter(coords);
+        }
+      }
+    }
+  }, [searchParams, places, map, searchPlaces, searchKeyword]);
 
   return (
     <div className="h-screen relative">

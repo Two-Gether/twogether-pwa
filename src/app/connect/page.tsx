@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { ChevronLeft } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
+import Notification from '@/components/ui/Notification';
 
 export default function ConnectPage() {
   const [partnerCode, setPartnerCode] = useState('');
@@ -16,12 +17,35 @@ export default function ConnectPage() {
   const [isClient, setIsClient] = useState(false);
   const [myPartnerCode, setMyPartnerCode] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
   const router = useRouter();
   const { user, accessToken, updateUser, login } = useAuthStore();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Toast 표시 함수
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({
+      show: true,
+      message,
+      type
+    });
+    
+    // 1.5초 후 자동으로 숨기기
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 1500);
+  };
 
   // 내 파트너 코드 조회 (3시간마다 새로 요청)
   useEffect(() => {
@@ -122,6 +146,7 @@ export default function ConnectPage() {
     .then(response => {
       if (!response.ok) {
         return response.json().then(errorData => {
+          console.error('파트너 연결 API 에러:', response.status, errorData);
           throw new Error(errorData.error || '연인 연동에 실패했어요.');
         });
       }
@@ -129,17 +154,32 @@ export default function ConnectPage() {
     })
     .then(data => {
       if (user) {
-        updateUser({
+        const updatedUser = {
           ...user,
           partnerId: data.partnerId,
           partnerNickname: data.partnerNickname,
-        });
+        };
+        updateUser(updatedUser);
+        
+        // 파트너 ID 등록 확인 로그
+        console.log('=== 파트너 연결 성공 ===');
+        console.log('이전 사용자 정보:', user);
+        console.log('업데이트된 사용자 정보:', updatedUser);
+        console.log('파트너 ID:', data.partnerId);
+        console.log('파트너 닉네임:', data.partnerNickname);
+        console.log('========================');
+        
+        // 성공 시 바로 main 페이지로 이동 (Toast는 main 페이지에서 표시)
+        router.push('/main?success=partner_connected');
       }
-      router.push('/main');
     })
     .catch(error => {
       console.log(error);
-      setErrorMessage(error.message || '연인 연동에 실패했어요.');
+      const errorMsg = error.message || '연인 연동에 실패했어요.';
+      setErrorMessage(errorMsg);
+      
+      // 실패 Toast 표시
+      showToast(errorMsg, 'error');
     })
     .finally(() => setIsLoading(false));
   };
@@ -189,13 +229,6 @@ export default function ConnectPage() {
             </div>
         </div>
       </div>
-
-      {/* Error Message */}
-      {errorMessage && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 mx-4 mt-4 rounded">
-          {errorMessage}
-        </div>
-      )}
 
       {/* Main Content */}
       <div className="px-6 py-8">
@@ -343,6 +376,18 @@ export default function ConnectPage() {
               {isLoading ? '연동 중...' : '연동하기'}
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification - 헤더를 덮도록 z-index 높게 설정 */}
+      {toast.show && (
+        <div className="fixed top-4 left-0 right-0 z-50 p-4">
+          <Notification
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          >
+            {toast.message}
+          </Notification>
         </div>
       )}
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import { useKakaoAuth } from '@/hooks/auth/useKakaoAuth';
@@ -12,6 +13,7 @@ const LoginScreen = () => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const router = useRouter();
     const { login } = useAuthStore();
     const { kakaoLogin } = useKakaoAuth();
     const { googleLogin } = useGoogleAuth();
@@ -37,24 +39,26 @@ const LoginScreen = () => {
             const data = await res.json();
             console.log('Login success:', data);
             
-            // Auth store에 사용자 정보와 토큰 저장
+            // Auth store에 사용자 정보와 토큰 저장 (일반 로그인은 myNickname과 partnerNickname 사용)
             login({
                 user: {
                     memberId: data.memberId,
-                    nickname: data.nickname,
+                    nickname: data.myNickname, // 일반 로그인은 myNickname 사용
                     partnerId: data.partnerId,
-                    partnerNickname: data.partnerNickname,
+                    partnerNickname: data.partnerNickname, // 일반 로그인은 partnerNickname 사용
                     relationshipStartDate: data.relationshipStartDate,
                 },
                 accessToken: data.accessToken,
             });
             
-            // 파트너 연결 상태 확인
-            if (data.partnerId === null) {
-                window.location.href = '/connect';
-            } else {
-                window.location.href = '/main';
-            }
+            // 상태 업데이트 후 페이지 이동 (약간의 지연)
+            setTimeout(() => {
+                if (data.partnerId === null) {
+                    router.push('/connect');
+                } else {
+                    router.push('/main');
+                }
+            }, 100);
             
         } catch (error) {
             console.error('Login error:', error);

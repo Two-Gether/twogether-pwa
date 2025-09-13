@@ -33,24 +33,31 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('실제 서버 응답 에러:', response.status, errorData);
+    // 서버 응답 상세 로그
+    console.log('서버 응답 상태:', response.status);
+    console.log('서버 응답 OK:', response.ok);
+
+    const responseData = await response.json().catch(() => ({}));
+    console.log('서버 응답 데이터:', responseData);
+
+    // HTTP 상태 코드가 400 이상이거나 응답에 에러가 있으면 실패로 처리
+    if (!response.ok || response.status >= 400 || responseData.status === 400) {
+      console.error('실제 서버 응답 에러:', response.status, responseData);
       
-      // let errorMessage = '연인 연동에 실패했어요.';
-      if (response.status === 400) {
-        // errorMessage = '잘못된 코드입니다.';
-      } else if (errorData.message) {
-        console.log(errorData.message);
+      let errorMessage = '연인 연동에 실패했어요.';
+      if (responseData.message) {
+        errorMessage = responseData.message;
+      } else if (response.status === 400) {
+        errorMessage = '파트너 코드가 유효하지 않습니다.';
       }
       
       return NextResponse.json(
-        { status: response.status }
+        { error: errorMessage },
+        { status: 400 }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error('파트너 연결 에러:', error);
     return NextResponse.json(

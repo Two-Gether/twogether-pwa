@@ -1,16 +1,71 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import MainHeader from '../../components/MainHeader';
 import Footer from '../../components/Footer';
+import RecommendationCard, { Recommendation } from '../../components/RecommendationCard';
+import Notification from '@/components/ui/Notification';
 import Image from 'next/image';
 
 export default function MainPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuthStore();
   const [relationshipDays, setRelationshipDays] = useState(0);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+
+  const refreshUserInfo = useCallback(async () => {
+    try {
+      const response = await fetch('/api/member/me', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('사용자 정보 조회에 실패했습니다.');
+      }
+
+      const userData = await response.json();
+      console.log('Main 페이지 사용자 정보 새로고침 성공:', userData);
+      
+      // Auth store 업데이트 (서버 응답의 myNickname을 nickname으로 매핑)
+      const { updateUser } = useAuthStore.getState();
+      updateUser({
+        memberId: userData.memberId,
+        nickname: userData.myNickname, // 서버 응답의 myNickname을 nickname으로 매핑
+        partnerId: userData.partnerId,
+        partnerNickname: userData.partnerNickname,
+        relationshipStartDate: userData.relationshipStartDate,
+      });
+    } catch (error) {
+      console.error('Main 페이지 사용자 정보 새로고침 에러:', error);
+    }
+  }, []);
+
+  // 추천 데이터 불러오기
+  const fetchRecommendations = async () => {
+    try {
+      setIsLoadingRecommendations(true);
+      const response = await fetch('/api/recommendations');
+      const data = await response.json();
+      
+      if (data.success) {
+        setRecommendations(data.data);
+      } else {
+        console.error('추천 데이터 로딩 실패:', data.error);
+      }
+    } catch (error) {
+      console.error('추천 데이터 로딩 중 오류:', error);
+    } finally {
+      setIsLoadingRecommendations(false);
+    }
+  };
 
   useEffect(() => {
     // 인증되지 않은 사용자는 로그인 페이지로 리다이렉트
@@ -18,12 +73,54 @@ export default function MainPage() {
       router.push('/login');
       return;
     }
+
+    // 디버깅용 로그
+    console.log('Main 페이지 사용자 정보:', {
+      user,
+      partnerId: user?.partnerId,
+      isAuthenticated
+    });
+
+    // 파트너 연결 성공 Toast 표시
+    const successParam = searchParams.get('success');
+    if (successParam === 'partner_connected') {
+      setShowSuccessToast(true);
+      
+      // 1.5초 후 Toast 숨기기
+      setTimeout(() => {
+        setShowSuccessToast(false);
+      }, 1500);
+      
+      // URL에서 파라미터 제거
+      router.replace('/main');
+    }
+
+    // 추천 데이터 불러오기
+    fetchRecommendations();
     
     // 파트너 ID가 null인 경우 매칭 페이지로 리다이렉트
     if (user && user.partnerId === null) {
+      console.log('파트너 ID가 null이므로 connect 페이지로 이동');
       router.push('/connect');
     }
-  }, [isAuthenticated, user, router]);
+  }, [isAuthenticated, user, router, searchParams]);
+
+  // 수동 새로고침 시에만 사용자 정보 새로고침
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // 페이지를 떠날 때만 새로고침
+      if (isAuthenticated) {
+        console.log('Main 페이지 새로고침 - 사용자 정보 새로고침');
+        refreshUserInfo();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [isAuthenticated, refreshUserInfo]);
 
   // 로딩 상태를 추가하여 하이드레이션 불일치 방지
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +221,7 @@ export default function MainPage() {
               </div>
               <div className="flex justify-end items-center">
                 <button 
-                  onClick={() => router.push('/my')}
+                  onClick={() => router.push('/user')}
                   className="text-xl text-brand-500 font-pretendard font-semibold underline leading-6 hover:no-underline"
                 >
                   연인 정보 입력
@@ -217,61 +314,44 @@ export default function MainPage() {
           <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
             오늘의 추천 장소/행사
           </h2>
+          
+          {isLoadingRecommendations ? (
+            <div className="flex gap-3 overflow-x-auto w-full pb-2">
+              {/* 로딩 스켈레톤 */}
+              {[...Array(3)].map((_, index) => (
+                <div 
+                  key={index}
+                  className="w-[230px] h-[314px] bg-gray-200 rounded-lg flex-shrink-0 animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
             <div className="flex gap-3 overflow-x-auto w-full pb-2" style={{ scrollBehavior: 'smooth' }}>
-            {/* Recommendation Card 1 */}
-            <div className="w-[230px] h-[314px] p-3 bg-gradient-to-b from-transparent to-black/50 rounded-lg relative flex-shrink-0" 
-                 style={{backgroundImage: 'url(https://placehold.co/230x314)'}}>
-              <div className="absolute top-3 left-3 px-2 py-1 bg-gray-100 rounded">
-                <span className="text-xs text-sub-700 font-pretendard font-semibold leading-[16.80px]">
-                  서울시 동작구
-                </span>
-              </div>
-              <div className="absolute bottom-3 left-3 right-3">
-                <div className="text-base text-white font-pretendard font-semibold leading-[19.20px] mb-1">
-                  2025 누구나 세종썸머페스티벌
+              {recommendations.map((recommendation) => (
+                <RecommendationCard
+                  key={recommendation.id}
+                  recommendation={recommendation}
+                  onClick={(rec) => {
+                    if (rec.fullAddress) {
+                      router.push(`/map?search=${encodeURIComponent(rec.fullAddress)}`);
+                    } else if (rec.mapx && rec.mapy) {
+                      // 좌표가 있는 경우 좌표로 검색
+                      router.push(`/map?lat=${rec.mapy}&lng=${rec.mapx}`);
+                    } else {
+                      // 주소 정보가 없는 경우 제목으로 검색
+                      router.push(`/map?search=${encodeURIComponent(rec.title)}`);
+                    }
+                  }}
+                />
+              ))}
+              
+              {recommendations.length === 0 && (
+                <div className="w-full h-[314px] flex items-center justify-center text-gray-500">
+                  추천 항목이 없습니다.
                 </div>
-                <div className="text-sm text-white font-pretendard font-normal leading-[19.60px]">
-                  2025.08.28 ~ 2025.08.31
-                </div>
-              </div>
+              )}
             </div>
-
-            {/* Recommendation Card 2 */}
-            <div className="w-[230px] h-[314px] p-3 bg-gradient-to-b from-transparent to-black/50 rounded-lg relative flex-shrink-0"
-                 style={{backgroundImage: 'url(https://placehold.co/230x314)'}}>
-              <div className="absolute top-3 left-3 px-2 py-1 bg-white rounded">
-                <span className="text-xs text-sub-700 font-pretendard font-semibold leading-[16.80px]">
-                  인천시 남동구
-                </span>
-              </div>
-              <div className="absolute bottom-3 left-3 right-3">
-                <div className="text-base text-white font-pretendard font-semibold leading-[19.20px] mb-1">
-                  2025 누구나 세종썸머페스티벌
-                </div>
-                <div className="text-sm text-white font-pretendard font-normal leading-[19.60px]">
-                  2025.08.28 ~ 2025.08.31
-                </div>
-              </div>
-            </div>
-            
-            {/* Recommendation Card 3 */}
-            <div className="w-[230px] h-[314px] p-3 bg-gradient-to-b from-transparent to-black/50 rounded-lg relative flex-shrink-0" 
-                 style={{backgroundImage: 'url(https://placehold.co/230x314)'}}>
-              <div className="absolute top-3 left-3 px-2 py-1 bg-gray-100 rounded">
-                <span className="text-xs text-sub-700 font-pretendard font-semibold leading-[16.80px]">
-                  서울시 강남구
-                </span>
-              </div>
-              <div className="absolute bottom-3 left-3 right-3">
-                <div className="text-base text-white font-pretendard font-semibold leading-[19.20px] mb-1">
-                  2025 강남 썸머 페스티벌
-                </div>
-                <div className="text-sm text-white font-pretendard font-normal leading-[19.60px]">
-                  2025.09.15 ~ 2025.09.18
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </div>
       </div>
       
@@ -308,6 +388,18 @@ export default function MainPage() {
           background: #a8a8a8; /* 스크롤바 호버 색상 */
         }
       `}</style>
+
+      {/* 성공 Toast - 헤더를 덮도록 z-index 높게 설정 */}
+      {showSuccessToast && (
+        <div className="fixed top-4 left-0 right-0 z-50 p-4">
+          <Notification
+            type="success"
+            onClose={() => setShowSuccessToast(false)}
+          >
+            연인 연동에 성공했어요!
+          </Notification>
+        </div>
+      )}
     </div>
   );
 }
