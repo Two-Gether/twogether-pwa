@@ -190,12 +190,6 @@ function DetailPageContent() {
                 {kakaoApiResponse.category_group_name}
               </div>
             )}
-            {/* <div className="px-2 py-1 bg-[#F9F9F9] rounded text-[#333333] text-sm font-normal flex items-center gap-1">
-              <span>32명이 재방문 의사를 표했어요</span>
-              <div className="w-3 h-3">
-                <div className="w-full h-full border border-[#333333] rounded-sm" />
-              </div>
-            </div> */}
           </div>
 
           {/* 장소명 */}
