@@ -7,6 +7,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Tag from '@/components/ui/Tag';
 import { handleImageUpload } from '@/utils/imageUtils';
+import { uploadImage } from '@/utils/imageUpload';
 
 export default function HighlightUploadPage() {
   const router = useRouter();
@@ -14,18 +15,23 @@ export default function HighlightUploadPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>(['가격이 싸요', '교통이 편리해요']);
   const [formData, setFormData] = useState({
     address: '',
-    photos: [] as Array<{ file: File; preview: string }>,
+    photos: [] as Array<{ file: File; preview: string; serverUrl?: string }>,
     description: '',
     review: ''
   });
+  const [isUploading, setIsUploading] = useState(false);
 
-  const quickReviewTags = [
-    '맛있어요',
-    '가격이 싸요', 
-    '사장님이 친절해요',
-    '교통이 편리해요',
-    '분위기가 좋아요'
-  ];
+  // 태그를 API 키워드로 매핑
+  const tagToKeywordMap: Record<string, string> = {
+    '맛있어요': 'taste',
+    '가격이 싸요': 'cheap',
+    '사장님이 친절해요': 'kindness',
+    '교통이 편리해요': 'convenient',
+    '분위기가 좋아요': 'atmosphere'
+  };
+
+  // 태그 목록을 매핑에서 추출
+  const quickReviewTags = Object.keys(tagToKeywordMap);
 
   // URL 파라미터에서 주소 받아오기
   useEffect(() => {
@@ -56,49 +62,47 @@ export default function HighlightUploadPage() {
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files;
     if (files && files.length > 0) {
-      const newPhotos: Array<{ file: File; preview: string }> = [];
+      const file = files[0]; // 첫 번째 파일만 선택
       
-      for (let i = 0; i < Math.min(files.length, 5 - formData.photos.length); i++) {
-        const file = files[i];
-        try {
-          const { file: processedFile, preview, exifData, address } = await handleImageUpload(file);
-          
-          if (preview) {
-            newPhotos.push({
-              file: processedFile,
-              preview: preview
-            });
-          }
-          
-          // 첫 번째 이미지에서 GPS 주소 추출
-          if (i === 0 && address && !formData.address) {
-            setFormData(prev => ({
-              ...prev,
-              address: address
-            }));
-            console.log('📍 GPS에서 추출한 주소:', address);
-          }
-          
-          if (exifData.dateTime) {
-            console.log('📅 촬영 날짜:', exifData.dateTime);
-          }
-          
-        } catch (error) {
-          console.error('파일 처리 실패:', error);
-          alert(`파일 처리 중 오류가 발생했습니다: ${file.name}`);
+      setIsUploading(true);
+      
+      try {
+        // 1. 이미지 처리 (EXIF 데이터 추출 등)
+        const { file: processedFile, preview, exifData, address } = await handleImageUpload(file);
+        
+        // 2. 서버에 이미지 업로드 (압축 포함)
+        const uploadResult = await uploadImage(processedFile);
+        
+        if (!uploadResult.success) {
+          throw new Error(uploadResult.error || '이미지 업로드 실패');
         }
+        
+        // 3. 폼 데이터 업데이트
+        if (preview && uploadResult.imageUrl) {
+          setFormData(prev => ({
+            ...prev,
+            photos: [{
+              file: processedFile,
+              preview: preview,
+              serverUrl: uploadResult.imageUrl
+            }]
+          }));
+        }
+        
+        // GPS 주소 추출
+        if (address && !formData.address) {
+          setFormData(prev => ({
+            ...prev,
+            address: address
+          }));
+        }
+      } catch (error) {
+        alert(`이미지 업로드 중 오류가 발생했습니다: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+      } finally {
+        setIsUploading(false);
+        // input 초기화
+        event.target.value = '';
       }
-      
-      if (newPhotos.length > 0) {
-        setFormData(prev => ({
-          ...prev,
-          photos: [...prev.photos, ...newPhotos]
-        }));
-        console.log(`${newPhotos.length}개 이미지 추가됨`);
-      }
-      
-      // input 초기화
-      event.target.value = '';
     }
   };
 
@@ -111,11 +115,27 @@ export default function HighlightUploadPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // 하이라이트 업로드 로직
-    console.log('하이라이트 업로드:', formData, selectedTags);
+    
+    // 선택된 태그를 키워드로 변환 (최대 2개)
+    const selectedKeywords = selectedTags
+      .map(tag => tagToKeywordMap[tag])
+      .filter(Boolean) // undefined 제거
+      .slice(0, 2); // 최대 2개로 제한
+    
+    // 실제 API로 보낼 데이터 구조
+    const apiData = {
+      imageUrl: formData.photos.length > 0 ? formData.photos[0].serverUrl || formData.photos[0].preview : "", // 서버 URL 우선, 없으면 preview URL
+      name: formData.address.split(' ')[0] || formData.address, // 주소에서 첫 번째 단어를 이름으로 사용 (임시)
+      address: formData.address,
+      description: formData.description,
+      tags: selectedKeywords.map(keyword => keyword.toUpperCase()) // 대문자로 변환
+    };
+
+    // TODO: 실제 API 호출 구현
+    // console.log('API 데이터:', apiData);
   };
 
-  const isFormValid = formData.address && formData.photos.length > 0;
+  const isFormValid = formData.address && formData.photos.length > 0 && !isUploading;
 
   return (
     <div className="min-h-screen bg-white">
@@ -139,42 +159,75 @@ export default function HighlightUploadPage() {
             <div className="flex gap-3 overflow-x-auto pb-2">
               {/* 업로드된 이미지들 */}
               {formData.photos.map((photo, index) => (
-                <div key={index} className="w-[146px] h-[187px] bg-gray-50 rounded-lg border border-gray-200 relative overflow-hidden flex-shrink-0">
+                <div key={index} className="w-[146px] h-[187px] bg-gray-50 rounded-lg border border-gray-200 relative overflow-hidden flex-shrink-0 group">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={photo.preview} 
                     alt={`업로드된 사진 ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
+                  
+                  {/* 교체 버튼 */}
+                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <div className="w-8 h-8 bg-white bg-opacity-90 rounded-full flex items-center justify-center">
+                        <div className="w-4 h-4 relative">
+                          <div className="w-3 h-3 border-2 border-gray-600 rounded-sm"></div>
+                          <div className="w-1 h-1 bg-gray-600 absolute top-1 left-1"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* 삭제 버튼 */}
                   <button
                     type="button"
                     onClick={() => handleRemovePhoto(index)}
-                    className="absolute top-2 right-2 w-6 h-6 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-sm"
+                    className="absolute top-2 right-2 w-6 h-6 bg-black bg-opacity-50 text-white rounded-full flex items-center justify-center text-sm hover:bg-opacity-70 transition-all duration-200"
                   >
                     ×
                   </button>
-                </div>
-              ))}
-              
-              {/* 업로드 버튼 */}
-              {formData.photos.length < 5 && (
-                <div className="w-[146px] h-[187px] bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center relative flex-shrink-0">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="w-5 h-5 relative">
-                      <div className="w-3 h-3 border-2 border-gray-400 rounded-sm"></div>
-                      <div className="w-1 h-1 bg-gray-400 absolute top-1 left-1"></div>
-                    </div>
-                    <span className="text-gray-500 text-sm font-pretendard font-normal text-center">
-                      사진을 선택하세요 ({formData.photos.length}/5)
-                    </span>
-                  </div>
+                  
+                  {/* 파일 입력 (교체용) */}
                   <input
                     type="file"
                     accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
                     onChange={handlePhotoUpload}
-                    multiple
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
+                </div>
+              ))}
+              
+              {/* 업로드 버튼 */}
+              {formData.photos.length === 0 && (
+                <div className="w-[146px] h-[187px] bg-gray-50 rounded-lg border border-gray-200 flex items-center justify-center relative flex-shrink-0">
+                  {isUploading ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-6 h-6 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-brand-500 text-sm font-pretendard font-normal text-center">
+                        업로드 중...
+                      </span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="w-5 h-5 relative">
+                          <div className="w-3 h-3 border-2 border-gray-400 rounded-sm"></div>
+                          <div className="w-1 h-1 bg-gray-400 absolute top-1 left-1"></div>
+                        </div>
+                        <span className="text-gray-500 text-sm font-pretendard font-normal text-center">
+                          사진을 선택하세요
+                        </span>
+                      </div>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif"
+                        onChange={handlePhotoUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        disabled={isUploading}
+                      />
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -206,7 +259,6 @@ export default function HighlightUploadPage() {
             />
           </div>
 
-          
           {/* 한 줄 소개 */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
@@ -245,7 +297,7 @@ export default function HighlightUploadPage() {
       </div>
 
       {/* 하단 버튼 */}
-      <div className="px-6 pt-6">
+      <div className="px-6 pt-8">
         <Button
           kind="functional"
           styleType={isFormValid ? "fill" : "outline"}
@@ -254,7 +306,7 @@ export default function HighlightUploadPage() {
           onClick={handleSubmit}
           disabled={!isFormValid}
         >
-          등록하기
+          {isUploading ? '업로드 중...' : '등록하기'}
         </Button>
       </div>
     </div>

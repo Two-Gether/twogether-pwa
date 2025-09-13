@@ -599,7 +599,7 @@ const MapScreen = () => {
         </div>
       )}
 
-      {/* Camera Button - 장소 정보창 상태에 따라 위치 조정 */}
+      {/* Upload Button - 장소 정보창 상태에 따라 위치 조정 */}
       {!locationInfo ? (
         // 장소 정보창이 없을 때 - 기존 위치
         <div className="absolute bottom-20 right-4 z-10">
@@ -608,8 +608,8 @@ const MapScreen = () => {
             onClick={() => router.push('/highlight')}
           >
             <Image 
-              src="/images/common/camera.svg" 
-              alt="Camera" 
+              src="/images/common/upload.svg" 
+              alt="Upload" 
               className="w-6 h-6"
               width={24}
               height={24}

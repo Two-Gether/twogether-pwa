@@ -277,14 +277,17 @@ export default function MainPage() {
       
       {/* Upload Button */}
       <div className="absolute bottom-20 right-4 z-10">
-        <div className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg">
+        <button 
+          className="w-12 h-12 bg-brand-500 rounded-full flex justify-center items-center shadow-lg hover:bg-brand-600 transition-colors"
+          onClick={() => router.push('/highlight')}
+        >
           <Image 
             src="/images/common/upload.svg" 
             alt="Upload" 
             width={24}
             height={24}
           />
-        </div>
+        </button>
       </div>
       
       <Footer />

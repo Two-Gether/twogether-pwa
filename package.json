@@ -6,9 +6,7 @@
     "dev": "next dev -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "lint": "next lint"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.85.5",
