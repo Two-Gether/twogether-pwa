@@ -8,18 +8,28 @@ import Input from '@/components/ui/Input';
 import Tag from '@/components/ui/Tag';
 import { handleImageUpload } from '@/utils/imageUtils';
 import { uploadImage } from '@/utils/imageUpload';
+import { getAuthToken } from '@/auth';
+import Notification from '@/components/ui/Notification';
 
 export default function HighlightUploadPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedTags, setSelectedTags] = useState<string[]>(['가격이 싸요', '교통이 편리해요']);
   const [formData, setFormData] = useState({
+    name: '',
     address: '',
     photos: [] as Array<{ file: File; preview: string; serverUrl?: string }>,
     description: '',
     review: ''
   });
   const [isUploading, setIsUploading] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  // Toast 표시 함수
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // 태그를 API 키워드로 매핑
   const tagToKeywordMap: Record<string, string> = {
@@ -33,13 +43,24 @@ export default function HighlightUploadPage() {
   // 태그 목록을 매핑에서 추출
   const quickReviewTags = Object.keys(tagToKeywordMap);
 
-  // URL 파라미터에서 주소 받아오기
+  // URL 파라미터에서 주소와 가게명 받아오기
   useEffect(() => {
     const addressParam = searchParams.get('address');
-    if (addressParam) {
+    const nameParam = searchParams.get('name');
+    
+    console.log('🔍 URL 파라미터 확인:', { addressParam, nameParam });
+    
+    if (addressParam || nameParam) {
+      const newFormData = {
+        address: addressParam ? decodeURIComponent(addressParam) : '',
+        name: nameParam ? decodeURIComponent(nameParam) : ''
+      };
+      
+      console.log('📝 설정할 formData:', newFormData);
+      
       setFormData(prev => ({
         ...prev,
-        address: decodeURIComponent(addressParam)
+        ...newFormData
       }));
     }
   }, [searchParams]);
@@ -127,15 +148,26 @@ export default function HighlightUploadPage() {
       // 선택된 태그를 그대로 사용 (API에서 요구하는 형식)
       const selectedTagsForApi = selectedTags.slice(0, 2); // 최대 2개로 제한
       
-      // 메타데이터 JSON 생성
+      // 태그를 API 키워드로 매핑
+      const mappedTags = selectedTagsForApi.map(tag => tagToKeywordMap[tag] || tag);
+      
+      // 메타데이터 JSON 생성 (순서 명시)
       const metaData = {
-        name: formData.address.split(' ')[0] || formData.address, // 주소에서 첫 번째 단어를 이름으로 사용
+        name: formData.name || formData.address.split(' ')[0] || formData.address, // 가게명 우선, 없으면 주소 첫 단어
         address: formData.address,
         description: formData.description,
-        tags: selectedTagsForApi
+        tags: mappedTags
       };
       
+      console.log('🏪 현재 formData:', formData);
+      console.log('📦 생성된 metaData:', metaData);
+      
+      // JSON 문자열로 변환 (순서 보장)
+      const metaJsonString = JSON.stringify(metaData, ['name', 'address', 'description', 'tags']);
+      console.log('📄 JSON 문자열:', metaJsonString);
+      
       console.log('📤 전송할 메타데이터:', metaData);
+      console.log('📍 저장될 주소:', formData.address);
       console.log('📤 전송할 이미지 파일:', {
         name: formData.photos[0].file.name,
         type: formData.photos[0].file.type,
@@ -144,7 +176,7 @@ export default function HighlightUploadPage() {
       
       // multipart/form-data 생성
       const formDataToSend = new FormData();
-      formDataToSend.append('meta', JSON.stringify(metaData));
+      formDataToSend.append('meta', metaJsonString); // 순서가 보장된 JSON 문자열
       formDataToSend.append('image', formData.photos[0].file); // 실제 파일 객체
       
       // FormData 내용 확인
@@ -157,28 +189,35 @@ export default function HighlightUploadPage() {
         }
       }
       
+      // 토큰 확인
+      const token = getAuthToken();
+      console.log('🔑 프론트엔드 토큰:', token ? token.substring(0, 20) + '...' : 'null');
+      
+      if (!token) {
+        alert('로그인이 필요합니다.');
+        return;
+      }
+      
       // API 호출
       const response = await fetch('/api/place', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: formDataToSend
       });
       
-      const result = await response.json();
+      if (response.ok) {
+        showToast('success', '하이라이트가 성공적으로 등록되었습니다!');
       
-      if (result.success) {
-        alert('하이라이트가 성공적으로 등록되었습니다!');
-        // 성공 시 메인 페이지로 이동
-        router.push('/main');
+        setTimeout(() => router.push('/main'), 1500);
       } else {
-        alert(`등록 실패: ${result.error || '알 수 없는 오류가 발생했습니다.'}`);
+        const result = await response.json();
+        showToast('error', `등록 실패: ${result.error || '알 수 없는 오류가 발생했습니다.'}`);
       }
       
     } catch (error) {
-      console.error('하이라이트 등록 에러:', error);
-      alert('하이라이트 등록 중 오류가 발생했습니다.');
+      showToast('error', '하이라이트 등록 중 오류가 발생했습니다.');
     } finally {
       setIsUploading(false);
     }
@@ -188,6 +227,18 @@ export default function HighlightUploadPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 left-0 right-0 z-50 p-4">
+          <Notification
+            type={toast.type}
+            onClose={() => setToast(null)}
+          >
+            {toast.message}
+          </Notification>
+        </div>
+      )}
+
       {/* Header */}
       <Header 
         title="하이라이트 업로드"

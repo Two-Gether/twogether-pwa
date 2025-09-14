@@ -10,6 +10,17 @@ import { Waypoint } from '@/types/waypoint';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import Notification from '@/components/ui/Notification';
 
+// 하이라이트 타입 정의
+interface Highlight {
+  id: number;
+  memberId: number;
+  imageUrl: string;
+  name: string;
+  address: string;
+  description: string;
+  tags: string[];
+}
+
 interface PlaceDetail {
   place_name: string;
   address_name: string;
@@ -26,6 +37,8 @@ function DetailPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [kakaoApiResponse, setKakaoApiResponse] = useState<PlaceSearchResult | null>(null);
   const [placeImageUrl, setPlaceImageUrl] = useState<string>('');
+  const [highlights, setHighlights] = useState<Array<{ id: number; imageUrl: string; description: string }>>([]);
+  const [isLoadingHighlights, setIsLoadingHighlights] = useState(false);
   
   // 웨이포인트 모달 관련 상태
   const [isWaypointModalOpen, setIsWaypointModalOpen] = useState(false);
@@ -64,6 +77,46 @@ function DetailPageContent() {
     setTimeout(() => {
       setToast(prev => ({ ...prev, show: false }));
     }, 1500);
+  };
+
+  // 하이라이트 데이터 가져오기
+  const fetchHighlights = async (address: string) => {
+    try {
+      setIsLoadingHighlights(true);
+      console.log('🔍 하이라이트 조회 시작:', address);
+      
+      const response = await fetch(`/api/place?address=${encodeURIComponent(address)}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      console.log('📡 하이라이트 API 응답 상태:', response.status, response.statusText);
+
+      if (!response.ok) {
+        throw new Error('하이라이트 데이터를 가져오는데 실패했습니다.');
+      }
+
+      const data: Highlight[] = await response.json();
+      console.log('📦 서버에서 받은 하이라이트 데이터:', data);
+      console.log('📊 하이라이트 데이터 개수:', data.length);
+      
+      // imageUrl과 description만 추출
+      const highlightsData = data.map((item: Highlight) => ({
+        id: item.id,
+        imageUrl: item.imageUrl,
+        description: item.description
+      }));
+      
+      console.log('🎯 처리된 하이라이트 데이터:', highlightsData);
+      setHighlights(highlightsData);
+    } catch (error) {
+      console.error('❌ 하이라이트 데이터 가져오기 에러:', error);
+      setHighlights([]);
+    } finally {
+      setIsLoadingHighlights(false);
+    }
   };
 
   useEffect(() => {
@@ -153,6 +206,12 @@ function DetailPageContent() {
       }
     } else {
     }
+
+    // 하이라이트 데이터 가져오기
+    if (address) {
+      fetchHighlights(address);
+    }
+
     setIsLoading(false);
   }, [searchParams]);
 
@@ -477,20 +536,33 @@ function DetailPageContent() {
 
           {/* 하이라이트 이미지들 */}
           <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-            {[1, 2, 3].map((item) => (
-              <div key={item} className="w-[123px] h-[164px] relative flex-shrink-0">
-                <div className="w-full h-full bg-gray-300 rounded-lg" />
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70 rounded-lg" />
-                <div className="absolute inset-3 flex flex-col justify-between">
-                  <div className="text-white text-xs font-normal leading-[16.8px]">
-                    {item + 5}시간 전
-                  </div>
-                  <div className="text-white text-sm font-normal leading-[19.6px]">
-                    한 줄 소개를 표시하면 됩니다.
+            {isLoadingHighlights ? (
+              <div className="w-[123px] h-[164px] bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-gray-500 text-sm">로딩 중...</span>
+              </div>
+            ) : highlights.length > 0 ? (
+              highlights.map((highlight) => (
+                <div key={highlight.id} className="w-[123px] h-[164px] relative flex-shrink-0">
+                  <Image
+                    src={highlight.imageUrl}
+                    alt={highlight.description}
+                    width={123}
+                    height={164}
+                    className="w-full h-full object-cover rounded-lg"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70 rounded-lg" />
+                  <div className="absolute inset-3 flex flex-col justify-end">
+                    <div className="text-white text-sm font-normal leading-[19.6px]">
+                      {highlight.description}
+                    </div>
                   </div>
                 </div>
+              ))
+            ) : (
+              <div className="w-[123px] h-[164px] bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                <span className="text-gray-500 text-sm">하이라이트가 없습니다</span>
               </div>
-            ))}
+            )}
           </div>
 
           {/* 하단 여백 - 남은 공간 채우기 */}

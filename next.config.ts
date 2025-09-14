@@ -32,6 +32,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/maps/api/place/photo**',
       },
+      {
+        protocol: 'https',
+        hostname: 'twogether-s3-private-bucket.s3.ap-northeast-2.amazonaws.com',
+        port: '',
+        pathname: '/**',
+      },
     ],
   },
 

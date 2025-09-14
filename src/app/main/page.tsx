@@ -44,6 +44,11 @@ export default function MainPage() {
       });
 
       if (!response.ok) {
+        if (response.status === 404) {
+          // 404는 일정이 없다는 의미로 처리
+          setSchedules([]);
+          return;
+        }
         throw new Error('일정 데이터를 가져오는데 실패했습니다.');
       }
 
