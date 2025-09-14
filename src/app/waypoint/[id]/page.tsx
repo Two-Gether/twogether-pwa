@@ -7,41 +7,30 @@ import { WaypointItem } from '@/types/waypoint';
 import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
 import { useParams, useRouter } from 'next/navigation';
 import { getAuthToken } from '@/auth';
-// @ts-expect-error - react-beautiful-dnd 타입 정의 없음
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import dynamic from 'next/dynamic';
+import Notification from '@/components/ui/Notification';
 
-// react-beautiful-dnd 타입 정의
-interface DroppableProvided {
-  innerRef: (element: HTMLElement | null) => void;
-  droppableProps: {
-    'data-rbd-droppable-context-id': string;
-    'data-rbd-droppable-id': string;
-  };
-  placeholder: React.ReactNode;
-}
+// @hello-pangea/dnd를 dynamic import로 SSR 방지
+const DragDropContext = dynamic(
+  () => import('@hello-pangea/dnd').then(mod => mod.DragDropContext),
+  { ssr: false }
+);
+const Droppable = dynamic(
+  () => import('@hello-pangea/dnd').then(mod => mod.Droppable),
+  { ssr: false }
+);
+const Draggable = dynamic(
+  () => import('@hello-pangea/dnd').then(mod => mod.Draggable),
+  { ssr: false }
+);
 
-interface DraggableProvided {
-  innerRef: (element: HTMLElement | null) => void;
-  draggableProps: {
-    'data-rbd-draggable-context-id': string;
-    'data-rbd-draggable-id': string;
-    style: React.CSSProperties;
-  };
-  dragHandleProps: {
-    'data-rbd-drag-handle-context-id': string;
-    'data-rbd-drag-handle-draggable-id': string;
-  } | null;
-}
-
-interface DraggableStateSnapshot {
-  isDragging: boolean;
-  isDropAnimating: boolean;
-  dropAnimation: unknown;
-  draggingOver: string | null;
-  combineWith: string | null;
-  combineTargetFor: string | null;
-  mode: 'FLUID' | 'SNAP';
-}
+// @hello-pangea/dnd 타입 import
+import type { 
+  DropResult,
+  DroppableProvided, 
+  DraggableProvided, 
+  DraggableStateSnapshot 
+} from '@hello-pangea/dnd';
 
 interface WaypointDetailResponse {
   waypointName: string;
@@ -62,6 +51,14 @@ export default function WaypointDetailPage() {
   const [isReorderMode, setIsReorderMode] = useState(false);
   const [reorderedItems, setReorderedItems] = useState<WaypointItem[]>([]);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  // Toast 표시 함수
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // 웨이포인트 상세 정보 조회
   const fetchWaypointDetail = async (id: string): Promise<WaypointDetailResponse> => {
@@ -95,6 +92,19 @@ export default function WaypointDetailPage() {
         const data = await fetchWaypointDetail(waypointId);
         setWaypointData(data);
         
+        // order 필드 기준으로 정렬
+        if (data.waypointInfoResponse && data.waypointInfoResponse.length > 0) {
+          // order 필드 기준으로 오름차순 정렬
+          const sortedItems = [...data.waypointInfoResponse].sort((a, b) => (a.order || 0) - (b.order || 0));
+          data.waypointInfoResponse = sortedItems;
+          
+          console.log('정렬된 웨이포인트 아이템들:', sortedItems.map(item => ({ 
+            itemId: item.itemId, 
+            name: item.name, 
+            order: item.order 
+          })));
+        }
+        
         // 각 장소의 이미지를 구글 플레이스에서 가져오기
         if (data.waypointInfoResponse && data.waypointInfoResponse.length > 0) {
           const imagePromises = data.waypointInfoResponse.map(async (item) => {
@@ -110,9 +120,8 @@ export default function WaypointDetailPage() {
           const imageResults = await Promise.all(imagePromises);
           const imageUrlMap: Record<number, string> = {};
           imageResults.forEach(({ itemId, imageUrl }) => {
-            if (imageUrl) {
-              imageUrlMap[itemId] = imageUrl;
-            }
+            // 이미지 URL이 있으면 사용하고, 없으면 기본 이미지 사용
+            imageUrlMap[itemId] = imageUrl || '/images/illust/cats/backgroundCat.png';
           });
           setItemImageUrls(imageUrlMap);
         }
@@ -167,27 +176,48 @@ export default function WaypointDetailPage() {
       setReorderedItems([]);
     } else {
       // 순서 변경 모드 시작
+      if (!waypointData?.waypointInfoResponse || waypointData.waypointInfoResponse.length === 0) {
+        alert('순서를 변경할 아이템이 없습니다.');
+        return;
+      }
       setIsReorderMode(true);
-      setReorderedItems(waypointData?.waypointInfoResponse || []);
+      const items = [...waypointData.waypointInfoResponse];
+      setReorderedItems(items);
       setSelectedItems(new Set());
       setIsAllSelected(false);
+      
     }
+  };
+
+  // 드래그 시작 핸들러
+  const handleDragStart = () => {
+    setIsDragging(true);
   };
 
   // 드래그 앤 드롭 핸들러
   const handleDragEnd = (result: DropResult) => {
-    if (!isReorderMode || !result.destination) return;
+    setIsDragging(false);
+    
+    if (!isReorderMode || !result.destination) {
+      return;
+    }
     
     const { source, destination } = result;
     
-    if (source.index === destination.index) return;
+    if (source.index === destination.index) {
+      return;
+    }
     
-    console.log('drag end:', { from: source.index, to: destination.index });
+    // draggableId에서 실제 itemId 추출 (item-123 -> 123)
+    const itemId = parseInt(result.draggableId.replace('item-', ''));
+    console.log('Parsed itemId:', itemId);
     
+    // 실제 순서 변경
     const newItems = Array.from(reorderedItems);
     const [movedItem] = newItems.splice(source.index, 1);
     newItems.splice(destination.index, 0, movedItem);
     
+    console.log('New order:', newItems.map(item => item.name));
     setReorderedItems(newItems);
   };
 
@@ -203,7 +233,9 @@ export default function WaypointDetailPage() {
         throw new Error('인증 토큰이 없습니다.');
       }
 
+      // 새로운 순서대로 itemId 배열 생성
       const orderedIds = reorderedItems.map(item => item.itemId);
+      console.log('📤 서버에 전송할 orderedIds:', orderedIds);
 
       const response = await fetch(`/api/waypoint/${waypointId}/items`, {
         method: 'PATCH',
@@ -219,15 +251,15 @@ export default function WaypointDetailPage() {
         throw new Error(errorData.error || '순서 변경에 실패했습니다.');
       }
 
-      // 성공 시 데이터 새로고침
-      await fetchWaypointDetail(waypointId);
-      setIsReorderMode(false);
-      setReorderedItems([]);
-      alert('순서가 변경되었습니다.');
+      // 성공 시 Toast 표시 후 페이지 새로고침
+      showToast('순서가 변경되었습니다.', 'success');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (error) {
       console.error('순서 변경 에러:', error);
       const errorMessage = error instanceof Error ? error.message : '순서 변경에 실패했습니다.';
-      alert(errorMessage);
+      showToast('순서 변경에 실패하였습니다.', 'error');
     } finally {
       setIsUpdating(false);
     }
@@ -245,17 +277,17 @@ export default function WaypointDetailPage() {
       
       // 선택된 모든 아이템을 한 번에 삭제
       const response = await fetch(`/api/waypoint/${waypointId}/items`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         body: JSON.stringify({ waypointItemIds }),
-      });
-      
-      if (!response.ok) {
+        });
+        
+        if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || '선택된 장소들 삭제에 실패했습니다.');
+        throw new Error(errorData.error || '선택된 장소 삭제에 실패했습니다.');
       }
 
       // 삭제 성공 시 선택 상태 초기화하고 데이터 다시 로드
@@ -266,10 +298,10 @@ export default function WaypointDetailPage() {
       const data = await fetchWaypointDetail(waypointId);
       setWaypointData(data);
       
-      console.log('장소 삭제 완료:', waypointItemIds);
-    } catch (error) {
-      console.error('장소 삭제 에러:', error);
-      alert(error instanceof Error ? error.message : '장소 삭제에 실패했습니다.');
+      // 성공 Toast 표시
+      showToast('장소가 웨이포인트에서 삭제되었습니다!', 'success');
+    } catch {
+      showToast('장소 삭제에 실패했습니다.', 'error');
     }
   };
 
@@ -314,6 +346,18 @@ export default function WaypointDetailPage() {
       {/* Header */}
       <Header title="웨이포인트 상세" showBackButton={true} />
 
+      {/* Toast Notification */}
+      {toast && (
+        <div className="fixed top-4 left-0 right-0 z-50 p-4">
+          <Notification
+            type={toast.type}
+            onClose={() => setToast(null)}
+          >
+          {toast.message}
+          </Notification>
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex-1 pt-6 bg-white flex flex-col min-h-0">
         {/* 웨이포인트 제목 */}
@@ -337,23 +381,26 @@ export default function WaypointDetailPage() {
             <div className="flex items-center gap-4">
               {!isReorderMode ? (
                 <>
-                  <button 
-                    onClick={toggleAllSelection}
-                    className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center"
-                  >
-                    {isAllSelected && (
-                      <Image 
-                        src="/images/common/checkbox.svg"
-                        alt="checked"
-                        width={20}
-                        height={20}
-                      />
-                    )}
-                  </button>
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-700 text-base font-pretendard font-normal leading-[22.4px]">전체</span>
-                    <span className="text-brand-500 text-base font-pretendard font-normal leading-[22.4px]">{waypointData.waypointInfoResponse.length}</span>
-                  </div>
+              <button 
+                onClick={toggleAllSelection}
+                disabled={isDragging}
+                className={`w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center ${
+                  isDragging ? 'opacity-50 cursor-not-allowed' : 'hover:border-gray-400'
+                }`}
+              >
+                {isAllSelected && (
+                  <Image 
+                    src="/images/common/checkbox.svg"
+                    alt="checked"
+                    width={20}
+                    height={20}
+                  />
+                )}
+              </button>
+              <div className="flex items-center gap-1">
+                <span className="text-gray-700 text-base font-pretendard font-normal leading-[22.4px]">전체</span>
+                <span className="text-brand-500 text-base font-pretendard font-normal leading-[22.4px]">{waypointData.waypointInfoResponse.length}</span>
+              </div>
                 </>
               ) : (
                 <div className="flex items-center">
@@ -364,53 +411,89 @@ export default function WaypointDetailPage() {
             {!isReorderMode && (
               <button 
                 onClick={toggleReorderMode}
-                className="flex items-center gap-2"
+                disabled={isDragging}
+                className={`flex items-center gap-2 ${isDragging ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span className="text-gray-700 text-sm font-pretendard font-normal">순서변경</span>
-                <Image
-                  src="/images/common/align.svg"
-                  alt="align"
-                  width={20}
-                  height={20}
-                />
+              <Image
+                src="/images/common/align.svg"
+                alt="align"
+                width={20}
+                height={20}
+              />
               </button>
             )}
           </div>
 
           {/* 장소 목록 */}
           <div className="flex-1 flex flex-col">
-            {isReorderMode ? (
-              <DragDropContext onDragEnd={handleDragEnd}>
-                <Droppable droppableId="waypoint-items">
+            {isReorderMode && reorderedItems && reorderedItems.length > 0 ? (
+              (() => {
+                console.log('Rendering DragDropContext with items:', reorderedItems.map(item => ({ id: item.itemId, name: item.name })));
+                return (
+                  <DragDropContext 
+                    onDragStart={handleDragStart} 
+                    onDragEnd={handleDragEnd}
+                  >
+                <Droppable 
+                  droppableId={`waypoint-items-${waypointId}`} 
+                  direction="vertical"
+                >
                   {(provided: DroppableProvided) => (
                     <div 
                       {...provided.droppableProps} 
                       ref={provided.innerRef}
-                      className="flex-1 flex flex-col"
+                      className="flex-1 flex flex-col min-h-0"
+                      style={{ minHeight: '200px' }}
                     >
-                      {reorderedItems.map((item, index) => (
-                        <Draggable key={item.itemId} draggableId={item.itemId.toString()} index={index}>
+                      {reorderedItems.map((item, index) => {
+                        const draggableId = `item-${item.itemId}`;
+                        console.log('Rendering draggable item:', { draggableId, index, itemId: item.itemId, name: item.name });
+                        return (
+                          <Draggable 
+                            key={draggableId} 
+                            draggableId={draggableId} 
+                            index={index}
+                            isDragDisabled={false}
+                          >
                           {(provided: DraggableProvided, snapshot: DraggableStateSnapshot) => (
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              className={`w-full px-6 py-3 bg-white flex items-center gap-4 ${
-                                snapshot.isDragging ? 'shadow-lg' : ''
+                              className={`w-full px-6 py-3 bg-white flex items-center gap-4 border border-gray-200 rounded-lg transition-all duration-200 ${
+                                snapshot.isDragging ? 'shadow-2xl bg-blue-50 border-blue-300 transform rotate-2 scale-105' : 'hover:bg-gray-50'
                               }`}
+                              style={{ 
+                                ...provided.draggableProps.style,
+                                touchAction: 'none',
+                                WebkitUserSelect: 'none',
+                                userSelect: 'none',
+                                minHeight: '100px'
+                              }}
                             >
-                              {/* 드래그 핸들 */}
+                              {/* 드래그 핸들 아이콘 */}
                               <div 
                                 {...provided.dragHandleProps}
-                                className="w-5 h-5 flex items-center justify-center cursor-move"
+                                className={`w-8 h-8 flex items-center justify-center cursor-move rounded p-2 touch-manipulation transition-all duration-200 ${
+                                  snapshot.isDragging ? 'bg-blue-200 scale-110' : 'hover:bg-gray-100'
+                                }`}
+                                style={{ 
+                                  touchAction: 'none',
+                                  WebkitUserSelect: 'none',
+                                  userSelect: 'none',
+                                  minWidth: '32px',
+                                  minHeight: '32px'
+                                }}
                               >
-                                <Image 
+                                <Image
                                   src="/images/common/align.svg"
-                                  alt="drag"
-                                  width={20}
-                                  height={20}
+                                  alt="align"
+                                  width={24}
+                                  height={24}
+                                  className="opacity-70 pointer-events-none"
                                 />
                               </div>
-                
+                              
                               {/* 장소 정보 컨테이너 */}
                               <div className="flex-1 flex items-start">
                                 {/* 장소 이미지들 */}
@@ -459,79 +542,85 @@ export default function WaypointDetailPage() {
                               </div>
                             </div>
                           )}
-                        </Draggable>
-                      ))}
+                          </Draggable>
+                        );
+                      })}
                       {provided.placeholder}
                     </div>
                   )}
                 </Droppable>
-              </DragDropContext>
+                  </DragDropContext>
+                );
+              })()
             ) : (
               /* 일반 모드 */
               waypointData.waypointInfoResponse.map((item) => (
-                <div key={item.itemId} className="w-full px-6 py-3 bg-white flex items-center gap-4">
-                  {/* 체크박스 */}
-                  <button 
-                    onClick={() => toggleItemSelection(item.itemId)}
-                    className="w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center"
-                  >
-                    {selectedItems.has(item.itemId) && (
-                      <Image 
-                        src="/images/common/checkbox.svg"
-                        alt="checked"
-                        width={20}
-                        height={20}
+              <div key={item.itemId} className="w-full px-6 py-3 bg-white flex items-center gap-4">
+                {/* 체크박스 */}
+                <button 
+                  onClick={() => toggleItemSelection(item.itemId)}
+                  disabled={isDragging}
+                  className={`w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center ${
+                    isDragging ? 'opacity-50 cursor-not-allowed' : 'hover:border-gray-400'
+                  }`}
+                >
+                  {selectedItems.has(item.itemId) && (
+                    <Image 
+                      src="/images/common/checkbox.svg"
+                      alt="checked"
+                      width={20}
+                      height={20}
+                    />
+                  )}
+                </button>
+                
+                {/* 장소 정보 컨테이너 */}
+                <div className="flex-1 flex items-start">
+                  {/* 장소 이미지들 */}
+                  {itemImageUrls[item.itemId] ? (
+                    <div className="w-[75px] h-[75px] rounded-lg border border-gray-200 overflow-hidden">
+                      <Image
+                        src={itemImageUrls[item.itemId]}
+                        alt={item.name}
+                        width={75}
+                        height={75}
+                        className="w-full h-full object-cover"
                       />
-                    )}
-                  </button>
-                  
-                  {/* 장소 정보 컨테이너 */}
-                  <div className="flex-1 flex items-start">
-                    {/* 장소 이미지들 */}
-                    {itemImageUrls[item.itemId] ? (
-                      <div className="w-[75px] h-[75px] rounded-lg border border-gray-200 overflow-hidden">
-                        <Image
-                          src={itemImageUrls[item.itemId]}
-                          alt={item.name}
-                          width={75}
-                          height={75}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-[75px] h-[75px] bg-gray-200 rounded-lg border border-gray-200 flex items-center justify-center">
-                        <span className="text-gray-500 text-xs">이미지</span>
-                      </div>
-                    )}
-                    <div className="w-[13.04px] h-[13.04px] rounded-lg" />
-                    
-                    {/* 장소 텍스트 정보 */}
-                    <div className="flex-1 flex flex-col gap-1">
-                      {/* 장소명 */}
-                      <div className="flex flex-col">
-                        <div className="text-gray-700 text-base font-pretendard font-normal leading-[22.4px]">
-                          {item.name}
-                        </div>
-                      </div>
-                      
-                      {/* 장소 주소 */}
-                      <div className="w-full text-[#767676] text-xs font-pretendard font-normal break-words">
-                        {item.address}
-                      </div>
-                      
-                      {/* 메모 (조건부 렌더링) */}
-                      {item.memo && (
-                        <div className="flex items-center mt-2">
-                          <span className="text-gray-500 text-sm font-pretendard font-normal leading-[19.6px]">메모</span>
-                          <span className="text-gray-500 text-sm font-pretendard font-normal leading-[19.6px] mx-1">ㅣ</span>
-                          <span className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">
-                            {item.memo}
-                          </span>
-                        </div>
-                      )}
                     </div>
+                  ) : (
+                    <div className="w-[75px] h-[75px] bg-gray-200 rounded-lg border border-gray-200 flex items-center justify-center">
+                      <span className="text-gray-500 text-xs">이미지</span>
+                    </div>
+                  )}
+                  <div className="w-[13.04px] h-[13.04px] rounded-lg" />
+                  
+                  {/* 장소 텍스트 정보 */}
+                  <div className="flex-1 flex flex-col gap-1">
+                    {/* 장소명 */}
+                    <div className="flex flex-col">
+                      <div className="text-gray-700 text-base font-pretendard font-normal leading-[22.4px]">
+                        {item.name}
+                      </div>
+                    </div>
+                    
+                    {/* 장소 주소 */}
+                      <div className="w-full text-gray text-xs font-pretendard font-normal break-words">
+                      {item.address}
+                    </div>
+                    
+                    {/* 메모 (조건부 렌더링) */}
+                    {item.memo && (
+                      <div className="flex items-center mt-2">
+                        <span className="text-gray-500 text-sm font-pretendard font-normal leading-[19.6px]">메모</span>
+                        <span className="text-gray-500 text-sm font-pretendard font-normal leading-[19.6px] mx-1">ㅣ</span>
+                        <span className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">
+                          {item.memo}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
+              </div>
               ))
             )}
           </div>
@@ -545,14 +634,24 @@ export default function WaypointDetailPage() {
             {/* 옮겨담기 버튼 */}
             <button 
               onClick={handleMoveItems}
-              className="flex-1 py-4 bg-gray-100 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center"
+              disabled={isDragging}
+              className={`flex-1 py-4 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center ${
+                isDragging 
+                  ? 'bg-gray-200 cursor-not-allowed' 
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
             >
               <span className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">옮겨담기</span>
             </button>
             {/* 삭제하기 버튼 */}
             <button 
               onClick={handleDeleteItems}
-              className="flex-1 py-4 bg-brand-500 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center"
+              disabled={isDragging}
+              className={`flex-1 py-4 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center ${
+                isDragging 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-brand-500 hover:bg-brand-600'
+              }`}
             >
               <span className="text-white text-sm font-pretendard font-semibold leading-[19.6px]">삭제하기</span>
             </button>
@@ -561,11 +660,15 @@ export default function WaypointDetailPage() {
           /* 순서 변경 완료 버튼 */
           <button 
             onClick={handleReorderComplete}
-            disabled={isUpdating}
-            className="flex-1 py-4 bg-brand-500 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center disabled:opacity-50"
+            disabled={isUpdating || isDragging}
+            className={`flex-1 py-4 rounded-lg shadow-[2px_4px_8px_rgba(0,0,0,0.08)] flex items-center justify-center ${
+              isDragging 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-brand-500 hover:bg-brand-600'
+            } disabled:opacity-50`}
           >
             <span className="text-white text-sm font-pretendard font-semibold leading-[19.6px]">
-              {isUpdating ? '변경 중...' : '변경 완료'}
+              {isDragging ? '드래그 중...' : isUpdating ? '변경 중...' : '변경 완료'}
             </span>
           </button>
         ) : (
@@ -578,6 +681,7 @@ export default function WaypointDetailPage() {
           </button>
         )}
       </div>
+
     </div>
   );
 }

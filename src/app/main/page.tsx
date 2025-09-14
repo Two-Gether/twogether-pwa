@@ -7,6 +7,9 @@ import MainHeader from '../../components/MainHeader';
 import Footer from '../../components/Footer';
 import RecommendationCard, { Recommendation } from '../../components/RecommendationCard';
 import Notification from '@/components/ui/Notification';
+import ScheduleCard from '@/components/ui/ScheduleCard';
+import { getCurrentMonthRange, getDaysDifference, formatDateToKorean } from '@/utils/dateUtils';
+import { DiaryMonthOverviewResponse } from '@/types/diary';
 import Image from 'next/image';
 
 export default function MainPage() {
@@ -17,10 +20,41 @@ export default function MainPage() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [schedules, setSchedules] = useState<DiaryMonthOverviewResponse[]>([]);
+  const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
 
   // 주소에서 괄호 부분 제거하는 함수
   const removeParentheses = (address: string): string => {
     return address.replace(/\s*\([^)]*\)/g, '').trim();
+  };
+
+  // 일정 데이터 가져오기
+  const fetchSchedules = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      setIsLoadingSchedules(true);
+      const { startDate, endDate } = getCurrentMonthRange();
+      
+      const response = await fetch(`/api/diary?startDate=${startDate}&endDate=${endDate}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('일정 데이터를 가져오는데 실패했습니다.');
+      }
+
+      const data = await response.json();
+      setSchedules(data.diaryMonthOverviewResponses || []);
+    } catch (error) {
+      console.error('일정 데이터 로딩 에러:', error);
+      setSchedules([]);
+    } finally {
+      setIsLoadingSchedules(false);
+    }
   };
 
   const refreshUserInfo = useCallback(async () => {
@@ -103,9 +137,11 @@ export default function MainPage() {
     // 추천 데이터 불러오기
     fetchRecommendations();
     
+    // 일정 데이터 불러오기
+    fetchSchedules();
+    
     // 파트너 ID가 null인 경우 매칭 페이지로 리다이렉트
     if (user && user.partnerId === null) {
-      console.log('파트너 ID가 null이므로 connect 페이지로 이동');
       router.push('/connect');
     }
   }, [isAuthenticated, user, router, searchParams]);
@@ -115,7 +151,6 @@ export default function MainPage() {
     const handleBeforeUnload = () => {
       // 페이지를 떠날 때만 새로고침
       if (isAuthenticated) {
-        console.log('Main 페이지 새로고침 - 사용자 정보 새로고침');
         refreshUserInfo();
       }
     };
@@ -252,70 +287,53 @@ export default function MainPage() {
           </div>
         )}
 
-        {/* Upcoming Schedule Section */}
-        <div className="mb-6 mt-28">
+        <div className="mb-6 mt-20">
           <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
             다가오는 데이트 일정
           </h2>
-
           <div className="space-y-3">
-            {/* Schedule Item 1 */}
-            <div className="p-4 bg-gray-100 rounded-lg border border-gray-300">
-              <div className="flex justify-between items-center mb-1">
-                <div className="flex items-center gap-1">
-                  <span className="text-base text-gray-700 font-pretendard font-semibold leading-[19.20px]">
-                    일정 제목
-                  </span>
-                  <div className="px-2 bg-brand-500 rounded-full w-10 flex items-center justify-center">
-                    <span className="text-xs text-white font-pretendard font-semibold leading-[16.80px]">
-                      D-5
-                    </span>
+            {isLoadingSchedules ? (
+              <div className="p-4 bg-gray-100 rounded-lg border border-gray-300 text-center">
+                <span className="text-gray-500">일정을 불러오는 중...</span>
+              </div>
+            ) : schedules.length > 0 ? (
+              schedules.map((schedule, index) => (
+                <ScheduleCard
+                  key={index}
+                  title={schedule.title}
+                  dateRange={`${formatDateToKorean(schedule.startDate)} ~ ${formatDateToKorean(schedule.endDate)}`}
+                  daysLeft={Math.max(0, getDaysDifference(schedule.startDate))}
+                  onClick={() => {
+                    // 캘린더 페이지로 이동
+                    router.push('/calendar');
+                  }}
+                />
+              ))
+              ) : (
+                <div 
+                  className="p-4 bg-gray-100 rounded-lg border border-gray-300 text-center cursor-pointer hover:bg-gray-200 transition-colors"
+                  onClick={() => router.push('/calendar')}
+                >
+                  <div className="flex items-center justify-center gap-2">
+                    <span className="text-gray-500">데이트 일정이 없어요!</span>
+                    <Image 
+                      src="/images/common/arrowTop.svg"
+                      alt="arrow"
+                      width={12}
+                      height={12}
+                      className="transform rotate-90"
+                    />
+                  </div>
+                  <div className="text-sm text-gray-700 mt-1">
+                    데이트 일정을 짜볼까요?
                   </div>
                 </div>
-                <Image 
-                    src="/images/common/arrowTop.svg"
-                    alt="arrow"
-                    width={12}
-                    height={12}
-                    className="transform rotate-90"
-                  />
-              </div>
-              <div className="text-sm text-gray-500 font-pretendard font-normal leading-[19.60px]">
-                2025/03/18(목) ~ 2025/03/18(목)
-              </div>
-            </div>
-
-            {/* Schedule Item 2 */}
-            <div className="p-4 bg-gray-100 rounded-lg border border-gray-300">
-              <div className="flex justify-between items-center mb-1">
-                <div className="flex items-center gap-1">
-                  <span className="text-base text-gray-700 font-pretendard font-semibold leading-[19.20px]">
-                    일정 제목
-                  </span>
-                  <div className="px-2 bg-brand-500 rounded-full w-10 flex items-center justify-center">
-                    <span className="text-xs text-white font-pretendard font-semibold leading-[16.80px]">
-                      D-7
-                    </span>
-                  </div>
-                </div>
-                <Image 
-                    src="/images/common/arrowTop.svg"
-                    alt="arrow"
-                    width={12}
-                    height={12}
-                    className="transform rotate-90"
-                  />
-              </div>
-              <div className="text-sm text-gray-500 font-pretendard font-normal leading-[19.60px]">
-                2025/03/18(목) ~ 2025/03/18(목)
-              </div>
-            </div>
+              )}
           </div>
         </div>
 
-
         {/* Today's Recommendations */}
-        <div className="mb-6 mt-12">
+        <div className="mb-6 mt-16">
           <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
             오늘의 추천 장소/행사
           </h2>

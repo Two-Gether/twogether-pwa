@@ -111,7 +111,7 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
     
     if (!placeResult || !placeResult.photos || placeResult.photos.length === 0) {
       console.log('해당 장소의 이미지를 찾을 수 없습니다:', placeName);
-      return '';
+      return '/images/illust/cats/backgroundCat.png';
     }
 
     // 첫 번째 사진을 대표사진으로 사용
@@ -122,6 +122,6 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
     return imageUrl;
   } catch (error) {
     console.error('장소 이미지 가져오기 에러:', error);
-    return '';
+    return '/images/illust/cats/backgroundCat.png';
   }
 }

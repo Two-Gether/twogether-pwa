@@ -180,9 +180,8 @@ export default function CreateEventPage() {
         const imageResults = await Promise.all(imagePromises);
         const imageUrlMap: Record<number, string> = {};
         imageResults.forEach(({ itemId, imageUrl }) => {
-          if (imageUrl) {
-            imageUrlMap[itemId] = imageUrl;
-          }
+          // 이미지 URL이 있으면 사용하고, 없으면 기본 이미지 사용
+          imageUrlMap[itemId] = imageUrl || '/images/illust/cats/backgroundCat.png';
         });
         setItemImageUrls(imageUrlMap);
       }

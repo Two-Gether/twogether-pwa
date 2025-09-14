@@ -148,6 +148,7 @@ function DetailPageContent() {
         getPlaceImageUrl(placeName).then(imageUrl => {
           setPlaceImageUrl(imageUrl);
         }).catch(() => {
+          setPlaceImageUrl('/images/illust/cats/backgroundCat.png');
         });
       }
     } else {

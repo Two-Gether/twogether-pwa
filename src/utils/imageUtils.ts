@@ -79,8 +79,7 @@ export const convertHEICToJPEG = async (file: File): Promise<File> => {
     });
 
     return convertedFile;
-  } catch (error) {
-    console.error('HEIC 변환 실패:', error);
+  } catch {
     throw new Error('HEIC 파일 변환에 실패했습니다.');
   }
 };
@@ -100,7 +99,6 @@ export const getAddressFromGPS = async (latitude: number, longitude: number): Pr
     );
     
     if (!response.ok) {
-      console.log('[getAddressFromGPS] Kakao API 실패');
       return null;
     }
     
@@ -108,15 +106,59 @@ export const getAddressFromGPS = async (latitude: number, longitude: number): Pr
     if (data.documents && data.documents.length > 0) {
       const address = data.documents[0].address;
       const addressName = `${address.region_1depth_name} ${address.region_2depth_name} ${address.region_3depth_name}`;
-      console.log('✅ 주소 변환 성공:', addressName);
       return addressName;
     }
     
     return null;
-  } catch (error) {
-    console.log('[getAddressFromGPS] 주소 변환 실패:', error);
+  } catch {
     return null;
   }
+};
+
+// 이미지 압축 함수
+const compressImage = async (file: File, maxWidth: number = 1920, quality: number = 0.8): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
+    
+    img.onload = () => {
+      // 원본 비율 유지하면서 최대 크기로 조정
+      let { width, height } = img;
+      
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+      
+      canvas.width = width;
+      canvas.height = height;
+      
+      // 이미지 그리기
+      ctx?.drawImage(img, 0, 0, width, height);
+      
+      // JPEG로 압축하여 Blob 생성
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            // File 객체로 변환
+            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(compressedFile);
+          } else {
+            reject(new Error('이미지 압축 실패'));
+          }
+        },
+        'image/jpeg',
+        quality
+      );
+    };
+    
+    img.onerror = () => reject(new Error('이미지 로드 실패'));
+    img.src = URL.createObjectURL(file);
+  });
 };
 
 // 통합 이미지 처리 함수
@@ -135,18 +177,20 @@ export const handleImageUpload = async (file: File): Promise<ProcessedImageResul
   if (file.type === 'image/heic' || file.type === 'image/heif') {
     try {
       processedFile = await convertHEICToJPEG(file);
-    } catch (error) {
-      console.error('HEIC 변환 실패:', error);
+    } catch {
       throw new Error('HEIC 파일 변환에 실패했습니다.');
     }
   } else {
-    // PNG/JPEG 파일인 경우 메타데이터 추출
-    console.log('PNG/JPEG 파일 처리 중:', file.name, file.type);
     exifData = await extractEXIFData(file);
   }
   
+  // 모든 이미지 파일에 대해 압축 적용
+  try {
+    processedFile = await compressImage(processedFile);
+  } catch {
+  }
+  
   // 미리보기 생성
-  console.log('미리보기 생성 중:', processedFile.name, processedFile.type);
   const preview = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {

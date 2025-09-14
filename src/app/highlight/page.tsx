@@ -68,7 +68,7 @@ export default function HighlightUploadPage() {
       
       try {
         // 1. 이미지 처리 (EXIF 데이터 추출 등)
-        const { file: processedFile, preview, exifData, address } = await handleImageUpload(file);
+        const { file: processedFile, preview, address } = await handleImageUpload(file);
         
         // 2. 서버에 이미지 업로드 (압축 포함)
         const uploadResult = await uploadImage(processedFile);
@@ -113,26 +113,75 @@ export default function HighlightUploadPage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // 선택된 태그를 키워드로 변환 (최대 2개)
-    const selectedKeywords = selectedTags
-      .map(tag => tagToKeywordMap[tag])
-      .filter(Boolean) // undefined 제거
-      .slice(0, 2); // 최대 2개로 제한
+    if (formData.photos.length === 0) {
+      alert('사진을 선택해주세요.');
+      return;
+    }
     
-    // 실제 API로 보낼 데이터 구조
-    const apiData = {
-      imageUrl: formData.photos.length > 0 ? formData.photos[0].serverUrl || formData.photos[0].preview : "", // 서버 URL 우선, 없으면 preview URL
-      name: formData.address.split(' ')[0] || formData.address, // 주소에서 첫 번째 단어를 이름으로 사용 (임시)
-      address: formData.address,
-      description: formData.description,
-      tags: selectedKeywords.map(keyword => keyword.toUpperCase()) // 대문자로 변환
-    };
-
-    // TODO: 실제 API 호출 구현
-    // console.log('API 데이터:', apiData);
+    try {
+      setIsUploading(true);
+      
+      // 선택된 태그를 그대로 사용 (API에서 요구하는 형식)
+      const selectedTagsForApi = selectedTags.slice(0, 2); // 최대 2개로 제한
+      
+      // 메타데이터 JSON 생성
+      const metaData = {
+        name: formData.address.split(' ')[0] || formData.address, // 주소에서 첫 번째 단어를 이름으로 사용
+        address: formData.address,
+        description: formData.description,
+        tags: selectedTagsForApi
+      };
+      
+      console.log('📤 전송할 메타데이터:', metaData);
+      console.log('📤 전송할 이미지 파일:', {
+        name: formData.photos[0].file.name,
+        type: formData.photos[0].file.type,
+        size: formData.photos[0].file.size
+      });
+      
+      // multipart/form-data 생성
+      const formDataToSend = new FormData();
+      formDataToSend.append('meta', JSON.stringify(metaData));
+      formDataToSend.append('image', formData.photos[0].file); // 실제 파일 객체
+      
+      // FormData 내용 확인
+      console.log('📤 FormData 내용:');
+      for (const [key, value] of formDataToSend.entries()) {
+        if (key === 'meta') {
+          console.log(`  ${key}:`, JSON.parse(value as string));
+        } else {
+          console.log(`  ${key}:`, value);
+        }
+      }
+      
+      // API 호출
+      const response = await fetch('/api/place', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formDataToSend
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('하이라이트가 성공적으로 등록되었습니다!');
+        // 성공 시 메인 페이지로 이동
+        router.push('/main');
+      } else {
+        alert(`등록 실패: ${result.error || '알 수 없는 오류가 발생했습니다.'}`);
+      }
+      
+    } catch (error) {
+      console.error('하이라이트 등록 에러:', error);
+      alert('하이라이트 등록 중 오류가 발생했습니다.');
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const isFormValid = formData.address && formData.photos.length > 0 && !isUploading;
