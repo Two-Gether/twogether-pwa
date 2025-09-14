@@ -18,15 +18,7 @@ export async function POST(
     const accessToken = authHeader.replace('Bearer ', '');
     const { id: waypointId } = await params;
     const body = await request.json();
-    
-    console.log('웨이포인트 아이템 추가 요청 받음:');
-    console.log('waypointId:', waypointId);
-    console.log('요청 body:', JSON.stringify(body, null, 2));
 
-    // 실제 서버에 웨이포인트 아이템 추가 요청
-    console.log('실제 서버로 전송할 데이터:', JSON.stringify(body, null, 2));
-    console.log('서버 URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`);
-    
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
       method: 'POST',
       headers: {
@@ -37,8 +29,6 @@ export async function POST(
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error('웨이포인트 아이템 추가 실패:', response.status, errorText);
       return NextResponse.json(
         { error: `웨이포인트 아이템 추가 실패: ${response.status}` },
         { status: response.status }
@@ -47,8 +37,7 @@ export async function POST(
 
     const data = await response.json();
     return NextResponse.json(data);
-  } catch (error) {
-    console.error('웨이포인트 아이템 추가 에러:', error);
+  } catch {
     return NextResponse.json(
       { error: '웨이포인트 아이템 추가 중 오류가 발생했습니다.' },
       { status: 500 }
@@ -59,7 +48,7 @@ export async function POST(
 // 웨이포인트에서 아이템 삭제 (DELETE)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string; itemId: string }> }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('authorization');
@@ -72,25 +61,26 @@ export async function DELETE(
     }
 
     const accessToken = authHeader.replace('Bearer ', '');
-    const { id: waypointId, itemId: waypointItemId } = await params;
+    const { id: waypointId } = await params;
     const body = await request.json();
-    
-    console.log('웨이포인트 아이템 삭제 요청 받음:');
-    console.log('waypointId:', waypointId);
-    console.log('waypointItemId:', waypointItemId);
-    console.log('요청 body:', JSON.stringify(body, null, 2));
 
-    // 실제 서버에 웨이포인트 아이템 삭제 요청
-    console.log('실제 서버로 전송할 데이터:', JSON.stringify(body, null, 2));
-    console.log('서버 URL:', `${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items/${waypointItemId}`);
+    // 요청 본문에서 waypointItemIds 배열 추출
+    const { waypointItemIds } = body;
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items/${waypointItemId}`, {
+    if (!waypointItemIds || !Array.isArray(waypointItemIds)) {
+      return NextResponse.json(
+        { error: 'waypointItemIds 배열이 필요합니다.' },
+        { status: 400 }
+      );
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ waypointItemIds }),
     });
 
     if (!response.ok) {
@@ -102,12 +92,106 @@ export async function DELETE(
       );
     }
 
-    const data = await response.json();
+    // 응답이 비어있을 수 있으므로 안전하게 처리
+    const responseText = await response.text();
+    let data;
+    
+    if (responseText.trim()) {
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON 파싱 에러:', parseError);
+        return NextResponse.json(
+          { error: '서버 응답을 처리할 수 없습니다.' },
+          { status: 500 }
+        );
+      }
+    } else {
+      // 빈 응답인 경우 성공으로 처리
+      data = { success: true };
+    }
+    
     return NextResponse.json(data);
   } catch (error) {
     console.error('웨이포인트 아이템 삭제 에러:', error);
     return NextResponse.json(
       { error: '웨이포인트 아이템 삭제 중 오류가 발생했습니다.' },
+      { status: 500 }
+    );
+  }
+}
+
+// 웨이포인트 아이템 순서 변경 (PATCH)
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const authHeader = request.headers.get('authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: '인증 토큰이 필요합니다.' },
+        { status: 401 }
+      );
+    }
+
+    const accessToken = authHeader.replace('Bearer ', '');
+    const { id: waypointId } = await params;
+    const body = await request.json();
+
+    // 요청 본문에서 orderedIds 배열 추출
+    const { orderedIds } = body;
+    
+    if (!orderedIds || !Array.isArray(orderedIds)) {
+      return NextResponse.json(
+        { error: 'orderedIds 배열이 필요합니다.' },
+        { status: 400 }
+      );
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ orderedIds }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('웨이포인트 아이템 순서 변경 실패:', response.status, errorText);
+      return NextResponse.json(
+        { error: `웨이포인트 아이템 순서 변경 실패: ${response.status}` },
+        { status: response.status }
+      );
+    }
+
+    // 응답이 비어있을 수 있으므로 안전하게 처리
+    const responseText = await response.text();
+    let data;
+    
+    if (responseText.trim()) {
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('JSON 파싱 에러:', parseError);
+        return NextResponse.json(
+          { error: '서버 응답을 처리할 수 없습니다.' },
+          { status: 500 }
+        );
+      }
+    } else {
+      // 빈 응답인 경우 성공으로 처리
+      data = { success: true };
+    }
+    
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('웨이포인트 아이템 순서 변경 에러:', error);
+    return NextResponse.json(
+      { error: '웨이포인트 아이템 순서 변경 중 오류가 발생했습니다.' },
       { status: 500 }
     );
   }

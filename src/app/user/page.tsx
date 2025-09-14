@@ -244,7 +244,7 @@ export default function MyPage() {
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-1">
             <span className="text-xl text-gray-700 font-pretendard font-semibold">
-              {user?.nickname || '닉네임 없음'}
+              {user?.nickname || '닉네임'}
             </span>
             <Image 
               src="/images/common/like.svg"
@@ -253,7 +253,7 @@ export default function MyPage() {
               height={16}
             />
             <span className="text-xl text-gray-700 font-pretendard font-semibold">
-              {user?.partnerNickname || '닉네임 없음'}
+              {user?.partnerNickname || '닉네임'}
             </span>
           </div>
         </div>

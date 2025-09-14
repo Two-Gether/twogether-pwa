@@ -28,8 +28,6 @@ export async function addLocationToWaypoint(
   memo: string = ''
 ): Promise<AddWaypointItemResponse> {
   try {
-    console.log('웨이포인트 아이템 추가 시작:', { waypointId, locationInfo });
-    
     // 인증 토큰 확인
     const token = getAuthToken();
     if (!token) {
@@ -43,7 +41,6 @@ export async function addLocationToWaypoint(
 
     // 이미지 URL은 null로 설정 (API 호출용)
     const imageUrl = null;
-    console.log('이미지 URL 설정:', imageUrl);
 
     // 웨이포인트에 아이템 추가
     const requestData = {
@@ -69,7 +66,6 @@ export async function addLocationToWaypoint(
     if (!response.ok) {
       const errorData = await response.json();
       const errorMsg = errorData.error || '웨이포인트에 장소를 추가하는데 실패했습니다.';
-      console.error('웨이포인트 API 호출 실패:', errorMsg);
       return {
         success: false,
         message: errorMsg,
@@ -77,8 +73,6 @@ export async function addLocationToWaypoint(
     }
 
     const responseData = await response.json();
-    console.log('웨이포인트 아이템 추가 성공:', responseData);
-
     return {
       success: true,
       message: '웨이포인트에 장소가 성공적으로 추가되었습니다!',

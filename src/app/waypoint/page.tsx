@@ -5,6 +5,7 @@ import Footer from '@/components/Footer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import PlusIcon from '@/components/icons/PlusIcon';
+import Notification from '@/components/ui/Notification';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { getAuthToken } from '@/auth';
@@ -21,6 +22,7 @@ export default function WaypointPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [waypointToDelete, setWaypointToDelete] = useState<Waypoint | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showToast, setShowToast] = useState(false);
 
   // 웨이포인트 목록 조회
   const fetchWaypoints = async () => {
@@ -175,6 +177,12 @@ export default function WaypointPage() {
       setWaypointCount(prev => prev - 1);
       setShowDeleteModal(false);
       setWaypointToDelete(null);
+      
+      // Toast 표시
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+      }, 3000);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '웨이포인트 삭제에 실패했습니다.';
       alert(errorMessage);
@@ -223,7 +231,7 @@ export default function WaypointPage() {
           </h1>
           
           {/* Cat Image Container */}
-          <div className="absolute right-0 top-[-8px] w-[134px] h-[105px]">
+          <div className="absolute right-0 top-[-8px] w-[134px] h-[105px] z-5">
             <Image
               src="/images/illust/cats/playCat.png"
               alt="Play Cat"
@@ -235,7 +243,7 @@ export default function WaypointPage() {
         </div>
 
         {/* Add Waypoint Button */}
-        <div className="mb-4 flex-shrink-0 z-10">
+        <div className="mb-4 flex-shrink-0">
           <Button
             kind="functional"
             styleType="outline"
@@ -306,7 +314,7 @@ export default function WaypointPage() {
                         >
                           웨이포인트 삭제
                         </button>
-                        <div className="h-px bg-gray-300" />
+                        {/* <div className="h-px bg-gray-300" />
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -316,7 +324,7 @@ export default function WaypointPage() {
                           className="w-full px-4 py-3 text-left text-gray-700 hover:bg-gray-50"
                         >
                           공유하기
-                        </button>
+                        </button> */}
                       </div>
                     )}
                   </div>
@@ -330,40 +338,53 @@ export default function WaypointPage() {
         </div>
       </div>
 
+      {/* Toast Bar */}
+      {showToast && (
+        <div className="fixed top-2 left-0 right-0 z-50 p-4">
+          <Notification type="default" onClose={() => setShowToast(false)}>
+            웨이포인트가 삭제되었어요.
+          </Notification>
+        </div>
+      )}
+
       {/* Footer */}
       <Footer />
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && (
         <div 
-          className="absolute inset-0 flex items-center justify-center z-60 bg-black bg-opacity-50"
+          className="fixed inset-0 flex items-center justify-center z-60 bg-black bg-opacity-50"
           onClick={() => setShowDeleteModal(false)}
         >
           <div 
-            className="bg-white rounded-lg w-full max-w-md mx-4 p-6"
+            className="bg-white rounded-2xl w-full max-w-sm mx-4 p-5 shadow-[2px_4px_8px_rgba(0,0,0,0.08)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              웨이포인트 삭제
-            </h3>
-            <p className="text-gray-600 mb-6">
-              &ldquo;{waypointToDelete?.name}&rdquo; 웨이포인트를 삭제하시겠습니까?<br />
-              이 작업은 되돌릴 수 없습니다.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteModal(false)}
-                className="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
-              >
-                취소
-              </button>
-              <button
-                onClick={handleDeleteWaypoint}
-                disabled={isDeleting}
-                className="flex-1 px-4 py-2 text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-              >
-                {isDeleting ? '삭제 중...' : '삭제'}
-              </button>
+            <div className="flex flex-col items-center gap-7">
+              <div className="w-full flex flex-col items-center gap-5">
+                <h3 className="text-center text-gray-800 text-xl font-pretendard font-semibold">
+                  웨이포인트 삭제하기
+                </h3>
+                <p className="text-center text-gray-500 text-sm font-pretendard font-normal">
+                  삭제할 경우 등록되어있던 장소들도 삭제되며<br />
+                  한 번 삭제한 웨이포인트는 되돌릴 수 없습니다.
+                </p>
+              </div>
+              <div className="w-full flex gap-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="w-[107px] py-4 bg-gray-200 rounded-lg text-center text-gray-800 text-sm font-pretendard font-normal leading-[19.6px] hover:bg-gray-200 transition-colors"
+                >
+                  닫기
+                </button>
+                <button
+                  onClick={handleDeleteWaypoint}
+                  disabled={isDeleting}
+                  className="flex-1 py-4 bg-brand-500 rounded-lg text-center text-white text-sm font-pretendard font-semibold leading-[19.6px] hover:bg-[#FF5A73] transition-colors disabled:opacity-50"
+                >
+                  {isDeleting ? '삭제 중...' : '삭제하기'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

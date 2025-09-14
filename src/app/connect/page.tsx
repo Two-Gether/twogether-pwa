@@ -13,7 +13,6 @@ export default function ConnectPage() {
   const [partnerCode, setPartnerCode] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [isClient, setIsClient] = useState(false);
   const [myPartnerCode, setMyPartnerCode] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -27,11 +26,22 @@ export default function ConnectPage() {
     type: 'success'
   });
   const router = useRouter();
-  const { user, accessToken, updateUser, login } = useAuthStore();
+  const { user, accessToken, updateUser } = useAuthStore();
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // 페이지 로드 시 사용자 정보 확인
+  useEffect(() => {
+    if (!isClient || !accessToken || !user) return;
+    
+    // 파트너가 이미 연결되어 있으면 main 페이지로 이동
+    if (user.partnerId) {
+      console.log('이미 파트너가 연결되어 있습니다. main 페이지로 이동합니다.');
+      router.push('/main');
+    }
+  }, [isClient, accessToken, user, router]);
 
   // Toast 표시 함수
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -122,12 +132,11 @@ export default function ConnectPage() {
 
   const handleConnectPartner = () => {
     if (!partnerCode.trim()) {
-      setErrorMessage('파트너 코드를 입력해주세요.');
+      showToast('파트너 코드를 입력해주세요.', 'error');
       return;
     }
 
     setIsLoading(true);
-    setErrorMessage('');
 
     fetch(`/api/partner/connect?code=${partnerCode}`, {
       method: 'POST',
@@ -176,7 +185,6 @@ export default function ConnectPage() {
     .catch(error => {
       console.log(error);
       const errorMsg = error.message || '연인 연동에 실패했어요.';
-      setErrorMessage(errorMsg);
       
       // 실패 Toast 표시
       showToast(errorMsg, 'error');
@@ -184,30 +192,47 @@ export default function ConnectPage() {
     .finally(() => setIsLoading(false));
   };
 
-  const handleRefreshToken = async () => {
-    if (!user) {
+  const handleRefreshUserInfo = async () => {
+    if (!accessToken) {
       alert('로그인이 필요합니다.');
       return;
     }
     try {
       setIsRefreshing(true);
-      const res = await fetch('/api/token/refresh', {
-        method: 'POST',
+      const res = await fetch('/api/member/me', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
       });
+      
       if (!res.ok) {
-        alert(`재발급 실패 (${res.status})`);
+        alert(`사용자 정보 조회 실패 (${res.status})`);
         return;
       }
-      const data = await res.json();
-      const newToken = data.accessToken || data.token || data.data?.accessToken;
-      if (!newToken) {
-        alert('재발급 토큰이 없습니다.');
-        return;
+      
+      const userData = await res.json();
+      console.log('=== 사용자 정보 새로고침 ===');
+      console.log('받아온 사용자 정보:', userData);
+      
+      // 사용자 정보 업데이트
+      updateUser(userData);
+      
+      // 파트너 아이디가 있으면 자동으로 main 페이지로 이동
+      if (userData.partnerId) {
+        console.log('파트너가 연결되어 있습니다. main 페이지로 이동합니다.');
+        showToast('파트너가 이미 연결되어 있습니다!', 'success');
+        setTimeout(() => {
+          router.push('/main');
+        }, 1500);
+      } else {
+        console.log('파트너가 연결되지 않았습니다.');
+        showToast('사용자 정보가 새로고침되었습니다.', 'success');
       }
-      login({ user, accessToken: newToken });
-      alert('토큰이 재발급되었습니다.');
-    } catch {
-      alert('토큰 재발급 중 오류가 발생했습니다.');
+    } catch (error) {
+      console.error('사용자 정보 조회 중 오류:', error);
+      alert('사용자 정보 조회 중 오류가 발생했습니다.');
     } finally {
       setIsRefreshing(false);
     }
@@ -320,16 +345,17 @@ export default function ConnectPage() {
         />
       </div>
       
-      {/* 토큰 재발급 키 - 오른쪽 하단 고정 */}
+      {/* 사용자 정보 새로고침 버튼 - 오른쪽 하단 고정 */}
       <button
-        onClick={handleRefreshToken}
+        onClick={handleRefreshUserInfo}
         disabled={isRefreshing}
         className="absolute bottom-6 right-6 mb-10 w-12 h-12 bg-brand-500 rounded-full flex items-center justify-center shadow-lg hover:bg-brand-600 transition-colors disabled:opacity-50 z-50"
+        title="사용자 정보 새로고침"
       >
         <div className="relative w-6 h-6">
           <Image 
             src="/images/common/reload.svg" 
-            alt="Reload" 
+            alt="사용자 정보 새로고침" 
             width={50} 
             height={50}
           />

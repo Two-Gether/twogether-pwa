@@ -18,6 +18,11 @@ export default function MainPage() {
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(true);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
+  // 주소에서 괄호 부분 제거하는 함수
+  const removeParentheses = (address: string): string => {
+    return address.replace(/\s*\([^)]*\)/g, '').trim();
+  };
+
   const refreshUserInfo = useCallback(async () => {
     try {
       const response = await fetch('/api/member/me', {
@@ -333,7 +338,9 @@ export default function MainPage() {
                   recommendation={recommendation}
                   onClick={(rec) => {
                     if (rec.fullAddress) {
-                      router.push(`/map?search=${encodeURIComponent(rec.fullAddress)}`);
+                      // 괄호 부분을 제거한 주소로 검색
+                      const cleanAddress = removeParentheses(rec.fullAddress);
+                      router.push(`/map?search=${encodeURIComponent(cleanAddress)}`);
                     } else if (rec.mapx && rec.mapy) {
                       // 좌표가 있는 경우 좌표로 검색
                       router.push(`/map?lat=${rec.mapy}&lng=${rec.mapx}`);

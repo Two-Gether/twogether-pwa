@@ -9,6 +9,7 @@ import { LocationInfo, PlaceSearchResult, GeocoderResult } from '@/types/map';
 import { Waypoint } from '@/types/waypoint';
 import { getAuthToken } from '@/auth';
 import { addLocationToWaypoint } from '@/services/waypointService';
+import Notification from '@/components/ui/Notification';
 
 const MapScreen = () => {
   const router = useRouter();
@@ -30,6 +31,29 @@ const MapScreen = () => {
   const [isMemoModalOpen, setIsMemoModalOpen] = useState(false);
   const [memoText, setMemoText] = useState('');
   const [selectedWaypointId, setSelectedWaypointId] = useState<number | null>(null);
+  const [toast, setToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'error';
+  }>({
+    show: false,
+    message: '',
+    type: 'success'
+  });
+
+  // Toast 표시 함수
+  const showToast = (message: string, type: 'success' | 'error') => {
+    setToast({
+      show: true,
+      message,
+      type
+    });
+    
+    // 1.5초 후 자동으로 숨기기
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 1500);
+  };
 
   // 사용자 현재 위치 가져오기
   const getUserLocation = useCallback(() => {
@@ -240,30 +264,15 @@ const MapScreen = () => {
       // 성공 시 모든 모달 닫기 및 성공 메시지
       setIsWaypointModalOpen(false);
       setIsMemoModalOpen(false);
-      alert(result.message);
+      showToast('웨이포인트 지정에 성공했습니다!', 'success');
       
       // 웨이포인트 목록 새로고침
       fetchWaypoints();
     } else {
       // 실패 시 에러 메시지 표시
-      alert(result.message);
+      showToast('웨이포인트 지정에 실패했습니다.', 'error');
     }
   }, [locationInfo, selectedWaypointId, memoText, fetchWaypoints]);
-
-  // 장소 정보 시트 닫기 함수
-  const closeLocationInfoSheet = useCallback(() => {
-    setIsLocationInfoSheetOpen(false);
-    // 완전히 사라지지 않고 접힌 상태로 유지
-  }, []);
-
-  // 장소 정보 시트 완전히 닫기 함수
-  const closeLocationInfoSheetCompletely = useCallback(() => {
-    setIsLocationInfoSheetOpen(false);
-    // 애니메이션 완료 후 locationInfo를 null로 설정
-    setTimeout(() => {
-      setLocationInfo(null);
-    }, 300);
-  }, []);
 
   // 검색 결과 항목 클릭 처리
   const handlePlaceClick = (place: PlaceSearchResult) => {
@@ -505,7 +514,7 @@ const MapScreen = () => {
               </button>
               <button 
                 onClick={toggleWaypointModal}
-                className="flex-1 py-4 bg-[#FF6B81] rounded-lg text-white text-sm font-semibold"
+                className="flex-1 py-4 bg-brand-500 rounded-lg text-white text-sm font-semibold"
               >
                 웨이포인트 지정
               </button>
@@ -672,6 +681,18 @@ const MapScreen = () => {
       <div className="absolute bottom-0 left-0 right-0 z-10">
         <Footer />
       </div>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed top-4 left-0 right-0 z-50 p-4">
+          <Notification
+            type={toast.type}
+            onClose={() => setToast(prev => ({ ...prev, show: false }))}
+          >
+            {toast.message}
+          </Notification>
+        </div>
+      )}
 
       <style jsx>{`
         .info_window__content {

@@ -366,22 +366,6 @@ export default function CreateEventPage() {
             
             {/* 웨이포인트 목록 */}
             <div className="flex flex-col">
-              {/* 웨이포인트 추가 */}
-              <div 
-                className="py-5 border-b border-gray-200 flex items-end gap-3 cursor-pointer hover:bg-gray-50"
-                onClick={handleAddWaypoint}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="text-brand-500 text-base font-pretendard font-normal leading-[22.4px]">
-                    웨이포인트 추가
-                  </div>
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-brand-500">
-                    <path d="M20.6272 12.3137H3.99977" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12.3135 4V20.6274" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                </div>
-              </div>
-              
               {/* 웨이포인트 목록 렌더링 */}
               {isLoadingWaypoints ? (
                 <div className="py-5 text-center text-gray-500">

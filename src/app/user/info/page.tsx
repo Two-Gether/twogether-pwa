@@ -114,6 +114,17 @@ export default function UserInfoPage() {
       
       <div className="flex-1 overflow-y-auto pb-20">
         <div className="px-6 py-4">
+           {/* 로그인 정보 섹션 */}
+           <div className="mb-6">
+            <h3 className="text-lg text-gray-700 font-pretendard font-semibold mb-4">로그인 정보</h3>
+            <div className="bg-white rounded-lg border border-gray-300">
+              <div className="py-3 px-4 border-b border-gray-100 flex justify-between items-center">
+                <span className="text-sm text-gray-600 font-pretendard">로그인 방식</span>
+                <span className="text-sm text-gray-800 font-pretendard">{getLoginPlatformText(userInfo?.loginPlatform || 'LOCAL')}</span>
+              </div>
+            </div>
+          </div>
+
           {/* 기본 정보 섹션 */}
           <div className="mb-6">
             <h3 className="text-lg text-gray-700 font-pretendard font-semibold mb-4">기본 정보</h3>
@@ -145,38 +156,8 @@ export default function UserInfoPage() {
             </div>
           </div>
 
-          {/* 로그인 정보 섹션 */}
-          <div className="mb-6">
-            <h3 className="text-lg text-gray-700 font-pretendard font-semibold mb-4">로그인 정보</h3>
-            <div className="bg-white rounded-lg border border-gray-300">
-              <div className="py-3 px-4 border-b border-gray-100 flex justify-between items-center">
-                <span className="text-sm text-gray-600 font-pretendard">로그인 방식</span>
-                <span className="text-sm text-gray-800 font-pretendard">{getLoginPlatformText(userInfo?.loginPlatform || 'LOCAL')}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 연인 정보 섹션 */}
-          <div className="mb-6">
-            <h3 className="text-lg text-gray-700 font-pretendard font-semibold mb-4">연인 정보</h3>
-            <div className="bg-white rounded-lg border border-gray-300">
-              <div className="py-3 px-4 border-b border-gray-300 flex justify-between items-center">
-                <span className="text-sm text-gray-600 font-pretendard">파트너 이름</span>
-                <span className="text-sm text-gray-800 font-pretendard">{formatValue(userInfo?.partnerName)}</span>
-              </div>
-              <div className="py-3 px-4 border-b border-gray-300 flex justify-between items-center">
-                <span className="text-sm text-gray-600 font-pretendard">파트너 닉네임</span>
-                <span className="text-sm text-gray-800 font-pretendard">{formatValue(userInfo?.partnerNickname)}</span>
-              </div>
-              <div className="py-3 px-4 flex justify-between items-center">
-                <span className="text-sm text-gray-600 font-pretendard">관계 시작일</span>
-                <span className="text-sm text-gray-800 font-pretendard">{formatValue(userInfo?.relationshipStartDate)}</span>
-              </div>
-            </div>
-          </div>
-
           {/* 회원 탈퇴 버튼 */}
-          <div className="mt-8">
+          <div className="mt-12">
             <Button
               kind="functional"
               styleType="fill"

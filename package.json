@@ -23,6 +23,7 @@
     "piexifjs": "^1.0.6",
     "postcss": "^8.5.6",
     "react": "19.1.0",
+    "react-beautiful-dnd": "^13.1.1",
     "react-dom": "19.1.0",
     "react-leaflet": "^5.0.0",
     "usestate": "^1.1.3",
