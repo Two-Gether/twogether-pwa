@@ -174,24 +174,8 @@ const MapScreenContent = () => {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await fetch('/api/waypoint', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        if (errorData.error) {
-          throw new Error(errorData.error);
-        } else {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-      }
-
-      const data = await response.json();
+      const { getWaypoints } = await import('@/api/waypoint');
+      const data = await getWaypoints();
       
       // 실제 서버 응답 구조에 맞게 처리
       if (data && data.waypointSummaryResponses && Array.isArray(data.waypointSummaryResponses)) {

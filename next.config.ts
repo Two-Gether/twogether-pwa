@@ -18,6 +18,8 @@ try {
 const nextConfig: NextConfig = {
   reactStrictMode: true, // Vercel 배포 시 권장
   swcMinify: true,       // 코드 압축 최적화
+  output: "export",
+
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
@@ -27,6 +29,7 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: "https",

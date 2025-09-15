@@ -96,7 +96,7 @@ export default function CreateEventPage() {
 
       console.log('일정 생성 요청:', requestData);
 
-      const response = await fetch('/api/diary', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
@@ -109,8 +109,6 @@ export default function CreateEventPage() {
         throw new Error('일정 생성에 실패했습니다.');
       }
 
-      console.log('일정 생성 성공');
-      
       // 성공 시 캘린더로 돌아가기
       router.push('/calendar');
     } catch (error) {

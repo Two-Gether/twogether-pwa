@@ -166,7 +166,7 @@ function HighlightUploadContent() {
       formDataToSend.append('image', formData.photos[0].file); // 실제 파일 객체
 
       // API 호출
-      const response = await fetch('/api/place', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${useAuthStore.getState().accessToken}`

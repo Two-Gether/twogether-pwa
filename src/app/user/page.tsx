@@ -30,7 +30,7 @@ export default function MyPage() {
 
   const handleLogout = useCallback(async () => {
     try {
-      await fetch('/api/member/logout', {
+      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/logout`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
@@ -61,7 +61,7 @@ export default function MyPage() {
 
   const refreshUserInfo = useCallback(async () => {
     try {
-      const response = await fetch('/api/member/me', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
@@ -87,7 +87,7 @@ export default function MyPage() {
 
   const handleUnlinkPartner = useCallback(async () => {
     try {
-      const response = await fetch('/api/member/me/partner', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me/partner`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
@@ -151,7 +151,7 @@ export default function MyPage() {
       try {
         setIsLoading(true);
         
-        const response = await fetch('/api/member/relationship-start-date', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/relationship-start-date`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -182,7 +182,7 @@ export default function MyPage() {
       try {
         setIsLoading(true);
         
-        const response = await fetch('/api/member/partner/nickname', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/nickname`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

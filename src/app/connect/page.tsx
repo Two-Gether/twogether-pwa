@@ -38,7 +38,6 @@ export default function ConnectPage() {
     
     // 파트너가 이미 연결되어 있으면 main 페이지로 이동
     if (user.partnerId) {
-      console.log('이미 파트너가 연결되어 있습니다. main 페이지로 이동합니다.');
       router.push('/main');
     }
   }, [isClient, accessToken, user, router]);
@@ -63,7 +62,7 @@ export default function ConnectPage() {
     
     const fetchPartnerCode = async () => {
       try {
-        const response = await fetch('/api/partner/code', {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/partner/code`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -138,7 +137,7 @@ export default function ConnectPage() {
 
     setIsLoading(true);
 
-    fetch(`/api/partner/connect?code=${partnerCode}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/partner/connect?code=${partnerCode}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
@@ -169,15 +168,7 @@ export default function ConnectPage() {
           partnerNickname: data.partnerNickname,
         };
         updateUser(updatedUser);
-        
-        // 파트너 ID 등록 확인 로그
-        console.log('=== 파트너 연결 성공 ===');
-        console.log('이전 사용자 정보:', user);
-        console.log('업데이트된 사용자 정보:', updatedUser);
-        console.log('파트너 ID:', data.partnerId);
-        console.log('파트너 닉네임:', data.partnerNickname);
-        console.log('========================');
-        
+
         // 성공 시 바로 main 페이지로 이동 (Toast는 main 페이지에서 표시)
         router.push('/main?success=partner_connected');
       }
@@ -199,7 +190,7 @@ export default function ConnectPage() {
     }
     try {
       setIsRefreshing(true);
-      const res = await fetch('/api/member/me', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,

@@ -37,7 +37,7 @@ function MainPageContent() {
       setIsLoadingSchedules(true);
       const { startDate, endDate } = getCurrentMonthRange();
       
-      const response = await fetch(`/api/diary?startDate=${startDate}&endDate=${endDate}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary?startDate=${startDate}&endDate=${endDate}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`
@@ -65,7 +65,7 @@ function MainPageContent() {
 
   const refreshUserInfo = useCallback(async () => {
     try {
-      const response = await fetch('/api/member/me', {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
@@ -77,8 +77,7 @@ function MainPageContent() {
       }
 
       const userData = await response.json();
-      console.log('Main 페이지 사용자 정보 새로고침 성공:', userData);
-      
+
       // Auth store 업데이트 (서버 응답의 myNickname을 nickname으로 매핑)
       const { updateUser } = useAuthStore.getState();
       updateUser({
@@ -97,8 +96,8 @@ function MainPageContent() {
   const fetchRecommendations = async () => {
     try {
       setIsLoadingRecommendations(true);
-      const response = await fetch('/api/recommendations');
-      const data = await response.json();
+      const { getRecommendations } = await import('@/api/tour');
+      const data = await getRecommendations();
       
       if (data.success) {
         setRecommendations(data.data);
@@ -118,14 +117,7 @@ function MainPageContent() {
       router.push('/login');
       return;
     }
-
-    // 디버깅용 로그
-    console.log('Main 페이지 사용자 정보:', {
-      user,
-      partnerId: user?.partnerId,
-      isAuthenticated
-    });
-
+    
     // 파트너 연결 성공 Toast 표시
     const successParam = searchParams.get('success');
     if (successParam === 'partner_connected') {

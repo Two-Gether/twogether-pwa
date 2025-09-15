@@ -63,7 +63,7 @@ export default function SignupPage() {
       return;
     }
     try {
-      const res = await fetch('/api/member/email/send', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/email/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -93,7 +93,7 @@ export default function SignupPage() {
     setIsVerifying(true);
     
     try {
-      const res = await fetch('/api/member/email/verify', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/email/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: verificationCode }),
@@ -139,7 +139,7 @@ export default function SignupPage() {
         ageRange: ageRange.match(/^(\d+)세/)?.[1] || "20" // 첫 번째 숫자만 추출
       };
 
-      const res = await fetch('/api/member/signup', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(signupData),

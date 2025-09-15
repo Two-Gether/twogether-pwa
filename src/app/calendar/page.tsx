@@ -52,7 +52,7 @@ const CalendarScreen = () => {
             setIsLoadingSchedules(true);
             const { startDate, endDate } = getCurrentMonthRange();
             
-            const response = await fetch(`/api/diary?startDate=${startDate}&endDate=${endDate}`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary?startDate=${startDate}&endDate=${endDate}`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${getAuthToken()}`

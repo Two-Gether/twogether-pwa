@@ -44,10 +44,18 @@ export function getGooglePlacePhotoUrl(photoReference: string, maxWidth: number 
 // 장소명으로 구글 플레이스 검색
 export async function searchGooglePlace(placeName: string): Promise<GooglePlaceSearchResult | null> {
   try {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      return null;
+    }
+
     const response = await fetch(
-      `/api/google-places/search?query=${encodeURIComponent(placeName)}`,
+      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(placeName)}&key=${apiKey}`,
       {
         method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         cache: 'no-store',
       }
     );
@@ -71,10 +79,18 @@ export async function searchGooglePlace(placeName: string): Promise<GooglePlaceS
 // 장소 ID로 구글 플레이스 상세 정보 가져오기
 export async function getGooglePlaceDetails(placeId: string): Promise<GooglePlaceDetails | null> {
   try {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      return null;
+    }
+
     const response = await fetch(
-      `/api/google-places/details?place_id=${placeId}`,
+      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=place_id,name,photos,formatted_address,geometry&key=${apiKey}`,
       {
         method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         cache: 'no-store',
       }
     );

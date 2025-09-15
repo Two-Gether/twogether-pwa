@@ -32,18 +32,13 @@ export const uploadImage = async (
     const formData = new FormData();
     formData.append('image', compressionResult.compressedFile);
 
-    // 3. 서버에 업로드
-    const response = await fetch('/api/upload/image', {
-      method: 'POST',
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || '업로드 실패');
+    // 3. S3에 업로드
+    const { uploadImageToS3 } = await import('@/api/upload');
+    const uploadData = await uploadImageToS3(compressionResult.compressedFile);
+    
+    if (!uploadData.success) {
+      throw new Error(uploadData.error || '업로드 실패');
     }
-
-    const uploadData = await response.json();
     return {
       success: true,
       imageUrl: uploadData.imageUrl,
@@ -113,20 +108,15 @@ export const uploadImageWithProgress = async (
     formData.append('image', compressionResult.compressedFile);
     onProgress(60); // 업로드 준비 완료
     
-    // 3. 서버에 업로드
-    const response = await fetch('/api/upload/image', {
-      method: 'POST',
-      body: formData,
-    });
+    // 3. S3에 업로드
+    const { uploadImageToS3 } = await import('@/api/upload');
+    const uploadData = await uploadImageToS3(compressionResult.compressedFile);
     
     onProgress(90); // 업로드 완료
     
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || '업로드 실패');
+    if (!uploadData.success) {
+      throw new Error(uploadData.error || '업로드 실패');
     }
-    
-    const uploadData = await response.json();
     onProgress(100); // 완료
     
     return {

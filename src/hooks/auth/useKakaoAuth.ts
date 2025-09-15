@@ -28,8 +28,8 @@ export const useKakaoAuth = () => {
     try {
       // 카카오 SDK를 통해 액세스 토큰을 받아옴
       const accessToken = await getKakaoAccessToken();
-      // 서버에 액세스 토큰을 전송하여 사용자 정보를 받아옴
-      const response = await fetch(`/api/auth/kakao`, {
+      // 서버에 액세스 토큰을 전송하여 사용자 정보를 받아옴 (외부 API 직접 호출)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/oauth/kakao`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

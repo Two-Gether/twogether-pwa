@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import { useKakaoAuth } from '@/hooks/auth/useKakaoAuth';
+import { loginApi } from '@/api/auth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -25,25 +26,13 @@ const LoginScreen = () => {
         }
         
         try {
-            const res = await fetch('/api/member/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            });
+            const data = await loginApi({ email, password });
 
-            if (!res.ok) {
-                const text = await res.text();
-                throw new Error(text || `HTTP ${res.status}`);
-            }
-
-            const data = await res.json();
-            console.log('Login success:', data);
-            
             // Auth store에 사용자 정보와 토큰 저장 (일반 로그인은 myNickname과 partnerNickname 사용)
             login({
                 user: {
                     memberId: data.memberId,
-                    nickname: data.myNickname, // 일반 로그인은 myNickname 사용
+                    nickname: data.myNickname ?? "", // 일반 로그인은 myNickname 사용
                     partnerId: data.partnerId,
                     partnerNickname: data.partnerNickname, // 일반 로그인은 partnerNickname 사용
                     relationshipStartDate: data.relationshipStartDate,

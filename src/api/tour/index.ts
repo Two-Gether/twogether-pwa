@@ -1,5 +1,3 @@
-import { NextResponse } from 'next/server';
-
 export interface Recommendation {
   id: string;
   title: string;
@@ -86,7 +84,7 @@ const getDateRange = () => {
 
 // 관광공사 API에서 데이터 가져오기
 const fetchTourismData = async (): Promise<Recommendation[]> => {
-  const apiKey = process.env.TOURISM_API_KEY;
+  const apiKey = process.env.NEXT_PUBLIC_TOURISM_API_KEY;
   
   if (!apiKey) {
     throw new Error('TOURISM_API_KEY가 설정되지 않았습니다.');
@@ -130,26 +128,26 @@ const fetchTourismData = async (): Promise<Recommendation[]> => {
   });
 };
 
-export async function GET() {
+export const getRecommendations = async (): Promise<{ success: boolean; data: Recommendation[]; count: number; error?: string }> => {
   try {
     // 한국관광공사 API에서 실제 데이터 가져오기
     const recommendations = await fetchTourismData();
     
-    return NextResponse.json({
+    return {
       success: true,
       data: recommendations,
       count: recommendations.length
-    });
+    };
     
   } catch (error) {
     console.error('추천 데이터 로딩 실패:', error);
     
     // API 실패 시 빈 배열 반환
-    return NextResponse.json({
+    return {
       success: true,
       data: [],
       count: 0,
       error: error instanceof Error ? error.message : '알 수 없는 오류'
-    });
+    };
   }
-}
+};

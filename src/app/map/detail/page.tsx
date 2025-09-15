@@ -83,36 +83,29 @@ function DetailPageContent() {
   const fetchHighlights = async (address: string) => {
     try {
       setIsLoadingHighlights(true);
-      console.log('🔍 하이라이트 조회 시작:', address);
-      
-      const response = await fetch(`/api/place?address=${encodeURIComponent(address)}`, {
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place?address=${encodeURIComponent(address)}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${accessToken}`,
         },
       });
 
-      console.log('📡 하이라이트 API 응답 상태:', response.status, response.statusText);
-
       if (!response.ok) {
         throw new Error('하이라이트 데이터를 가져오는데 실패했습니다.');
       }
 
       const data: Highlight[] = await response.json();
-      console.log('📦 서버에서 받은 하이라이트 데이터:', data);
-      console.log('📊 하이라이트 데이터 개수:', data.length);
-      
+
       // imageUrl과 description만 추출
       const highlightsData = data.map((item: Highlight) => ({
         id: item.id,
         imageUrl: item.imageUrl,
         description: item.description
       }));
-      
-      console.log('🎯 처리된 하이라이트 데이터:', highlightsData);
+
       setHighlights(highlightsData);
-    } catch (error) {
-      console.error('❌ 하이라이트 데이터 가져오기 에러:', error);
+    } catch {
       setHighlights([]);
     } finally {
       setIsLoadingHighlights(false);
@@ -184,7 +177,6 @@ function DetailPageContent() {
         fetchPlaceDetailFromKakao(placeId).catch(() => {
         });
       } else {
-        console.log('카카오맵 서비스 로딩 대기 중...');
         const checkKakaoServices = () => {
           if (window.kakao && window.kakao.maps.services) {
             fetchPlaceDetailFromKakao(placeId).catch(() => {
