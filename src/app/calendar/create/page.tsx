@@ -31,6 +31,7 @@ export default function CreateEventPage() {
   
   // 선택된 웨이포인트 아이템들
   const [selectedWaypointItems, setSelectedWaypointItems] = useState<WaypointItem[]>([]);
+  const [selectedWaypointId, setSelectedWaypointId] = useState<number | null>(null);
   const [isLoadingWaypointItems, setIsLoadingWaypointItems] = useState(false);
   const [itemImageUrls, setItemImageUrls] = useState<Record<number, string>>({});
 
@@ -81,12 +82,39 @@ export default function CreateEventPage() {
     }
     
     try {
-      // TODO: 일정 생성 API 호출
-      console.log('일정 생성:', formData);
+      // 일정 생성 API 호출
+      const requestData = {
+        title: formData.title,
+        startDate: formData.startDate,
+        endDate: formData.endDate,
+        stickerListRequest: {
+          stickerRequests: []
+        },
+        waypointId: selectedWaypointId,
+        memo: formData.memo
+      };
+
+      console.log('일정 생성 요청:', requestData);
+
+      const response = await fetch('/api/diary', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error('일정 생성에 실패했습니다.');
+      }
+
+      console.log('일정 생성 성공');
       
       // 성공 시 캘린더로 돌아가기
       router.push('/calendar');
-    } catch {
+    } catch (error) {
+      console.error('일정 생성 에러:', error);
       alert('일정 생성에 실패했습니다.');
     }
   };
@@ -136,11 +164,6 @@ export default function CreateEventPage() {
       return newState;
     });
   }, [fetchWaypoints]);
-
-  // 웨이포인트 추가 핸들러
-  const handleAddWaypoint = useCallback(() => {
-    router.push('/waypoint/add');
-  }, [router]);
 
   // 웨이포인트 아이템 조회
   const fetchWaypointItems = useCallback(async (waypointId: number) => {
@@ -195,6 +218,7 @@ export default function CreateEventPage() {
 
   // 웨이포인트 선택 핸들러
   const handleSelectWaypoint = useCallback((waypointId: number) => {
+    setSelectedWaypointId(waypointId);
     fetchWaypointItems(waypointId);
     setIsWaypointModalOpen(false);
   }, [fetchWaypointItems]);

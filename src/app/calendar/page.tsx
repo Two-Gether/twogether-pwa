@@ -5,12 +5,78 @@ import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Header from '@/components/ui/Header';
 import PlusIcon from '@/components/icons/PlusIcon';
+import { getAuthToken } from '@/auth';
+
+// 일정 데이터 타입 정의
+interface DiarySchedule {
+  title: string;
+  startDate: string;
+  endDate: string;
+  mainStickerUrl?: string;
+}
 
 const CalendarScreen = () => {
     const router = useRouter();
     const [selectedDate, setSelectedDate] = useState<number | null>(null);
     const [currentDate, setCurrentDate] = useState(new Date());
     const touchStartYRef = useRef<number | null>(null);
+    
+    // 일정 데이터 상태
+    const [schedules, setSchedules] = useState<DiarySchedule[]>([]);
+    const [, setIsLoadingSchedules] = useState(false);
+    
+    // 현재 월의 첫째날과 마지막날 계산
+    const getCurrentMonthRange = () => {
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+        const startDate = new Date(year, month, 1);
+        const endDate = new Date(year, month + 1, 0); // 다음 달의 0일 = 이번 달의 마지막 날
+        
+        // 로컬 시간대 기준으로 날짜 문자열 생성
+        const formatDate = (date: Date) => {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+        
+        return {
+            startDate: formatDate(startDate),
+            endDate: formatDate(endDate)
+        };
+    };
+    
+    // 일정 데이터 불러오기
+    const fetchSchedules = async () => {
+        try {
+            setIsLoadingSchedules(true);
+            const { startDate, endDate } = getCurrentMonthRange();
+            
+            const response = await fetch(`/api/diary?startDate=${startDate}&endDate=${endDate}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 404) {
+                    // 404는 일정이 없다는 의미로 처리
+                    setSchedules([]);
+                    return;
+                }
+                throw new Error('일정 데이터를 불러오는데 실패했습니다.');
+            }
+
+            const data = await response.json();
+            setSchedules(data.diaryMonthOverviewResponses || []);
+        } catch (error) {
+            console.error('일정 데이터 로딩 에러:', error);
+            setSchedules([]);
+        } finally {
+            setIsLoadingSchedules(false);
+        }
+    };
     
     // 현재 날짜 정보
     const currentYear = currentDate.getFullYear();
@@ -40,6 +106,11 @@ const CalendarScreen = () => {
         
         return days;
     }, [firstDayOfWeek, daysInMonth]);
+    
+    // 월이 변경될 때마다 일정 불러오기
+    useEffect(() => {
+        fetchSchedules();
+    }, [currentDate]);
     
     // 오늘 날짜
     const today = new Date().getDate();
@@ -97,17 +168,17 @@ const CalendarScreen = () => {
         setSelectedDate(now.getDate());
     }, []);
     
-    // 기간 이벤트 예시 (날짜에 색칠, 텍스트는 아래 줄)
+    // 실제 일정 데이터를 이벤트 형태로 변환
     type EventColor = 'text-brand-500'|'text-brand-200'|'text-sub-200';
     type CalEvent = { id:string; title:string; start:Date; end:Date;};
     const events: CalEvent[] = useMemo(()=>{
-        const y=currentYear, m=currentMonth;
-        return [
-            { id:'e1', title:'여행 제목은 이곳에...', start:new Date(y,m,8), end:new Date(y,m,12)},
-            { id:'e2', title:'춘천 당일치기', start:new Date(y,m,24), end:new Date(y,m,26) },
-            { id:'e3', title:'여행을 길게 다녀오지만 사실 1박 2일', start:new Date(y,m,3), end:new Date(y,m,4)},
-        ];
-    },[currentMonth,currentYear]);
+        return schedules.map((schedule, index) => ({
+            id: `schedule-${index}`,
+            title: schedule.title,
+            start: new Date(schedule.startDate),
+            end: new Date(schedule.endDate)
+        }));
+    },[schedules]);
     
     // 날짜별 색상 결정 함수
     const getDateColor = (day: number) => {

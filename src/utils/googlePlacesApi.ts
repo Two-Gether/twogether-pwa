@@ -35,7 +35,6 @@ export interface GooglePlaceSearchResult {
 export function getGooglePlacePhotoUrl(photoReference: string, maxWidth: number = 400): string {
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
   if (!apiKey) {
-    console.error('Google Places API 키가 설정되지 않았습니다.');
     return '';
   }
   
@@ -54,20 +53,17 @@ export async function searchGooglePlace(placeName: string): Promise<GooglePlaceS
     );
 
     if (!response.ok) {
-      console.error('Google Places API 호출 실패:', response.status);
       return null;
     }
 
     const data = await response.json();
     
     if (data.status !== 'OK' || !data.results || data.results.length === 0) {
-      console.log('구글 플레이스에서 해당 장소를 찾을 수 없습니다:', placeName);
       return null;
     }
 
     return data.results[0] as GooglePlaceSearchResult;
-  } catch (error) {
-    console.error('Google Places API 호출 에러:', error);
+  } catch {
     return null;
   }
 }
@@ -84,20 +80,17 @@ export async function getGooglePlaceDetails(placeId: string): Promise<GooglePlac
     );
 
     if (!response.ok) {
-      console.error('Google Places API 호출 실패:', response.status);
       return null;
     }
 
     const data = await response.json();
     
     if (data.status !== 'OK' || !data.result) {
-      console.log('구글 플레이스에서 해당 장소 상세 정보를 찾을 수 없습니다:', placeId);
       return null;
     }
 
     return data.result as GooglePlaceDetails;
-  } catch (error) {
-    console.error('Google Places API 호출 에러:', error);
+  } catch {
     return null;
   }
 }
@@ -105,23 +98,18 @@ export async function getGooglePlaceDetails(placeId: string): Promise<GooglePlac
 // 장소명으로 대표사진 URL 가져오기
 export async function getPlaceImageUrl(placeName: string): Promise<string> {
   try {
-    console.log('구글 플레이스에서 장소 이미지 검색 시작:', placeName);
-    
     const placeResult = await searchGooglePlace(placeName);
     
     if (!placeResult || !placeResult.photos || placeResult.photos.length === 0) {
-      console.log('해당 장소의 이미지를 찾을 수 없습니다:', placeName);
       return '/images/illust/cats/backgroundCat.png';
     }
 
     // 첫 번째 사진을 대표사진으로 사용
     const photoReference = placeResult.photos[0].photo_reference;
     const imageUrl = getGooglePlacePhotoUrl(photoReference, 400);
-    
-    console.log('장소 이미지 URL 생성 완료:', imageUrl);
+
     return imageUrl;
-  } catch (error) {
-    console.error('장소 이미지 가져오기 에러:', error);
+  } catch {
     return '/images/illust/cats/backgroundCat.png';
   }
 }

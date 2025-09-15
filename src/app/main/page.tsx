@@ -27,7 +27,8 @@ export default function MainPage() {
   const removeParentheses = (address: string): string => {
     return address.replace(/\s*\([^)]*\)/g, '').trim();
   };
-
+  const { accessToken } = useAuthStore();
+  
   // 일정 데이터 가져오기
   const fetchSchedules = async () => {
     if (!isAuthenticated) return;
@@ -39,7 +40,7 @@ export default function MainPage() {
       const response = await fetch(`/api/diary?startDate=${startDate}&endDate=${endDate}`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${accessToken}`
         }
       });
 
@@ -292,7 +293,7 @@ export default function MainPage() {
           </div>
         )}
 
-        <div className="mb-6 mt-20">
+        <div className="mb-6 mt-24">
           <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
             다가오는 데이트 일정
           </h2>
@@ -316,11 +317,11 @@ export default function MainPage() {
               ))
               ) : (
                 <div 
-                  className="p-4 bg-gray-100 rounded-lg border border-gray-300 text-center cursor-pointer hover:bg-gray-200 transition-colors"
+                  className="p-4 bg-gray-100 rounded-lg border border-gray-300 text-left cursor-pointer hover:bg-gray-200 transition-colors"
                   onClick={() => router.push('/calendar')}
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <span className="text-gray-500">데이트 일정이 없어요!</span>
+                  <div className="flex items-center justify-between gap-2 w-full">
+                    <span className="text-gray-500 text-left">데이트 일정이 없어요!</span>
                     <Image 
                       src="/images/common/arrowTop.svg"
                       alt="arrow"
@@ -328,9 +329,6 @@ export default function MainPage() {
                       height={12}
                       className="transform rotate-90"
                     />
-                  </div>
-                  <div className="text-sm text-gray-700 mt-1">
-                    데이트 일정을 짜볼까요?
                   </div>
                 </div>
               )}

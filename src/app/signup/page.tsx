@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { Header, Input, Button, Dropdown } from '@/components/ui';
+import Notification from '@/components/ui/Notification';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -23,6 +24,13 @@ export default function SignupPage() {
   const [passwordMatch, setPasswordMatch] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
+
+  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning' | 'info' | 'default'; message: string; visible: boolean }>({ type: 'default', message: '', visible: false });
+
+  const showToast = (type: 'success' | 'error' | 'warning' | 'info' | 'default', message: string, durationMs = 2000) => {
+    setToast({ type, message, visible: true });
+    window.setTimeout(() => setToast(prev => ({ ...prev, visible: false })), durationMs);
+  };
 
   // 재발송 타이머 관리
   useEffect(() => {
@@ -51,7 +59,7 @@ export default function SignupPage() {
 
   const handleSendVerificationCode = async () => {
     if (!email.trim()) {
-      alert('이메일을 입력해주세요.');
+      showToast('warning', '이메일을 입력해주세요.');
       return;
     }
     try {
@@ -69,16 +77,16 @@ export default function SignupPage() {
       });
       setIsVerificationSent(true);
       setResendTimer(60); // 60초 타이머 시작
-      alert(message || '인증 코드가 전송되었습니다.');
+      showToast('success', message || '인증 코드가 전송되었습니다.');
     } catch {
-      alert('발송에 실패했습니다. 다시 시도해주세요.');
+      showToast('error', '발송에 실패했습니다. 다시 시도해주세요.');
     } finally {
     }
   };
 
   const handleVerifyCode = async () => {
     if (!verificationCode.trim()) {
-      alert('인증코드를 입력해주세요.');
+      showToast('warning', '인증코드를 입력해주세요.');
       return;
     }
     
@@ -98,9 +106,9 @@ export default function SignupPage() {
       
       setIsVerificationCompleted(true);
       setIsEmailVerified(true);
-      alert('이메일 인증이 완료되었습니다.');
+      showToast('success', '이메일 인증이 완료되었습니다.');
     } catch {
-      alert('인증에 실패했습니다. 다시 시도해주세요.');
+      showToast('error', '인증에 실패했습니다. 다시 시도해주세요.');
     } finally {
       setIsVerifying(false);
     }
@@ -108,15 +116,15 @@ export default function SignupPage() {
 
   const handleSignup = async () => {
     if (!email || !password || !confirmPassword || !name || !phone) {
-      alert('모든 필수 항목을 입력해주세요.');
+      showToast('warning', '모든 필수 항목을 입력해주세요.');
       return;
     }
     if (password !== confirmPassword) {
-      alert('비밀번호가 일치하지 않습니다.');
+      showToast('warning', '비밀번호가 일치하지 않습니다.');
       return;
     }
     if (!isEmailVerified) {
-      alert('이메일 인증을 완료해주세요.');
+      showToast('warning', '이메일 인증을 완료해주세요.');
       return;
     }
 
@@ -146,19 +154,24 @@ export default function SignupPage() {
       console.log('Signup success:', data);
       
       // 성공 시 처리
-      alert('회원가입이 완료되었습니다!');
+      showToast('success', '회원가입이 완료되었습니다!');
       
       // 로그인 페이지로 이동
-      window.location.href = '/login';
+      window.setTimeout(() => { window.location.href = '/login'; }, 1500);
       
     } catch (error) {
       console.error('Signup error:', error);
-      alert('회원가입에 실패했습니다. 다시 시도해주세요.');
+      showToast('error', '회원가입에 실패했습니다. 다시 시도해주세요.');
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100">
+      {toast.visible && (
+        <div className="fixed top-4 left-0 right-0 z-50 px-5">
+          <Notification type={toast.type} variant="toast">{toast.message}</Notification>
+        </div>
+      )}
       {/* Header */}
       <Header title="회원가입" showBackButton={true} />
 

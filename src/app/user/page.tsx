@@ -98,9 +98,13 @@ export default function MyPage() {
         throw new Error('연인 연동 해제에 실패했습니다.');
       }
 
-      // 로그아웃 처리
-      logout();
-      router.replace('/login');
+      // 모달 닫고 토스트 노출 후 로그아웃/이동
+      setShowUnlinkModal(false);
+      showToastMessage('연인 연동이 해제되었습니다.', 'success');
+      setTimeout(() => {
+        logout();
+        router.replace('/login');
+      }, 1500);
     } catch (error) {
       console.error('연인 연동 해제 에러:', error);
       showToastMessage('연인 연동 해제에 실패했습니다. 다시 시도해주세요.', 'error');

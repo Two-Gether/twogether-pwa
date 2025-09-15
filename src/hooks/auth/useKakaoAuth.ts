@@ -59,7 +59,6 @@ export const useKakaoAuth = () => {
       }
 
       const userData = await response.json();
-      console.log('Kakao login success:', userData);
 
       // 로그인 상태 업데이트 (카카오 로그인은 myNickname과 partnerNickname 사용)
       login({
@@ -75,10 +74,8 @@ export const useKakaoAuth = () => {
       
       // 파트너 ID가 null이면 매칭 페이지로 (partnerNickname 조건 제거)
       if (userData.partnerId === null) {
-        console.log('파트너 ID가 null이므로 connect 페이지로 이동');
         router.push('/connect');
       } else {
-        console.log('파트너 ID가 있으므로 main 페이지로 이동');
         router.push('/main');
       }
       

@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import Notification from '@/components/ui/Notification';
 
 interface UserInfo {
   memberId: number;
@@ -29,39 +30,41 @@ export default function UserInfoPage() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning' | 'info' | 'default'; message: string; visible: boolean }>({ type: 'default', message: '', visible: false });
+
+  const showToast = (type: 'success' | 'error' | 'warning' | 'info' | 'default', message: string, ms = 2000) => {
+    setToast({ type, message, visible: true });
+    window.setTimeout(() => setToast(prev => ({ ...prev, visible: false })), ms);
+  };
 
   useEffect(() => {
     if (!isAuthenticated) {
       router.push('/login');
       return;
     }
+    (async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/member/me', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
+          },
+        });
 
-    fetchUserInfo();
-  }, [isAuthenticated, router]);
+        if (!response.ok) {
+          throw new Error('사용자 정보 조회에 실패했습니다.');
+        }
 
-  const fetchUserInfo = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/member/me', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('사용자 정보 조회에 실패했습니다.');
+        const data = await response.json();
+        setUserInfo(data);
+      } catch {
+        showToast('error', '사용자 정보 조회에 실패했습니다.');
+      } finally {
+        setIsLoading(false);
       }
-
-      const data = await response.json();
-      console.log('사용자 정보:', data);
-      setUserInfo(data);
-    } catch (error) {
-      console.error('사용자 정보 조회 에러:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    })();
+  }, [isAuthenticated, router]);
 
   const formatValue = (value: string | number | null | undefined) => {
     if (value === null || value === undefined) return '미입력';
@@ -87,10 +90,25 @@ export default function UserInfoPage() {
     }
   };
 
-  const handleDeleteAccount = () => {
-    // TODO: 회원 탈퇴 API 호출
-    console.log('회원 탈퇴 처리');
-    setShowDeleteModal(false);
+  const handleDeleteAccount = async () => {
+    try {
+      const res = await fetch('/api/member/me', {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error('회원 탈퇴에 실패했습니다.');
+      }
+      setShowDeleteModal(false);
+      showToast('success', '탈퇴가 완료되었습니다.');
+      window.setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
+    } catch {
+      showToast('error', '탈퇴 처리 중 오류가 발생했습니다.');
+    }
   };
 
   if (isLoading) {
@@ -110,6 +128,11 @@ export default function UserInfoPage() {
 
   return (
     <div className="w-full h-screen bg-white flex flex-col">
+      {toast.visible && (
+        <div className="fixed top-4 left-0 right-0 z-50 px-5">
+          <Notification type={toast.type} variant="toast">{toast.message}</Notification>
+        </div>
+      )}
       <Header title="로그인 정보" showBackButton={true} />
       
       <div className="flex-1 overflow-y-auto pb-20">
