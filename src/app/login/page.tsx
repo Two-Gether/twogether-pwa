@@ -168,14 +168,16 @@ const LoginScreen = () => {
                                 className="cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() => handleSocialLogin('kakao')}
                             />
-                            <Image 
-                                src="/images/social/google-logo.svg" 
-                                alt="Google Login" 
-                                width={48} 
-                                height={48} 
-                                className="cursor-pointer hover:opacity-80 transition-opacity"
-                                onClick={() => handleSocialLogin('google')}
-                            />
+                            {/* TODO: 구글 로그인 연동 예정
+                              <Image 
+                                  src="/images/social/google-logo.svg" 
+                                  alt="Google Login" 
+                                  width={48} 
+                                  height={48} 
+                                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                                  onClick={() => handleSocialLogin('google')}
+                              />
+                            */}
                         </div>
                     </div>
                 </div>

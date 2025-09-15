@@ -1,12 +1,12 @@
 import type { NextConfig } from "next";
 
-// next-pwa가 있을 때만 적용되도록 안전하게 래핑
+// next-pwa 있을 때만 적용
 let withPWA: (cfg: NextConfig) => NextConfig = (cfg) => cfg;
 try {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const pwa = require('next-pwa');
+  const pwa = require("next-pwa");
   withPWA = pwa({
-    dest: 'public',
+    dest: "public",
     disable: false,
     register: true,
     skipWaiting: true,
@@ -16,6 +16,8 @@ try {
 }
 
 const nextConfig: NextConfig = {
+  reactStrictMode: true, // Vercel 배포 시 권장
+  swcMinify: true,       // 코드 압축 최적화
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
@@ -27,16 +29,16 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'maps.googleapis.com',
-        port: '',
-        pathname: '/maps/api/place/photo**',
+        protocol: "https",
+        hostname: "maps.googleapis.com",
+        port: "",
+        pathname: "/maps/api/place/photo**",
       },
       {
-        protocol: 'https',
-        hostname: 'twogether-s3-private-bucket.s3.ap-northeast-2.amazonaws.com',
-        port: '',
-        pathname: '/**',
+        protocol: "https",
+        hostname: "twogether-s3-private-bucket.s3.ap-northeast-2.amazonaws.com",
+        port: "",
+        pathname: "/**",
       },
     ],
   },
@@ -49,6 +51,10 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
     ];
+  },
+
+  experimental: {
+    scrollRestoration: true,
   },
 };
 
