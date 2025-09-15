@@ -1,6 +1,5 @@
 import { useAuthStore } from './useAuth';
 import { useRouter } from 'next/navigation';
-import { signIn } from '@/auth';
 
 export const useGoogleAuth = () => {
   const { login } = useAuthStore();

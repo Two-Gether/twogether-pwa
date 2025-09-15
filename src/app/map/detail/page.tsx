@@ -749,7 +749,7 @@ function DetailPageContent() {
 
 export default function DetailPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={null}>
       <DetailPageContent />
     </Suspense>
   );

@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       type: file.type
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: '이미지 업로드 중 오류가 발생했습니다.' },
       { status: 500 }

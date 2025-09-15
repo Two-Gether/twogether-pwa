@@ -143,19 +143,6 @@ const calculateDimensions = (
 };
 
 /**
- * 바이트를 읽기 쉬운 형태로 변환
- */
-const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return '0 Bytes';
-  
-  const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-};
-
-/**
  * 기본 압축 옵션 (모바일 최적화)
  */
 export const DEFAULT_COMPRESSION_OPTIONS: CompressionOptions = {

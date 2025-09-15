@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Input from '@/components/ui/Input';
@@ -11,7 +11,7 @@ import { getAuthToken } from '@/auth';
 import { addLocationToWaypoint } from '@/services/waypointService';
 import Notification from '@/components/ui/Notification';
 
-const MapScreen = () => {
+const MapScreenContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const mapRef = useRef<HTMLDivElement>(null);
@@ -704,6 +704,14 @@ const MapScreen = () => {
         }
       `}</style>
     </div>
+  );
+};
+
+const MapScreen = () => {
+  return (
+    <Suspense fallback={null}>
+      <MapScreenContent />
+    </Suspense>
   );
 };
 

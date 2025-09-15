@@ -22,7 +22,6 @@ export const SearchResultsList: React.FC<SearchResultsListProps> = ({
   showResults,
   hasMore,
   isLoading,
-  pagination,
   onPlaceSelect,
   onLoadMore,
   onClose

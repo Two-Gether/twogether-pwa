@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import MainHeader from '../../components/MainHeader';
@@ -12,7 +12,7 @@ import { getCurrentMonthRange, getDaysDifference, formatDateToKorean } from '@/u
 import { DiaryMonthOverviewResponse } from '@/types/diary';
 import Image from 'next/image';
 
-export default function MainPage() {
+function MainPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, isAuthenticated } = useAuthStore();
@@ -429,5 +429,13 @@ export default function MainPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function MainPage() {
+  return (
+    <Suspense fallback={null}>
+      <MainPageContent />
+    </Suspense>
   );
 }

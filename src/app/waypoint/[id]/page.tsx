@@ -256,9 +256,7 @@ export default function WaypointDetailPage() {
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-    } catch (error) {
-      console.error('순서 변경 에러:', error);
-      const errorMessage = error instanceof Error ? error.message : '순서 변경에 실패했습니다.';
+    } catch {
       showToast('순서 변경에 실패하였습니다.', 'error');
     } finally {
       setIsUpdating(false);
