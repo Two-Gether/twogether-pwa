@@ -1,11 +1,12 @@
 "use client";
 
+import { Suspense } from 'react';
 import Header from '@/components/ui/Header';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { WaypointItem } from '@/types/waypoint';
 import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
-import { useParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { getAuthToken } from '@/auth';
 import dynamic from 'next/dynamic';
 import Notification from '@/components/ui/Notification';
@@ -37,10 +38,10 @@ interface WaypointDetailResponse {
   waypointInfoResponse: WaypointItem[];
 }
 
-export default function WaypointDetailPage() {
-  const params = useParams();
+function WaypointDetailContent() {
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const waypointId = params.id as string;
+  const waypointId = searchParams.get('waypointId') as string;
   
   const [waypointData, setWaypointData] = useState<WaypointDetailResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,7 +68,7 @@ export default function WaypointDetailPage() {
       throw new Error('인증 토큰이 없습니다.');
     }
 
-    const response = await fetch(`/api/waypoint/${id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${id}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -85,6 +86,12 @@ export default function WaypointDetailPage() {
 
   useEffect(() => {
     const loadWaypointDetail = async () => {
+      if (!waypointId) {
+        setError('웨이포인트 ID가 없습니다.');
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
         setError(null);
@@ -223,7 +230,18 @@ export default function WaypointDetailPage() {
 
   // 순서 변경 완료
   const handleReorderComplete = async () => {
-    if (!waypointData || reorderedItems.length === 0) return;
+    if (!waypointData || !waypointId) {
+      console.log('❌ waypointData 또는 waypointId가 없습니다:', { waypointData: !!waypointData, waypointId });
+      return;
+    }
+
+    // reorderedItems가 비어있으면 원본 데이터 사용
+    const itemsToReorder = reorderedItems.length > 0 ? reorderedItems : waypointData.waypointInfoResponse;
+    
+    if (itemsToReorder.length === 0) {
+      console.log('❌ 재정렬할 아이템이 없습니다');
+      return;
+    }
 
     try {
       setIsUpdating(true);
@@ -234,10 +252,11 @@ export default function WaypointDetailPage() {
       }
 
       // 새로운 순서대로 itemId 배열 생성
-      const orderedIds = reorderedItems.map(item => item.itemId);
+      const orderedIds = itemsToReorder.map(item => item.itemId);
       console.log('📤 서버에 전송할 orderedIds:', orderedIds);
+      console.log('📤 waypointId:', waypointId);
 
-      const response = await fetch(`/api/waypoint/${waypointId}/items`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -247,8 +266,13 @@ export default function WaypointDetailPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '순서 변경에 실패했습니다.');
+        const errorText = await response.text();
+        console.error('❌ 순서 변경 API 에러:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText
+        });
+        throw new Error(`순서 변경에 실패했습니다. (${response.status})`);
       }
 
       // 성공 시 Toast 표시 후 페이지 새로고침
@@ -256,7 +280,8 @@ export default function WaypointDetailPage() {
       setTimeout(() => {
         window.location.reload();
       }, 1000);
-    } catch {
+    } catch (error) {
+      console.error('❌ 순서 변경 에러:', error);
       showToast('순서 변경에 실패하였습니다.', 'error');
     } finally {
       setIsUpdating(false);
@@ -274,16 +299,16 @@ export default function WaypointDetailPage() {
       const waypointItemIds = Array.from(selectedItems);
       
       // 선택된 모든 아이템을 한 번에 삭제
-      const response = await fetch(`/api/waypoint/${waypointId}/items`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify({ waypointItemIds }),
-        });
-        
-        if (!response.ok) {
+      });
+      
+      if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || '선택된 장소 삭제에 실패했습니다.');
       }
@@ -681,5 +706,13 @@ export default function WaypointDetailPage() {
       </div>
 
     </div>
+  );
+}
+
+export default function WaypointDetailPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <WaypointDetailContent />
+    </Suspense>
   );
 }

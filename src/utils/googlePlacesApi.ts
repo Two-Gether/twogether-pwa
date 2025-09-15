@@ -41,36 +41,58 @@ export function getGooglePlacePhotoUrl(photoReference: string, maxWidth: number 
   return `https://maps.googleapis.com/maps/api/place/photo?maxwidth=${maxWidth}&photoreference=${photoReference}&key=${apiKey}`;
 }
 
+// Google Maps JavaScript SDK 초기화
+let placesService: google.maps.places.PlacesService | null = null;
+
+const initializePlacesService = (): google.maps.places.PlacesService | null => {
+  if (typeof window === 'undefined') return null;
+  
+  if (!placesService) {
+    // 더미 div를 생성하여 PlacesService 초기화
+    const dummyDiv = document.createElement('div');
+    placesService = new google.maps.places.PlacesService(dummyDiv);
+  }
+  
+  return placesService;
+};
+
 // 장소명으로 구글 플레이스 검색
 export async function searchGooglePlace(placeName: string): Promise<GooglePlaceSearchResult | null> {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
-    if (!apiKey) {
+    const service = initializePlacesService();
+    if (!service) {
       return null;
     }
 
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(placeName)}&key=${apiKey}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-      }
-    );
+    return new Promise((resolve) => {
+      const request: google.maps.places.TextSearchRequest = {
+        query: placeName
+      };
 
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    
-    if (data.status !== 'OK' || !data.results || data.results.length === 0) {
-      return null;
-    }
-
-    return data.results[0] as GooglePlaceSearchResult;
+      service.textSearch(request, (results: google.maps.places.PlaceResult[] | null, status: google.maps.places.PlacesServiceStatus) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+          const result = results[0];
+          resolve({
+            place_id: result.place_id || '',
+            name: result.name || '',
+            photos: result.photos?.map((photo: google.maps.places.PlacePhoto) => ({
+              photo_reference: photo.getUrl({ maxWidth: 400 }) || '',
+              height: 400,
+              width: 400
+            })),
+            formatted_address: result.formatted_address,
+            geometry: result.geometry?.location ? {
+              location: {
+                lat: result.geometry.location.lat(),
+                lng: result.geometry.location.lng()
+              }
+            } : undefined
+          });
+        } else {
+          resolve(null);
+        }
+      });
+    });
   } catch {
     return null;
   }
@@ -79,33 +101,39 @@ export async function searchGooglePlace(placeName: string): Promise<GooglePlaceS
 // 장소 ID로 구글 플레이스 상세 정보 가져오기
 export async function getGooglePlaceDetails(placeId: string): Promise<GooglePlaceDetails | null> {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
-    if (!apiKey) {
+    const service = initializePlacesService();
+    if (!service) {
       return null;
     }
 
-    const response = await fetch(
-      `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=place_id,name,photos,formatted_address,geometry&key=${apiKey}`,
-      {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        cache: 'no-store',
-      }
-    );
+    return new Promise((resolve) => {
+      const request: google.maps.places.PlaceDetailsRequest = {
+        placeId: placeId
+      };
 
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    
-    if (data.status !== 'OK' || !data.result) {
-      return null;
-    }
-
-    return data.result as GooglePlaceDetails;
+      service.getDetails(request, (result: google.maps.places.PlaceResult | null, status: google.maps.places.PlacesServiceStatus) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && result) {
+          resolve({
+            place_id: result.place_id || '',
+            name: result.name || '',
+            photos: result.photos?.map((photo: google.maps.places.PlacePhoto) => ({
+              photo_reference: photo.getUrl({ maxWidth: 400 }) || '',
+              height: 400,
+              width: 400
+            })),
+            formatted_address: result.formatted_address,
+            geometry: result.geometry?.location ? {
+              location: {
+                lat: result.geometry.location.lat(),
+                lng: result.geometry.location.lng()
+              }
+            } : undefined
+          });
+        } else {
+          resolve(null);
+        }
+      });
+    });
   } catch {
     return null;
   }
@@ -120,11 +148,8 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
       return '/images/illust/cats/backgroundCat.png';
     }
 
-    // 첫 번째 사진을 대표사진으로 사용
-    const photoReference = placeResult.photos[0].photo_reference;
-    const imageUrl = getGooglePlacePhotoUrl(photoReference, 400);
-
-    return imageUrl;
+    // JavaScript SDK에서는 이미 URL이 반환됨
+    return placeResult.photos[0].photo_reference;
   } catch {
     return '/images/illust/cats/backgroundCat.png';
   }

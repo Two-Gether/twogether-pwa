@@ -152,7 +152,7 @@ export default function WaypointPage() {
 
   // 웨이포인트 클릭 시 상세 페이지로 이동
   const handleWaypointClick = (waypointId: number) => {
-    window.location.href = `/waypoint/${waypointId}`;
+    window.location.href = `/waypoint/list?waypointId=${waypointId}`;
   };
 
   // 외부 클릭 감지하여 메뉴 닫기

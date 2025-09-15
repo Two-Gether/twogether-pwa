@@ -137,24 +137,6 @@ export const deleteWaypoint = async (waypointId: number): Promise<void> => {
   }
 };
 
-// 웨이포인트 아이템 목록 조회
-export const getWaypointItems = async (waypointId: number): Promise<WaypointItem[]> => {
-  const token = getAuthToken();
-  const response = await fetch(`${API_BASE_URL}/waypoint/${waypointId}/items`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error('웨이포인트 아이템 목록 조회에 실패했습니다.');
-  }
-
-  return response.json();
-};
-
 // 웨이포인트 아이템 생성
 export const createWaypointItem = async (waypointId: number, data: CreateWaypointItemRequest): Promise<WaypointItem> => {
   const token = getAuthToken();

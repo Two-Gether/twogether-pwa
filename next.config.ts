@@ -19,6 +19,16 @@ const nextConfig: NextConfig = {
   reactStrictMode: true, // Vercel 배포 시 권장
   swcMinify: true,       // 코드 압축 최적화
   output: "export",
+  
+  // Google Maps JavaScript SDK 로드
+  async rewrites() {
+    return [
+      {
+        source: '/api/google-maps/:path*',
+        destination: 'https://maps.googleapis.com/maps/api/:path*',
+      },
+    ];
+  },
 
   webpack(config) {
     config.module.rules.push({

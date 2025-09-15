@@ -39,6 +39,7 @@
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@svgr/webpack": "^8.1.0",
+    "@types/google.maps": "^3.58.1",
     "@types/minimatch": "^6.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
