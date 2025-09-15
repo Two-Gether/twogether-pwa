@@ -230,11 +230,10 @@ const MapScreenContent = () => {
     });
   }, [fetchWaypoints]);
 
-  // 웨이포인트 추가 핸들러
+  // 웨이포인트 추가 핸들러: 모달(인라인 입력) 열기로 복구
   const handleAddWaypoint = useCallback(() => {
-    // 웨이포인트 추가 페이지로 이동
-    router.push('/waypoint/add');
-  }, [router]);
+    setIsWaypointModalOpen(true);
+  }, []);
 
   // 웨이포인트 선택 핸들러 (메모 입력 모달 열기)
   const handleSelectWaypoint = useCallback((waypointId: number) => {
