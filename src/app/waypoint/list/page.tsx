@@ -169,11 +169,11 @@ function WaypointDetailContent() {
     }
   };
 
-  // 옮겨담기 함수
-  const handleMoveItems = () => {
-    console.log('옮겨담기:', Array.from(selectedItems));
-    // TODO: 웨이포인트 선택 모달 표시
-  };
+  // // 옮겨담기 함수
+  // const handleMoveItems = () => {
+  //   console.log('옮겨담기:', Array.from(selectedItems));
+  //   // TODO: 웨이포인트 선택 모달 표시
+  // };
 
   // 순서 변경 모드 토글
   const toggleReorderMode = () => {
@@ -256,24 +256,9 @@ function WaypointDetailContent() {
       console.log('📤 서버에 전송할 orderedIds:', orderedIds);
       console.log('📤 waypointId:', waypointId);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
-        method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ orderedIds }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('❌ 순서 변경 API 에러:', {
-          status: response.status,
-          statusText: response.statusText,
-          errorText
-        });
-        throw new Error(`순서 변경에 실패했습니다. (${response.status})`);
-      }
+      // API 모듈 사용
+      const { updateWaypointItemsOrder } = await import('@/api/waypoint');
+      await updateWaypointItemsOrder(parseInt(waypointId), { orderedIds });
 
       // 성공 시 Toast 표시 후 페이지 새로고침
       showToast('순서가 변경되었습니다.', 'success');
@@ -291,27 +276,13 @@ function WaypointDetailContent() {
   // 삭제하기 함수
   const handleDeleteItems = async () => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('인증 토큰이 없습니다.');
-      }
+      if (!waypointId) return;
 
       const waypointItemIds = Array.from(selectedItems);
       
-      // 선택된 모든 아이템을 한 번에 삭제
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ waypointItemIds }),
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '선택된 장소 삭제에 실패했습니다.');
-      }
+      // API 모듈 사용
+      const { deleteWaypointItems } = await import('@/api/waypoint');
+      await deleteWaypointItems(parseInt(waypointId), { waypointItemIds: waypointItemIds });
 
       // 삭제 성공 시 선택 상태 초기화하고 데이터 다시 로드
       setSelectedItems(new Set());
@@ -654,7 +625,7 @@ function WaypointDetailContent() {
       <div className="absolute bottom-5 left-5 right-5 flex gap-3">
         {selectedItems.size > 0 ? (
           <>
-            {/* 옮겨담기 버튼 */}
+            {/* 옮겨담기 버튼
             <button 
               onClick={handleMoveItems}
               disabled={isDragging}
@@ -665,7 +636,7 @@ function WaypointDetailContent() {
               }`}
             >
               <span className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">옮겨담기</span>
-            </button>
+            </button> */}
             {/* 삭제하기 버튼 */}
             <button 
               onClick={handleDeleteItems}

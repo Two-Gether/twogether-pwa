@@ -30,12 +30,7 @@ export function getCurrentMonthRange(date?: Date): { startDate: string; endDate:
   
   const startDate = new Date(year, month, 1);
   const endDate = new Date(year, month + 1, 0); // 다음 달의 0일 = 이번 달의 마지막 날
-  
-  console.log('🔍 dateUtils - 현재 날짜:', targetDate);
-  console.log('🔍 dateUtils - 계산된 년월:', year, month + 1);
-  console.log('🔍 dateUtils - 시작일:', formatDate(startDate));
-  console.log('🔍 dateUtils - 종료일:', formatDate(endDate));
-  
+
   return {
     startDate: formatDate(startDate),
     endDate: formatDate(endDate)

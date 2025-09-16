@@ -41,9 +41,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-*storybook.log
-storybook-static
-
 # Large AppIcons only (keep other assets)
-public/AppIcons/
 public/fonts/
+
+# Capacitor build outputs
+/android/
+/ios/
+/build/
+/out/
+/dist/
+/node_modules/
+/.idea/
+/.vscode/
+*.log
