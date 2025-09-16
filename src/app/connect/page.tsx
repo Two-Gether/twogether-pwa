@@ -62,7 +62,7 @@ export default function ConnectPage() {
     
     const fetchPartnerCode = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/partner/code`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/code`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -137,7 +137,7 @@ export default function ConnectPage() {
 
     setIsLoading(true);
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/partner/connect?code=${partnerCode}`, {
+    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/connect?code=${partnerCode}`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${accessToken}`,
