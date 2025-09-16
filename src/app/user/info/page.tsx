@@ -104,7 +104,7 @@ export default function UserInfoPage() {
       setShowDeleteModal(false);
       showToast('success', '탈퇴가 완료되었습니다.');
       window.setTimeout(() => {
-        window.location.href = '/login';
+        router.push('/login');
       }, 1500);
     } catch {
       showToast('error', '탈퇴 처리 중 오류가 발생했습니다.');

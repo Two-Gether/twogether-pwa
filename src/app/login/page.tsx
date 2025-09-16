@@ -80,7 +80,7 @@ const LoginScreen = () => {
     };
 
     const handleSignup = () => {
-        window.location.href = '/signup';
+        router.push('/signup');
     };
 
     return (

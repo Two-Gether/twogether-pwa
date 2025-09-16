@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { Header, Input, Button, Dropdown } from '@/components/ui';
 import Notification from '@/components/ui/Notification';
 
 export default function SignupPage() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
@@ -157,7 +159,7 @@ export default function SignupPage() {
       showToast('success', '회원가입이 완료되었습니다!');
       
       // 로그인 페이지로 이동
-      window.setTimeout(() => { window.location.href = '/login'; }, 1500);
+      window.setTimeout(() => { router.push('/login'); }, 1500);
       
     } catch (error) {
       console.error('Signup error:', error);

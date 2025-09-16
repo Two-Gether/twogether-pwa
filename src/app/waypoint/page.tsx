@@ -8,10 +8,12 @@ import PlusIcon from '@/components/icons/PlusIcon';
 import Notification from '@/components/ui/Notification';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { getAuthToken } from '@/auth';
 import { Waypoint, CreateWaypointResponse } from '@/types/waypoint';
 
 export default function WaypointPage() {
+  const router = useRouter();
   const [waypointLists, setWaypointLists] = useState<Waypoint[]>([]);
   const [waypointCount, setWaypointCount] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -152,7 +154,7 @@ export default function WaypointPage() {
 
   // 웨이포인트 클릭 시 상세 페이지로 이동
   const handleWaypointClick = (waypointId: number) => {
-    window.location.href = `/waypoint/list?waypointId=${waypointId}`;
+    router.push(`/waypoint/list?waypointId=${waypointId}`);
   };
 
   // 외부 클릭 감지하여 메뉴 닫기
