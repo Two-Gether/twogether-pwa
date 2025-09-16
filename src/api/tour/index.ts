@@ -106,11 +106,19 @@ const fetchTourismData = async (): Promise<Recommendation[]> => {
   }
   
   const items = data.response.body.items.item || [];
+
+  const normalizeImageUrl = (url?: string): string => {
+    if (!url) return '';
+    // 혼합 콘텐츠 방지: http로 내려오는 관광공사 이미지를 https로 강제
+    if (url.startsWith('http://')) {
+      return url.replace('http://', 'https://');
+    }
+    return url;
+  };
   
   return items.map((item): Recommendation => {
-    const originalImageUrl = item.firstimage || '';
-    
-    // 원본 URL 그대로 사용
+    // firstimage가 없으면 firstimage2를 사용하고, http는 https로 바꿔줌
+    const originalImageUrl = normalizeImageUrl(item.firstimage) || normalizeImageUrl(item.firstimage2);
     const imageUrl = originalImageUrl || 'https://placehold.co/230x314';
     
     return {

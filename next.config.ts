@@ -53,6 +53,25 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/**",
       },
+      // Korea Tourism Organization (VisitKorea) image hosts
+      {
+        protocol: "https",
+        hostname: "tong.visitkorea.or.kr",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "api.visitkorea.or.kr",
+        port: "",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "korean.visitkorea.or.kr",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 

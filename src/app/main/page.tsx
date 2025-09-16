@@ -285,7 +285,7 @@ function MainPageContent() {
           </div>
         )}
 
-        <div className="mb-6 mt-24">
+        <div className="mb-6 mt-16">
           <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
             다가오는 데이트 일정
           </h2>
