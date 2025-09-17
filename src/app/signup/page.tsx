@@ -26,6 +26,7 @@ export default function SignupPage() {
   const [passwordMatch, setPasswordMatch] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
   const [confirmPasswordFocused, setConfirmPasswordFocused] = useState(false);
+  const [privacyAgreed, setPrivacyAgreed] = useState(false);
 
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning' | 'info' | 'default'; message: string; visible: boolean }>({ type: 'default', message: '', visible: false });
 
@@ -127,6 +128,10 @@ export default function SignupPage() {
     }
     if (!isEmailVerified) {
       showToast('warning', '이메일 인증을 완료해주세요.');
+      return;
+    }
+    if (!privacyAgreed) {
+      showToast('warning', '개인정보 수집 및 활용에 동의해주세요.');
       return;
     }
 
@@ -347,6 +352,40 @@ export default function SignupPage() {
             inputMode="tel"
             autoComplete="tel"
           />
+        </div>
+
+        {/* Privacy Agreement */}
+        <div className="mb-6">
+          <div className="flex items-start gap-3">
+            <button 
+              onClick={() => setPrivacyAgreed(!privacyAgreed)}
+              className={`w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                privacyAgreed ? 'border-brand-500 bg-brand-50' : 'hover:border-gray-400'
+              }`}
+            >
+              {privacyAgreed && (
+                <Image 
+                  src="/images/common/checkbox.svg"
+                  alt="checked"
+                  width={20}
+                  height={20}
+                />
+              )}
+            </button>
+            <div className="flex-1">
+              <p className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">
+                개인정보 수집 및 활용에 동의합니다.{' '}
+                <a 
+                  href="https://reflective-brush-deb.notion.site/26e096f283e2800c9bf5f45e92fcd669?pvs=74" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-brand-500 underline hover:text-brand-600"
+                >
+                  [약관보기]
+                </a>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Signup Button */}
