@@ -151,7 +151,7 @@ export default function MyPage() {
       try {
         setIsLoading(true);
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/relationship-start-date`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me/relationship-start-date`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

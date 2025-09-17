@@ -7,7 +7,6 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Tag from '@/components/ui/Tag';
 import { handleImageUpload } from '@/utils/imageUtils';
-import { uploadImage } from '@/utils/imageUpload';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 import Notification from '@/components/ui/Notification';
 
@@ -47,9 +46,7 @@ function HighlightUploadContent() {
   useEffect(() => {
     const addressParam = searchParams.get('address');
     const nameParam = searchParams.get('name');
-    
-    console.log('🔍 URL 파라미터 확인:', { addressParam, nameParam });
-    
+
     if (addressParam || nameParam) {
       const newFormData = {
         address: addressParam ? decodeURIComponent(addressParam) : '',
@@ -89,21 +86,13 @@ function HighlightUploadContent() {
         // 1. 이미지 처리 (EXIF 데이터 추출 등)
         const { file: processedFile, preview, address } = await handleImageUpload(file);
         
-        // 2. 서버에 이미지 업로드 (압축 포함)
-        const uploadResult = await uploadImage(processedFile);
-        
-        if (!uploadResult.success) {
-          throw new Error(uploadResult.error || '이미지 업로드 실패');
-        }
-        
-        // 3. 폼 데이터 업데이트
-        if (preview && uploadResult.imageUrl) {
+        // 2. 폼 데이터에 미리보기와 파일만 저장 (선업로드 제거)
+        if (preview) {
           setFormData(prev => ({
             ...prev,
             photos: [{
               file: processedFile,
-              preview: preview,
-              serverUrl: uploadResult.imageUrl
+              preview: preview
             }]
           }));
         }

@@ -30,7 +30,7 @@ function MainPageContent() {
   const { accessToken } = useAuthStore();
   
   // 일정 데이터 가져오기
-  const fetchSchedules = async () => {
+  const fetchSchedules = useCallback(async () => {
     if (!isAuthenticated) return;
     
     try {
@@ -61,7 +61,7 @@ function MainPageContent() {
     } finally {
       setIsLoadingSchedules(false);
     }
-  };
+  }, [isAuthenticated, accessToken]);
 
   const refreshUserInfo = useCallback(async () => {
     try {
@@ -93,7 +93,7 @@ function MainPageContent() {
   }, []);
 
   // 추천 데이터 불러오기
-  const fetchRecommendations = async () => {
+  const fetchRecommendations = useCallback(async () => {
     try {
       setIsLoadingRecommendations(true);
       const { getRecommendations } = await import('@/api/tour');
@@ -109,7 +109,7 @@ function MainPageContent() {
     } finally {
       setIsLoadingRecommendations(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     // 인증되지 않은 사용자는 로그인 페이지로 리다이렉트
@@ -142,7 +142,7 @@ function MainPageContent() {
     if (user && user.partnerId === null) {
       router.push('/connect');
     }
-  }, [isAuthenticated, user, router, searchParams]);
+  }, [isAuthenticated, user, router, searchParams, fetchRecommendations, fetchSchedules]);
 
   // 수동 새로고침 시에만 사용자 정보 새로고침
   useEffect(() => {

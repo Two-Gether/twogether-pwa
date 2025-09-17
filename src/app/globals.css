@@ -52,6 +52,16 @@ body {
   position: relative;
 }
 
+/* Safe area bottom padding utility */
+.pb-safe {
+  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+}
+
+/* JS 보정값과 함께 사용하는 경우 */
+.pb-safe-js {
+  padding-bottom: calc(var(--safe-bottom, 0px) + env(safe-area-inset-bottom) + 16px);
+}
+
 /* 스마트폰 프레임 효과 (선택사항) */
 .phone-frame {
   position: relative;

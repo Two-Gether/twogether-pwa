@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Input from '@/components/ui/Input';
@@ -40,6 +41,7 @@ const MapScreenContent = () => {
     message: '',
     type: 'success'
   });
+  const [showLocationModal, setShowLocationModal] = useState(true);
 
   // Toast 표시 함수
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -55,77 +57,79 @@ const MapScreenContent = () => {
     }, 1500);
   };
 
-  // 사용자 현재 위치 가져오기
-  const getUserLocation = useCallback(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const lat = position.coords.latitude;
-          const lng = position.coords.longitude;
-          
-          // window.kakao.maps가 로드될 때까지 기다린 후 LatLng 객체 생성
-          const createLatLng = () => {
-            if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
-              try {
-                const kakaoLatLng = new window.kakao.maps.LatLng(lat, lng);
-                setUserLocation(kakaoLatLng);
-                setCurrentLocation({ lat, lng });
-              } catch (error) {
-                console.error('Kakao LatLng 객체 생성 실패:', error);
-                const defaultLatLng = new window.kakao.maps.LatLng(37.554678, 126.970606);
-                setUserLocation(defaultLatLng);
-                setCurrentLocation({ lat: 37.554678, lng: 126.970606 });
-              }
-            } else {
-              setTimeout(createLatLng, 100);
+  // 사용자 현재 위치 가져오기 (웹/네이티브 공통)
+  const getUserLocation = useCallback(async () => {
+    try {
+      if (Capacitor.getPlatform() === 'android' || Capacitor.getPlatform() === 'ios') {
+        const { Geolocation } = await import('@capacitor/geolocation');
+        // 권한 요청 (사용자 제스처 후 호출)
+        await Geolocation.requestPermissions();
+        const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const createLatLng = () => {
+          if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
+            try {
+              const kakaoLatLng = new window.kakao.maps.LatLng(lat, lng);
+              setUserLocation(kakaoLatLng);
+              setCurrentLocation({ lat, lng });
+            } catch (error) {
+              console.error('Kakao LatLng 객체 생성 실패:', error);
+              const fallback = new window.kakao.maps.LatLng(37.554678, 126.970606);
+              setUserLocation(fallback);
+              setCurrentLocation({ lat: 37.554678, lng: 126.970606 });
             }
-          };
-          
-          createLatLng();
-        },
-        () => {
-          // 에러 시 기본값 사용
-          const createDefaultLatLng = () => {
-            if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
-              try {
-                const defaultLatLng = new window.kakao.maps.LatLng(37.554678, 126.970606);
-                setUserLocation(defaultLatLng);
-                setCurrentLocation({ lat: 37.554678, lng: 126.970606 });
-              } catch (error) {
-                console.error('기본값 설정 실패:', error);
-              }
-            } else {
-              setTimeout(createDefaultLatLng, 100);
-            }
-          };
-          
-          createDefaultLatLng();
-        },
-        {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
-        }
-      );
-    } else {
-      // Geolocation API 미지원 시 기본값 사용
-      const createDefaultLatLng = () => {
-        if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
-          try {
-            const defaultLatLng = new window.kakao.maps.LatLng(37.554678, 126.970606);
-            setUserLocation(defaultLatLng);
-            setCurrentLocation({ lat: 37.554678, lng: 126.970606 });
-          } catch (error) {
-            console.error('기본값 설정 실패:', error);
+          } else {
+            setTimeout(createLatLng, 100);
           }
-        } else {
-          setTimeout(createDefaultLatLng, 100);
-        }
-      };
-      
-      createDefaultLatLng();
+        };
+        createLatLng();
+        return true;
+      } else {
+        if (!navigator.geolocation) throw new Error('Geolocation not supported');
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
+        });
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const createLatLng = () => {
+          if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
+            try {
+              const kakaoLatLng = new window.kakao.maps.LatLng(lat, lng);
+              setUserLocation(kakaoLatLng);
+              setCurrentLocation({ lat, lng });
+            } catch (error) {
+              console.error('Kakao LatLng 객체 생성 실패:', error);
+              const fallback = new window.kakao.maps.LatLng(37.554678, 126.970606);
+              setUserLocation(fallback);
+              setCurrentLocation({ lat: 37.554678, lng: 126.970606 });
+            }
+          } else {
+            setTimeout(createLatLng, 100);
+          }
+        };
+        createLatLng();
+        return true;
+      }
+    } catch (err) {
+      console.error('현재 위치 가져오기 실패:', err);
+      return false;
     }
   }, []);
+
+  const handlePermissionConfirm = useCallback(async () => {
+    setShowLocationModal(false);
+    const ok = await getUserLocation();
+    if (!ok) {
+      // 차단되었거나 실패한 경우 설정 유도 또는 메인 이동 안내를 고려
+      setToast({ show: true, message: '현재 위치를 가져오지 못했습니다.', type: 'error' });
+    }
+  }, [getUserLocation]);
+
+  const handlePermissionCancel = useCallback(() => {
+    alert('지도 페이지는 이용할 수 없어요ㅠㅠ');
+    router.push('/main');
+  }, [router]);
 
   // 초기화 함수
   const init = useCallback(() => {
@@ -153,11 +157,7 @@ const MapScreenContent = () => {
     }
   }, [currentLocation]);
 
-  // 검색 결과 목록 렌더링 함수
-  const displayPlaces = (places: PlaceSearchResult[]) => {
-    setSearchResults(places);
-    setShowResults(true);
-  };
+  // 검색 결과 목록 렌더링: searchPlaces 내부에서 직접 상태 업데이트로 처리
 
   // 장소 정보 시트 토글 함수
   const toggleLocationInfoSheet = useCallback(() => {
@@ -308,14 +308,15 @@ const MapScreenContent = () => {
     (places as { keywordSearch: (keyword: string, callback: (result: PlaceSearchResult[], status: string) => void, options?: { location?: unknown }) => void })
       .keywordSearch(searchKeyword, (result: PlaceSearchResult[], status: string) => {
         if (status === window.kakao.maps.services.Status.OK) {
-          displayPlaces(result);
+          setSearchResults(result);
+          setShowResults(true);
         } else {
           console.error('검색 실패:', status);
         }
       }, {
         location: userLocation,
       });
-  }, [places, searchKeyword, displayPlaces, userLocation]);
+  }, [places, searchKeyword, userLocation]);
 
   // 검색어 입력 처리
   const handleSearchInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -349,10 +350,10 @@ const MapScreenContent = () => {
     }
   };
 
-  // 컴포넌트 마운트 시 현재 위치 가져오기
+  // 컴포넌트 마운트 시: 권한 안내 모달 먼저 노출
   useEffect(() => {
-    getUserLocation();
-  }, [getUserLocation]);
+    setShowLocationModal(true);
+  }, []);
 
   // 현재 위치와 SDK가 준비되면 지도 초기화
   useEffect(() => {
@@ -674,6 +675,47 @@ const MapScreenContent = () => {
           >
             {toast.message}
           </Notification>
+        </div>
+      )}
+
+      {/* 위치 권한 사전 안내 모달 */}
+      {showLocationModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-5">
+          <div 
+            className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-lg"
+            style={{
+              boxShadow: '2px 4px 8px rgba(0, 0, 0, 0.08)'
+            }}
+          >
+            <div className="flex flex-col items-center gap-8">
+              <div className="w-full flex flex-col items-center gap-4">
+                <div className="text-center text-gray-800 text-xl font-pretendard font-semibold leading-6">
+                  현재 위치를 사용하시겠어요?
+                </div>
+                <div className="text-center text-gray-500 text-sm font-pretendard font-normal leading-5">
+                  주변 장소 검색과 지도 이동을 위해 기기의 위치 권한이 필요합니다.
+                </div>
+              </div>
+              <div className="w-full flex items-center gap-4">
+                <button
+                  onClick={handlePermissionCancel}
+                  className="w-24 py-4 bg-gray-200 rounded-lg flex justify-center items-center"
+                >
+                  <span className="text-center text-gray-700 text-sm font-pretendard font-normal leading-5">
+                    취소
+                  </span>
+                </button>
+                <button
+                  onClick={handlePermissionConfirm}
+                  className="flex-1 py-4 bg-brand-500 rounded-lg flex justify-center items-center"
+                >
+                  <span className="text-center text-white text-sm font-pretendard font-semibold leading-5">
+                    확인
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
