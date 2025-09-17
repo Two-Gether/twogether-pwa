@@ -41,7 +41,15 @@ const MapScreenContent = () => {
     message: '',
     type: 'success'
   });
-  const [showLocationModal, setShowLocationModal] = useState(true);
+  const [showLocationModal, setShowLocationModal] = useState(false);
+
+  const hasAskedLocationPermission = useCallback(() => {
+    try {
+      return typeof window !== 'undefined' && localStorage.getItem('locationPermissionAsked') === 'true';
+    } catch {
+      return false;
+    }
+  }, []);
 
   // Toast 표시 함수
   const showToast = (message: string, type: 'success' | 'error') => {
@@ -62,8 +70,10 @@ const MapScreenContent = () => {
     try {
       if (Capacitor.getPlatform() === 'android' || Capacitor.getPlatform() === 'ios') {
         const { Geolocation } = await import('@capacitor/geolocation');
-        // 권한 요청 (사용자 제스처 후 호출)
-        await Geolocation.requestPermissions();
+        // 권한 요청은 최초 1회만 (우리 앱 내 안내 모달 확인 후)
+        if (!hasAskedLocationPermission()) {
+          await Geolocation.requestPermissions();
+        }
         const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
@@ -115,10 +125,13 @@ const MapScreenContent = () => {
       console.error('현재 위치 가져오기 실패:', err);
       return false;
     }
-  }, []);
+  }, [hasAskedLocationPermission]);
 
   const handlePermissionConfirm = useCallback(async () => {
     setShowLocationModal(false);
+    try {
+      localStorage.setItem('locationPermissionAsked', 'true');
+    } catch {}
     const ok = await getUserLocation();
     if (!ok) {
       // 차단되었거나 실패한 경우 설정 유도 또는 메인 이동 안내를 고려
@@ -350,10 +363,16 @@ const MapScreenContent = () => {
     }
   };
 
-  // 컴포넌트 마운트 시: 권한 안내 모달 먼저 노출
+  // 컴포넌트 마운트 시: 최초 1회만 안내 모달 노출, 그 외엔 바로 시도
   useEffect(() => {
-    setShowLocationModal(true);
-  }, []);
+    if (hasAskedLocationPermission()) {
+      setShowLocationModal(false);
+      // 이미 안내를 본 경우, 즉시 현재 위치 시도 (OS 권한은 플랫폼이 관리)
+      void getUserLocation();
+    } else {
+      setShowLocationModal(true);
+    }
+  }, [hasAskedLocationPermission, getUserLocation]);
 
   // 현재 위치와 SDK가 준비되면 지도 초기화
   useEffect(() => {

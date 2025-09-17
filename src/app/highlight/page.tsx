@@ -149,10 +149,12 @@ function HighlightUploadContent() {
       // JSON 문자열로 변환 (순서 보장)
       const metaJsonString = JSON.stringify(metaData, ['name', 'address', 'description', 'tags']);
 
-      // multipart/form-data 생성
+      // multipart/form-data 생성 (인앱 웹뷰 호환을 위해 파일명 명시)
       const formDataToSend = new FormData();
       formDataToSend.append('meta', metaJsonString); // 순서가 보장된 JSON 문자열
-      formDataToSend.append('image', formData.photos[0].file); // 실제 파일 객체
+      const uploadFile = formData.photos[0].file;
+      const safeFileName = (uploadFile as File).name || 'photo.jpg';
+      formDataToSend.append('image', uploadFile, safeFileName);
 
       // API 호출
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place`, {

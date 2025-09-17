@@ -9,6 +9,8 @@ import Notification from '@/components/ui/Notification';
 
 export default function SignupPage() {
   const router = useRouter();
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [verificationCode, setVerificationCode] = useState('');
   const [password, setPassword] = useState('');
@@ -241,24 +243,54 @@ export default function SignupPage() {
             비밀번호
           </h3>
           <div className="space-y-2">
-            <Input
-              type="password"
-              variant={passwordFocused ? "focus" : "placeholder"}
-              placeholder="비밀번호를 입력해주세요"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              onFocus={() => setPasswordFocused(true)}
-              onBlur={() => setPasswordFocused(false)}
-            />
-            <Input
-              type="password"
-              variant={confirmPasswordFocused ? "focus" : "placeholder"}
-              placeholder="비밀번호를 다시 입력해주세요"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              onFocus={() => setConfirmPasswordFocused(true)}
-              onBlur={() => setConfirmPasswordFocused(false)}
-            />
+            <div className="relative">
+              <Input
+                type={isPasswordVisible ? 'text' : 'password'}
+                variant={passwordFocused ? "focus" : "placeholder"}
+                placeholder="비밀번호를 입력해주세요"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
+              />
+              <button
+                type="button"
+                onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                aria-label="비밀번호 표시 토글"
+              >
+                <Image 
+                  src={isPasswordVisible ? '/images/common/pw_open.svg' : '/images/common/pw_close.svg'} 
+                  alt="Toggle Password Visibility" 
+                  width={20} 
+                  height={20} 
+                />
+              </button>
+            </div>
+            <div className="relative">
+              <Input
+                type={isConfirmPasswordVisible ? 'text' : 'password'}
+                variant={confirmPasswordFocused ? "focus" : "placeholder"}
+                placeholder="비밀번호를 다시 입력해주세요"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                onFocus={() => setConfirmPasswordFocused(true)}
+                onBlur={() => setConfirmPasswordFocused(false)}
+              />
+              <button
+                type="button"
+                onClick={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                aria-label="비밀번호 확인 표시 토글"
+              >
+                <Image 
+                  src={isConfirmPasswordVisible ? '/images/common/pw_open.svg' : '/images/common/pw_close.svg'} 
+                  alt="Toggle Confirm Password Visibility" 
+                  width={20} 
+                  height={20} 
+                />
+              </button>
+            </div>
             {confirmPassword && (
               <div className="flex items-center gap-1 mt-8">
                 {passwordMatch ? (

@@ -227,7 +227,11 @@ function MainPageContent() {
                   이 지났어요!
                 </span>
               </div>
-              <div className="flex justify-end items-center gap-1">
+              <div 
+                className="flex justify-end items-center gap-1 cursor-pointer"
+                onClick={() => router.push('/calendar')}
+                aria-label="캘린더로 이동"
+              >
                 <span className="text-sm text-gray-500 font-pretendard font-normal leading-[19.60px]">
                   우리의 발자국 살펴보기
                 </span>

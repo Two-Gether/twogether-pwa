@@ -173,35 +173,40 @@ export const handleImageUpload = async (file: File): Promise<ProcessedImageResul
   let processedFile = file;
   let exifData: EXIFData = {};
   
-  // HEIC 파일인 경우 JPEG로 변환 (메타데이터 없이)
-  if (file.type === 'image/heic' || file.type === 'image/heif') {
-    try {
-      processedFile = await convertHEICToJPEG(file);
-    } catch {
-      throw new Error('HEIC 파일 변환에 실패했습니다.');
-    }
-  } else {
+  // HEIC/HEIF은 모바일 웹뷰에서 변환/압축이 불안정하므로 원본 그대로 사용
+  if (!(file.type === 'image/heic' || file.type === 'image/heif')) {
     exifData = await extractEXIFData(file);
   }
   
-  // 모든 이미지 파일에 대해 압축 적용
-  try {
-    processedFile = await compressImage(processedFile);
-  } catch {
+  // HEIC/HEIF 이외의 포맷만 압축 적용 (웹뷰 호환성 고려)
+  if (!(file.type === 'image/heic' || file.type === 'image/heif')) {
+    try {
+      processedFile = await compressImage(processedFile);
+    } catch {
+    }
   }
   
   // 미리보기 생성
-  const preview = await new Promise<string>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const result = e.target?.result as string;
-      resolve(result);
-    };
-    reader.onerror = (error) => {
-      reject(error);
-    };
-    reader.readAsDataURL(processedFile);
-  });
+  let preview: string | null = null;
+  try {
+    preview = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        resolve(result);
+      };
+      reader.onerror = (error) => {
+        reject(error);
+      };
+      reader.readAsDataURL(processedFile);
+    });
+  } catch {
+    try {
+      preview = URL.createObjectURL(processedFile);
+    } catch {
+      preview = null;
+    }
+  }
   
   // GPS 좌표가 있으면 주소 변환 (HEIC 파일이 아닌 경우만)
   let address: string | null = null;
