@@ -2,7 +2,7 @@
 
 import Header from '@/components/ui/Header';
 import Footer from '@/components/Footer';
-import { useAuthStore } from '@/hooks/auth/useAuth';
+import { useAuthStore, apiWithAuth } from '@/hooks/auth/useAuth';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState, useEffect } from 'react';
 import Image from 'next/image';
@@ -30,11 +30,8 @@ export default function MyPage() {
 
   const handleLogout = useCallback(async () => {
     try {
-      await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/logout`, {
+      await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/logout`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
-        },
       });
     } catch {
     } finally {
@@ -61,11 +58,8 @@ export default function MyPage() {
 
   const refreshUserInfo = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
-        },
       });
 
       if (!response.ok) {
@@ -87,11 +81,8 @@ export default function MyPage() {
 
   const handleUnlinkPartner = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me/partner`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me/partner`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
-        },
       });
 
       if (!response.ok) {
@@ -151,11 +142,10 @@ export default function MyPage() {
       try {
         setIsLoading(true);
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me/relationship-start-date`, {
+        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me/relationship-start-date`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
           },
           body: JSON.stringify({ date: formattedDate }),
         });
@@ -182,11 +172,10 @@ export default function MyPage() {
       try {
         setIsLoading(true);
         
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/nickname`, {
+        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/nickname`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
           },
           body: JSON.stringify({ nickname: inputValue.trim() }),
         });

@@ -8,6 +8,7 @@ import { WaypointItem } from '@/types/waypoint';
 import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getAuthToken } from '@/auth';
+import { apiWithAuth } from '@/hooks/auth/useAuth';
 import dynamic from 'next/dynamic';
 import Notification from '@/components/ui/Notification';
 
@@ -68,10 +69,9 @@ function WaypointDetailContent() {
       throw new Error('인증 토큰이 없습니다.');
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${id}`, {
+    const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${id}`, {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthStore } from '@/hooks/auth/useAuth';
+import { useAuthStore, apiWithAuth } from '@/hooks/auth/useAuth';
 import Image from 'next/image';
 import { ChevronLeft } from 'lucide-react';
 import Input from '@/components/ui/Input';
@@ -62,10 +62,9 @@ export default function ConnectPage() {
     
     const fetchPartnerCode = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/code`, {
+        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/code`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
         });
@@ -137,10 +136,9 @@ export default function ConnectPage() {
 
     setIsLoading(true);
 
-    fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/connect?code=${partnerCode}`, {
+    apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/connect?code=${partnerCode}`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -190,10 +188,9 @@ export default function ConnectPage() {
     }
     try {
       setIsRefreshing(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
+      const res = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
       });

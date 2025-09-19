@@ -8,7 +8,7 @@ import Input from '@/components/ui/Input';
 import DatePicker from '@/components/ui/DatePicker';
 import Button from '@/components/ui/Button';
 import { Waypoint, WaypointItem } from '@/types/waypoint';
-import { useAuthStore } from '@/hooks/auth/useAuth';
+import { useAuthStore, apiWithAuth } from '@/hooks/auth/useAuth';
 import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
 
 export default function CreateEventPage() {
@@ -96,10 +96,9 @@ export default function CreateEventPage() {
 
       console.log('일정 생성 요청:', requestData);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(requestData),
@@ -130,11 +129,8 @@ export default function CreateEventPage() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await fetch('/api/waypoint', {
+      const response = await apiWithAuth('/api/waypoint', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
       });
 
       if (!response.ok) {
@@ -172,11 +168,8 @@ export default function CreateEventPage() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await fetch(`/api/waypoint/${waypointId}`, {
+      const response = await apiWithAuth(`/api/waypoint/${waypointId}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
       });
 
       if (!response.ok) {

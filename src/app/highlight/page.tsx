@@ -7,7 +7,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Tag from '@/components/ui/Tag';
 import { handleImageUpload } from '@/utils/imageUtils';
-import { useAuthStore } from '@/hooks/auth/useAuth';
+import { useAuthStore, apiWithAuth } from '@/hooks/auth/useAuth';
 import Notification from '@/components/ui/Notification';
 
 function HighlightUploadContent() {
@@ -157,11 +157,8 @@ function HighlightUploadContent() {
       formDataToSend.append('image', uploadFile, safeFileName);
 
       // API 호출
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`
-        },
         body: formDataToSend
       });
       

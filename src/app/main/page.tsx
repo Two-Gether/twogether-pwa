@@ -8,7 +8,7 @@ import Footer from '../../components/Footer';
 import RecommendationCard, { Recommendation } from '../../components/RecommendationCard';
 import Notification from '@/components/ui/Notification';
 import ScheduleCard from '@/components/ui/ScheduleCard';
-import { getCurrentMonthRange, getDaysDifference, formatDateToKorean } from '@/utils/dateUtils';
+import { getCurrentMonthRange, formatDateToKorean, getScheduleStatus } from '@/utils/dateUtils';
 import { DiaryMonthOverviewResponse } from '@/types/diary';
 import Image from 'next/image';
 
@@ -292,26 +292,35 @@ function MainPageContent() {
               <div className="p-4 bg-gray-100 rounded-lg border border-gray-300 text-center">
                 <span className="text-gray-500">일정을 불러오는 중...</span>
               </div>
-            ) : schedules.length > 0 ? (
-              schedules.map((schedule, index) => (
-                <ScheduleCard
-                  key={index}
-                  title={schedule.title}
-                  dateRange={`${formatDateToKorean(schedule.startDate)} ~ ${formatDateToKorean(schedule.endDate)}`}
-                  daysLeft={Math.max(0, getDaysDifference(schedule.startDate))}
-                  onClick={() => {
-                    // 캘린더 페이지로 이동
-                    router.push('/calendar');
-                  }}
-                />
-              ))
+            ) : (() => {
+              const upcomingSchedules = schedules
+                .map((schedule) => {
+                  const status = getScheduleStatus(schedule.startDate, schedule.endDate);
+                  return { ...schedule, status };
+                })
+                .filter((schedule) => schedule.status.status !== 'past'); // 지난 일정 제외
+              
+              return upcomingSchedules.length > 0 ? (
+                upcomingSchedules.map((schedule, index) => (
+                  <ScheduleCard
+                    key={index}
+                    title={schedule.title}
+                    dateRange={`${formatDateToKorean(schedule.startDate)} ~ ${formatDateToKorean(schedule.endDate)}`}
+                    daysLeft={schedule.status.daysLeft}
+                    displayText={schedule.status.displayText}
+                    onClick={() => {
+                      // 캘린더 페이지로 이동
+                      router.push('/calendar');
+                    }}
+                  />
+                ))
               ) : (
                 <div 
                   className="p-4 bg-gray-100 rounded-lg border border-gray-300 text-left cursor-pointer hover:bg-gray-200 transition-colors"
                   onClick={() => router.push('/calendar')}
                 >
                   <div className="flex items-center justify-between gap-2 w-full">
-                    <span className="text-gray-500 text-left">데이트 일정이 없어요!</span>
+                    <span className="text-gray-500 text-left">다가오는 일정이 없어요!</span>
                     <Image 
                       src="/images/common/arrowTop.svg"
                       alt="arrow"
@@ -321,7 +330,8 @@ function MainPageContent() {
                     />
                   </div>
                 </div>
-              )}
+              );
+            })()}
           </div>
         </div>
 

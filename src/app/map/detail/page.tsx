@@ -7,7 +7,7 @@ import Header from '@/components/ui/Header';
 import { PlaceSearchResult } from '@/types/map';
 import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
 import { Waypoint } from '@/types/waypoint';
-import { useAuthStore } from '@/hooks/auth/useAuth';
+import { useAuthStore, apiWithAuth } from '@/hooks/auth/useAuth';
 import Notification from '@/components/ui/Notification';
 
 // 하이라이트 타입 정의
@@ -84,11 +84,8 @@ function DetailPageContent() {
     try {
       setIsLoadingHighlights(true);
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place?address=${encodeURIComponent(address)}`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place?address=${encodeURIComponent(address)}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
       });
 
       if (!response.ok) {
@@ -221,11 +218,8 @@ function DetailPageContent() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await fetch('/api/waypoint', {
+      const response = await apiWithAuth('/api/waypoint', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
       });
 
       if (!response.ok) {
@@ -278,10 +272,9 @@ function DetailPageContent() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await fetch('/api/waypoint', {
+      const response = await apiWithAuth('/api/waypoint', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ name: newWaypointName.trim() }),
@@ -345,10 +338,9 @@ function DetailPageContent() {
         memo: memoText.trim() // 메모 텍스트 전송
       };
 
-      const response = await fetch(`/api/waypoint/${selectedWaypointId}/items`, {
+      const response = await apiWithAuth(`/api/waypoint/${selectedWaypointId}/items`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(itemData),

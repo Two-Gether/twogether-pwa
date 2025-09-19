@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Footer from '@/components/Footer';
 import Header from '@/components/ui/Header';
 import PlusIcon from '@/components/icons/PlusIcon';
-import { getAuthToken } from '@/auth';
+import { apiWithAuth } from '@/hooks/auth/useAuth';
 
 // 일정 데이터 타입 정의
 interface DiarySchedule {
@@ -52,11 +52,8 @@ const CalendarScreen = () => {
             setIsLoadingSchedules(true);
             const { startDate, endDate } = getCurrentMonthRange();
             
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary?startDate=${startDate}&endDate=${endDate}`, {
+            const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary?startDate=${startDate}&endDate=${endDate}`, {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${getAuthToken()}`
-                }
             });
 
             if (!response.ok) {
