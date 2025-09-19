@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useAuthStore } from '@/hooks/auth/useAuth';
+import { useAuthStore, apiWithAuth } from '@/hooks/auth/useAuth';
 import MainHeader from '../../components/MainHeader';
 import Footer from '../../components/Footer';
 import RecommendationCard, { Recommendation } from '../../components/RecommendationCard';
@@ -37,11 +37,8 @@ function MainPageContent() {
       setIsLoadingSchedules(true);
       const { startDate, endDate } = getCurrentMonthRange();
       
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary?startDate=${startDate}&endDate=${endDate}`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary?startDate=${startDate}&endDate=${endDate}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
       });
 
       if (!response.ok) {
@@ -65,11 +62,8 @@ function MainPageContent() {
 
   const refreshUserInfo = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
-        },
       });
 
       if (!response.ok) {

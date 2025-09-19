@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Script from 'next/script';
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
+import TokenRefreshOverlay from '@/components/TokenRefreshOverlay';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -149,9 +150,10 @@ const RootLayout = ({
           strategy="afterInteractive"
         />
         <QueryClientProvider client={queryClient}>
-          <div className="mobile-app-container pb-safe-js">
+          <div className="mobile-app-container pb-safe-footer">
             {children}
           </div>
+          <TokenRefreshOverlay />
         </QueryClientProvider>
       </body>
     </html>

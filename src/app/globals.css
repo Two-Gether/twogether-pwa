@@ -62,6 +62,12 @@ body {
   padding-bottom: calc(var(--safe-bottom, 0px) + env(safe-area-inset-bottom) + 16px);
 }
 
+/* 푸터(하단 바)까지 고려한 추가 여백 버전 */
+.pb-safe-footer {
+  /* Footer 높이(약 56px) + 기본 16px 마진 + 안전영역 */
+  padding-bottom: calc(var(--safe-bottom, 0px) + env(safe-area-inset-bottom) + 72px);
+}
+
 /* 스마트폰 프레임 효과 (선택사항) */
 .phone-frame {
   position: relative;
