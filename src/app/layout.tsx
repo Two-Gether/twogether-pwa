@@ -150,7 +150,7 @@ const RootLayout = ({
           strategy="afterInteractive"
         />
         <QueryClientProvider client={queryClient}>
-          <div className="mobile-app-container pb-safe-footer">
+          <div className="mobile-app-container pt-safe-top pb-safe-footer">
             {children}
           </div>
           <TokenRefreshOverlay />
