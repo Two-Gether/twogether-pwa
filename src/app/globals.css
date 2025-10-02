@@ -52,25 +52,9 @@ body {
   position: relative;
 }
 
-/* Safe area bottom padding utility */
-.pb-safe {
-  padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
-}
-
-/* 상단 상태바 처리 */
+/* 상단 상태바 처리 (표준 레퍼런스) */
 .pt-safe-top {
   padding-top: var(--safe-area-inset-top, env(safe-area-inset-top));
-}
-
-/* JS 보정값과 함께 사용하는 경우 */
-.pb-safe-js {
-  padding-bottom: calc(var(--safe-bottom, 0px) + env(safe-area-inset-bottom) + 16px);
-}
-
-/* 푸터(하단 바)까지 고려한 추가 여백 버전 */
-.pb-safe-footer {
-  /* Footer 높이(약 56px) + 기본 16px 마진 + 안전영역 */
-  padding-bottom: calc(var(--safe-area-inset-bottom, env(safe-area-inset-bottom)) + 72px);
 }
 
 /* 스마트폰 프레임 효과 (선택사항) */

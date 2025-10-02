@@ -50,4 +50,25 @@ export async function refreshTokenApi(): Promise<{ accessToken: string }> {
   return res.json();
 }
 
+// 새로운 카카오 로그인 API들
+export async function startKakaoLogin(returnUrl: string = '/'): Promise<void> {
+  // GET /oauth/kakao/start 호출하여 카카오 인증 페이지로 리다이렉트
+  // 서버에서 카카오 인증 완료 후 ${FRONT_URL}/auth/finish?otc=<OTC>&returnUrl=<returnUrl>로 리다이렉트
+  window.location.href = `${API_BASE_URL}/oauth/kakao/start?returnUrl=${encodeURIComponent(returnUrl)}`;
+}
+
+export async function exchangeOtcApi(otc: string): Promise<LoginResponse> {
+  const res = await fetch(`${API_BASE_URL}/oauth/otc/exchange`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ otc }),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 

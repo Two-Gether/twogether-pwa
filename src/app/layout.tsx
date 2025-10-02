@@ -7,6 +7,7 @@ import Script from 'next/script';
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import TokenRefreshOverlay from '@/components/TokenRefreshOverlay';
+// import { useAuthStore } from '@/hooks/auth/useAuth';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -95,6 +96,8 @@ const RootLayout = ({
 
     // Android 하드웨어 뒤로가기 처리
     let removeBack: (() => void) | undefined;
+    // 딥링크 수신 해제 함수
+    let removeAppUrlOpen: (() => void) | undefined;
     (async () => {
       try {
         if (Capacitor?.getPlatform?.() === 'android') {
@@ -107,6 +110,33 @@ const RootLayout = ({
             }
           });
           removeBack = () => sub.remove();
+
+          // 카카오 로그인 등 외부 브라우저 → 앱 복귀 딥링크 처리
+          const subUrl = await App.addListener('appUrlOpen', async ({ url }) => {
+            try {
+              // 예: twogether://auth/finish?otc=XYZ&returnUrl=...
+              const parsedUrl = new URL(url);
+              const pathname = parsedUrl.pathname || '';
+              if (pathname.includes('/auth/finish')) {
+                const otc = parsedUrl.searchParams.get('otc');
+                const returnUrl = parsedUrl.searchParams.get('returnUrl');
+                // 앱 내 finish 페이지로 라우팅하여 통합 처리
+                if (otc) {
+                  const params = new URLSearchParams();
+                  params.set('otc', otc);
+                  if (returnUrl) params.set('returnUrl', returnUrl);
+                  window.location.href = `/auth/finish?${params.toString()}`;
+                  return;
+                }
+                // 그 외에는 안전하게 로그인 페이지로
+                window.location.href = '/login';
+              }
+            } catch {
+              // 무시하고 로그인으로
+              window.location.href = '/login';
+            }
+          });
+          removeAppUrlOpen = () => subUrl.remove();
         }
       } catch {
         // noop
@@ -121,6 +151,7 @@ const RootLayout = ({
       subShow.remove();
       subHide.remove();
       if (removeBack) removeBack();
+      if (removeAppUrlOpen) removeAppUrlOpen();
     };
   }, []);
 
@@ -138,19 +169,11 @@ const RootLayout = ({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Script
-          src="https://developers.kakao.com/sdk/js/kakao.js"
-          onLoad={() => {
-            if (typeof window !== 'undefined' && window.Kakao) {
-              window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY as string);
-            }
-          }}
-        />
-        <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY}&libraries=places`}
           strategy="afterInteractive"
         />
         <QueryClientProvider client={queryClient}>
-          <div className="mobile-app-container pt-safe-top pb-safe-footer">
+          <div className="mobile-app-container pt-safe-top">
             {children}
           </div>
           <TokenRefreshOverlay />
