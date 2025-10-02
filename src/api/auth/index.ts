@@ -17,7 +17,7 @@ export interface LoginResponse {
 }
 
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
-  const res = await fetch(`${API_BASE_URL}/v1/member/login`, {
+  const res = await fetch(`${API_BASE_URL}/member/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -31,7 +31,7 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
 
 export async function logoutApi(): Promise<void> {
   const token = getAuthToken();
-  await fetch(`${API_BASE_URL}/v1/member/logout`, {
+  await fetch(`${API_BASE_URL}/member/logout`, {
     method: 'DELETE',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -39,7 +39,7 @@ export async function logoutApi(): Promise<void> {
 
 export async function refreshTokenApi(): Promise<{ accessToken: string }> {
   const token = getAuthToken();
-  const res = await fetch(`${API_BASE_URL}/v1/member/token/refresh`, {
+  const res = await fetch(`${API_BASE_URL}/member/token/refresh`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });

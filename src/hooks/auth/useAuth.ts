@@ -67,7 +67,7 @@ export const refreshToken = async (): Promise<boolean> => {
   try {
     setRefreshing(true);
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/token/refresh`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/token/refresh`, {
       method: 'POST',
       credentials: 'include', // 쿠키 포함
     });

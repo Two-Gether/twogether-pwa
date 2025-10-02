@@ -45,7 +45,7 @@ export default function UserInfoPage() {
     (async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/me`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,
@@ -92,7 +92,7 @@ export default function UserInfoPage() {
 
   const handleDeleteAccount = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/me`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${useAuthStore.getState().accessToken}`,

@@ -62,7 +62,7 @@ function MainPageContent() {
 
   const refreshUserInfo = useCallback(async () => {
     try {
-      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/me`, {
         method: 'GET',
       });
 
@@ -341,9 +341,25 @@ function MainPageContent() {
             오늘의 추천 장소/행사
           </h2>
           
+          {/* API 장애 안내문 */}
+          <div className="w-full h-[314px] flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
+            <div className="text-center px-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                서비스 점검 중
+              </h3>
+              <p className="text-sm text-gray-500 mb-4 leading-relaxed">
+                국가정보자원관리원 화재 사고로 인해<br/>
+                현재 추천 서비스가 일시적으로 중단되었습니다.
+              </p>
+              <p className="text-xs text-gray-400">
+                빠른 시일 내에 복구하겠습니다.
+              </p>
+            </div>
+          </div>
+
+          {/* 기존 추천 기능 주석 처리
           {isLoadingRecommendations ? (
             <div className="flex gap-3 overflow-x-auto w-full pb-2">
-              {/* 로딩 스켈레톤 */}
               {[...Array(3)].map((_, index) => (
                 <div 
                   key={index}
@@ -359,14 +375,11 @@ function MainPageContent() {
                   recommendation={recommendation}
                   onClick={(rec) => {
                     if (rec.fullAddress) {
-                      // 괄호 부분을 제거한 주소로 검색
                       const cleanAddress = removeParentheses(rec.fullAddress);
                       router.push(`/map?search=${encodeURIComponent(cleanAddress)}`);
                     } else if (rec.mapx && rec.mapy) {
-                      // 좌표가 있는 경우 좌표로 검색
                       router.push(`/map?lat=${rec.mapy}&lng=${rec.mapx}`);
                     } else {
-                      // 주소 정보가 없는 경우 제목으로 검색
                       router.push(`/map?search=${encodeURIComponent(rec.title)}`);
                     }
                   }}
@@ -380,6 +393,7 @@ function MainPageContent() {
               )}
             </div>
           )}
+          */}
         </div>
       </div>
       

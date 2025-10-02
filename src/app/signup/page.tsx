@@ -68,7 +68,7 @@ export default function SignupPage() {
       return;
     }
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/email/send`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/email/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -98,7 +98,7 @@ export default function SignupPage() {
     setIsVerifying(true);
     
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/email/verify`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/email/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code: verificationCode }),
@@ -148,7 +148,7 @@ export default function SignupPage() {
         ageRange: ageRange.match(/^(\d+)세/)?.[1] || "20" // 첫 번째 숫자만 추출
       };
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/signup`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(signupData),
@@ -388,7 +388,7 @@ export default function SignupPage() {
 
         {/* Privacy Agreement */}
         <div className="mb-6">
-          <div className="flex items-start gap-3">
+          <div className="flex justify-center align-center items-center gap-3">
             <button 
               onClick={() => setPrivacyAgreed(!privacyAgreed)}
               className={`w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center flex-shrink-0 mt-0.5 ${

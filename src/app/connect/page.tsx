@@ -62,7 +62,7 @@ export default function ConnectPage() {
     
     const fetchPartnerCode = async () => {
       try {
-        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/code`, {
+        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/partner/code`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -136,7 +136,7 @@ export default function ConnectPage() {
 
     setIsLoading(true);
 
-    apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/connect?code=${partnerCode}`, {
+    apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/partner/connect?code=${partnerCode}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -188,7 +188,7 @@ export default function ConnectPage() {
     }
     try {
       setIsRefreshing(true);
-      const res = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
+      const res = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/me`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

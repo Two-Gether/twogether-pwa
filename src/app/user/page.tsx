@@ -30,7 +30,7 @@ export default function MyPage() {
 
   const handleLogout = useCallback(async () => {
     try {
-      await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/logout`, {
+      await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/logout`, {
         method: 'DELETE',
       });
     } catch {
@@ -58,7 +58,7 @@ export default function MyPage() {
 
   const refreshUserInfo = useCallback(async () => {
     try {
-      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/me`, {
         method: 'GET',
       });
 
@@ -81,7 +81,7 @@ export default function MyPage() {
 
   const handleUnlinkPartner = useCallback(async () => {
     try {
-      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me/partner`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/me/partner`, {
         method: 'DELETE',
       });
 
@@ -142,7 +142,7 @@ export default function MyPage() {
       try {
         setIsLoading(true);
         
-        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/me/relationship-start-date`, {
+        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/me/relationship-start-date`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -172,7 +172,7 @@ export default function MyPage() {
       try {
         setIsLoading(true);
         
-        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/v1/member/partner/nickname`, {
+        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/partner/nickname`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
