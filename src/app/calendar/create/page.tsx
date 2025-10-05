@@ -129,7 +129,7 @@ export default function CreateEventPage() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await apiWithAuth('/api/waypoint', {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, {
         method: 'GET',
       });
 
@@ -168,7 +168,7 @@ export default function CreateEventPage() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await apiWithAuth(`/api/waypoint/${waypointId}`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}`, {
         method: 'GET',
       });
 

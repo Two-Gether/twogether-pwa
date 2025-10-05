@@ -304,7 +304,7 @@ export default function SignupPage() {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-1 mt-1">
+          <div className="flex items-center gap-1 mt-4">
             {passwordValid ? (
               <Check size={16} className="text-semantic-success" />
             ) : (
@@ -388,10 +388,10 @@ export default function SignupPage() {
 
         {/* Privacy Agreement */}
         <div className="mb-6">
-          <div className="flex justify-center align-center items-center gap-3">
+          <div className="flex items-center gap-3">
             <button 
               onClick={() => setPrivacyAgreed(!privacyAgreed)}
-              className={`w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center flex-shrink-0 mt-0.5 ${
+              className={`w-5 h-5 bg-white rounded-full border border-gray-300 flex items-center justify-center flex-shrink-0 ${
                 privacyAgreed ? 'border-brand-500 bg-brand-50' : 'hover:border-gray-400'
               }`}
             >
@@ -399,13 +399,13 @@ export default function SignupPage() {
                 <Image 
                   src="/images/common/checkbox.svg"
                   alt="checked"
-                  width={20}
-                  height={20}
+                  width={16}
+                  height={16}
                 />
               )}
             </button>
-            <div className="flex-1">
-              <p className="text-gray-700 text-sm font-pretendard font-normal leading-[19.6px]">
+            <div className="flex-1 flex items-center">
+              <p className="text-gray-700 text-sm font-pretendard font-normal">
                 개인정보 수집 및 활용에 동의합니다.{' '}
                 <a 
                   href="https://reflective-brush-deb.notion.site/26e096f283e2800c9bf5f45e92fcd669?pvs=74" 

@@ -114,18 +114,17 @@ const RootLayout = ({
           // 카카오 로그인 등 외부 브라우저 → 앱 복귀 딥링크 처리
           const subUrl = await App.addListener('appUrlOpen', async ({ url }) => {
             try {
-              // 예: twogether://auth/finish?otc=XYZ&returnUrl=...
               const parsedUrl = new URL(url);
               const pathname = parsedUrl.pathname || '';
-              if (pathname.includes('/auth/finish')) {
+              if (pathname.includes('/oauth/finish')) {
                 const otc = parsedUrl.searchParams.get('otc');
-                const returnUrl = parsedUrl.searchParams.get('returnUrl');
+                const returnUrl = parsedUrl.searchParams.get('return');
                 // 앱 내 finish 페이지로 라우팅하여 통합 처리
                 if (otc) {
                   const params = new URLSearchParams();
                   params.set('otc', otc);
-                  if (returnUrl) params.set('returnUrl', returnUrl);
-                  window.location.href = `/auth/finish?${params.toString()}`;
+                  if (returnUrl) params.set('return', returnUrl);
+                  window.location.href = `/oauth/finish?${params.toString()}`;
                   return;
                 }
                 // 그 외에는 안전하게 로그인 페이지로
@@ -173,7 +172,7 @@ const RootLayout = ({
           strategy="afterInteractive"
         />
         <QueryClientProvider client={queryClient}>
-          <div className="mobile-app-container pt-safe-top">
+          <div className="mobile-app-container">
             {children}
           </div>
           <TokenRefreshOverlay />

@@ -342,6 +342,22 @@ const MapScreenContent = () => {
     searchPlaces();
   };
 
+  // 검색어 지우기
+  const clearSearch = () => {
+    setSearchKeyword('');
+    setSearchResults([]);
+    setShowResults(false);
+  };
+
+  // 아이콘 클릭 처리 (검색어가 있으면 지우기, 없으면 검색)
+  const handleIconClick = () => {
+    if (searchKeyword.trim()) {
+      clearSearch();
+    } else {
+      searchPlaces();
+    }
+  };
+
   // 검색 결과 닫기
   const closeSearchResults = () => {
     setShowResults(false);
@@ -425,7 +441,8 @@ const MapScreenContent = () => {
             placeholder="장소를 검색하세요"
             value={searchKeyword}
             onChange={handleSearchInput}
-            onIconClick={() => searchPlaces()}
+            onIconClick={handleIconClick}
+            iconType={searchKeyword.trim() ? 'close' : 'search'}
           />
         </form>
       </div>

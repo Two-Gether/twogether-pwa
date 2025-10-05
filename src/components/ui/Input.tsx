@@ -3,7 +3,7 @@
 import React, { forwardRef } from 'react';
 
 type InputType = 'text' | 'icon' | 'password';
-type TextVariant = 'placeholder' | 'disabled' | 'default' | 'textarea' | 'focus';
+type TextVariant = 'placeholder' | 'disabled' | 'default' | 'textarea' | 'textareaDisabled' | 'focus';
 type IconVariant = 'placeholder' | 'default' | 'disabled' | 'focus';
 
 interface BaseInputProps {
@@ -24,6 +24,7 @@ interface IconInputProps extends BaseInputProps, Omit<React.InputHTMLAttributes<
   type: 'icon';
   variant?: IconVariant;
   icon?: React.ReactNode;
+  iconType?: 'search' | 'close';
   helperText?: string;
   label?: string;
   onIconClick?: () => void;
@@ -53,12 +54,13 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
       placeholder: 'bg-gray-100 border border-gray-300 text-gray-500 placeholder:text-gray-500',
       disabled: 'bg-gray-200 border border-gray-300 text-gray-700 cursor-not-allowed placeholder:text-gray-500',
       default: 'bg-gray-100 border border-gray-300 text-gray-700 placeholder:text-gray-700',
-      textarea: 'bg-gray-100 border border-gray-300 text-gray-500 min-h-[120px] resize-none placeholder:text-gray-500',
+      textarea: 'bg-gray-100 border border-gray-300 text-gray-500 min-h-[120px] h-auto py-4 resize-none placeholder:text-gray-500',
+      textareaDisabled: 'bg-gray-200 border border-gray-300 text-gray-700 cursor-not-allowed min-h-[120px] h-auto py-4 resize-none placeholder:text-gray-500',
       focus: 'bg-gray-100 border border-brand-500 text-gray-700 placeholder:text-gray-700',
     };
 
-    const isTextarea = variant === 'textarea';
-    const isDisabled = variant === 'disabled';
+    const isTextarea = variant === 'textarea' || variant === 'textareaDisabled';
+    const isDisabled = variant === 'disabled' || variant === 'textareaDisabled';
 
     return (
       <div className={`${widthClass}`}>
@@ -93,7 +95,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
   /** icon 계열 */
   const renderIcon = (p: IconInputProps) => {
-    const { variant = 'default', helperText, label, onIconClick, ...iconProps } = p;
+    const { variant = 'default', helperText, label, onIconClick, iconType = 'search', ...iconProps } = p;
 
     const iconVariants: Record<IconVariant, string> = {
       placeholder: 'bg-gray-100 border border-gray-300 text-gray-500 placeholder:text-gray-500',
@@ -123,7 +125,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             className={`absolute inset-y-0 right-0 flex items-center pr-4 ${iconColor} ${onIconClick ? 'cursor-pointer' : ''}`}
             onClick={onIconClick}
           >
-            <img src="/images/common/search.svg" alt="Search" className="w-3.5 h-3.5" />
+            <img 
+              src={iconType === 'close' ? "/images/common/close.svg" : "/images/common/search.svg"} 
+              alt={iconType === 'close' ? "Close" : "Search"} 
+              className="w-3.5 h-3.5" 
+            />
           </div>
         </div>
         {helperText && (

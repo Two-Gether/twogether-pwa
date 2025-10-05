@@ -39,7 +39,7 @@ export default function Footer() {
   }
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white px-4 py-2" style={{ borderTop: '1px #EEEEEE solid'}}>
+    <div className="bg-white px-4 py-2" style={{ borderTop: '1px #EEEEEE solid'}}>
       <div className="flex justify-around items-center">
         <button
           onClick={() => router.push('/main')}

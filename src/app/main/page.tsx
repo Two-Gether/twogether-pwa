@@ -132,9 +132,12 @@ function MainPageContent() {
     // 일정 데이터 불러오기
     fetchSchedules();
     
-    // 파트너 ID가 null인 경우 매칭 페이지로 리다이렉트
-    if (user && user.partnerId === null) {
-      router.push('/connect');
+    // 파트너 상태 재검증 및 리다이렉트
+    if (user) {
+      if (user.partnerId === null) {
+        router.push('/connect');
+        return;
+      }
     }
   }, [isAuthenticated, user, router, searchParams, fetchRecommendations, fetchSchedules]);
 
@@ -193,9 +196,9 @@ function MainPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 pb-16">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       <MainHeader />
-      <div className="px-5 pt-6">
+      <div className="px-5 pt-6 flex-1">
         {/* Relationship Status Card */}
         {user?.relationshipStartDate ? (
           <div className="mb-6 p-5 bg-gray-200 rounded-lg border border-gray-300 relative">
@@ -283,7 +286,7 @@ function MainPageContent() {
           </div>
         )}
 
-        <div className="mb-6 mt-16">
+        <div className="mb-6 mt-24">
           <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
             다가오는 데이트 일정
           </h2>
@@ -350,9 +353,6 @@ function MainPageContent() {
               <p className="text-sm text-gray-500 mb-4 leading-relaxed">
                 국가정보자원관리원 화재 사고로 인해<br/>
                 현재 추천 서비스가 일시적으로 중단되었습니다.
-              </p>
-              <p className="text-xs text-gray-400">
-                빠른 시일 내에 복구하겠습니다.
               </p>
             </div>
           </div>

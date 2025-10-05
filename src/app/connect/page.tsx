@@ -56,13 +56,49 @@ export default function ConnectPage() {
     }, 1500);
   };
 
+  // 임의로 파트너 코드 새로고침 (캐시 무시)
+  const forceRefreshPartnerCode = async () => {
+    if (!user?.memberId) {
+      showToast('로그인 후 이용해주세요.', 'error');
+      return;
+    }
+    try {
+      setMyPartnerCode('로딩 중...');
+      localStorage.removeItem('partnerCode');
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/partner/code?memberId=${user.memberId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const code = await response.text();
+      const trimmedCode = code.trim();
+      setMyPartnerCode(trimmedCode);
+      localStorage.setItem('partnerCode', JSON.stringify({ code: trimmedCode, timestamp: Date.now() }));
+      showToast('연인 코드가 갱신되었습니다.', 'success');
+    } catch (error) {
+      console.log(error);
+      showToast('코드 갱신 실패', 'error');
+    }
+  };
+
   // 내 파트너 코드 조회 (3시간마다 새로 요청)
   useEffect(() => {
     if (!isClient || !accessToken) return;
     
     const fetchPartnerCode = async () => {
       try {
-        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/partner/code`, {
+        if (!user?.memberId) {
+          setMyPartnerCode('사용자 정보 없음');
+          return;
+        }
+        const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/member/partner/code?memberId=${user.memberId}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -310,6 +346,14 @@ export default function ConnectPage() {
               title="클릭하여 복사하기"
             />
           </div>
+        </div>
+        <div className="mt-2">
+          <button
+            onClick={forceRefreshPartnerCode}
+            className="text-gray-500 hover:text-gray-700 underline text-xs"
+          >
+            코드 새로고침
+          </button>
         </div>
 
         {/* Partner Code Registration */}

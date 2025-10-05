@@ -4,8 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuthStore } from '@/hooks/auth/useAuth';
-import { useKakaoAuth } from '@/hooks/auth/useKakaoAuth';
-import { loginApi } from '@/api/auth';
+import { loginApi, startKakaoLogin } from '@/api/auth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -16,7 +15,6 @@ const LoginScreen = () => {
     const [password, setPassword] = useState('');
     const router = useRouter();
     const { login } = useAuthStore();
-    const { kakaoLogin } = useKakaoAuth();
     const { googleLogin } = useGoogleAuth();
 
     const handleLogin = async () => {
@@ -57,11 +55,12 @@ const LoginScreen = () => {
 
     const handleKakaoLogin = async () => {
         try {
-            await kakaoLogin();
+            await startKakaoLogin('/main');
         } catch (error) {
             window.alert('카카오 로그인 실패: ' + (error as Error).message);
         }
     };
+
 
     const handleGoogleLogin = async () => {
         try {
