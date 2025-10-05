@@ -147,7 +147,7 @@ const LoginScreen = () => {
                             <div className="flex-1 h-px bg-gray-300"></div>
                         </div>
 
-                        <div className="flex justify-center space-x-4">
+                        {/* <div className="flex justify-center space-x-4">
                             <Image 
                                 src="/images/social/kakao-logo.svg" 
                                 alt="Kakao Login" 
@@ -165,8 +165,8 @@ const LoginScreen = () => {
                                   className="cursor-pointer hover:opacity-80 transition-opacity"
                                   onClick={() => handleSocialLogin('google')}
                               />
-                            */}
-                        </div>
+                            
+                        </div> */}
                     </div>
                 </div>
             </div>
