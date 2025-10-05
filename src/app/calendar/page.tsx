@@ -14,6 +14,7 @@ interface DiarySchedule {
   startDate: string;
   endDate: string;
   mainStickerUrl?: string;
+  diaryId?: number;
 }
 
 const CalendarScreen = () => {
@@ -72,7 +73,11 @@ const CalendarScreen = () => {
             }
 
             const data = await response.json();
-            setSchedules(data.diaryMonthOverviewResponses || []);
+            const list = (data.diaryMonthOverviewResponses || []).map((it: any) => ({
+                ...it,
+                diaryId: it.diaryId ?? it.id ?? it.diaryID,
+            }));
+            setSchedules(list);
         } catch (error) {
             console.error('일정 데이터 로딩 에러:', error);
             setSchedules([]);
@@ -200,22 +205,35 @@ const CalendarScreen = () => {
   // 하루 최대 3개까지만 캘린더에 표시 (나머지는 모달에서)
   const monthStart = new Date(currentYear, currentMonth, 1);
   const monthEnd = new Date(currentYear, currentMonth + 1, 0);
-  const eventsSorted = useMemo(() => [...events].sort((a, b) => b.start.getTime() - a.start.getTime()), [events]);
+  const eventsSorted = useMemo(() => [...events].sort((a, b) => a.start.getTime() - b.start.getTime()), [events]); // 시작일 기준 오름차순
   const topEventsByDay = useMemo(() => {
-    const map: Record<string, Set<string>> = {};
+    const map: Record<string, string[]> = {}; // 각 날짜별 일정 ID 배열 (순서대로)
+    
+    // 먼저 모든 날짜에 빈 배열 초기화
+    for (let day = 1; day <= monthEnd.getDate(); day++) {
+      const dayDate = new Date(currentYear, currentMonth, day);
+      const key = dateKey(dayDate);
+      map[key] = [];
+    }
+    
+    // 각 일정을 날짜별로 추가
     for (const ev of eventsSorted) {
       const start = new Date(Math.max(ev.start.getTime(), monthStart.getTime()));
       const end = new Date(Math.min(ev.end.getTime(), monthEnd.getTime()));
       const cur = new Date(start);
+      
       while (cur <= end) {
         const key = dateKey(cur);
-        if (!map[key]) map[key] = new Set();
-        if (map[key].size < 3) {
-          map[key].add(ev.id);
+        
+        // 해당 날짜에 아직 3개 미만의 일정이 있으면 추가
+        if (map[key] && map[key].length < 3) {
+          map[key].push(ev.id);
         }
+        
         cur.setDate(cur.getDate() + 1);
       }
     }
+    
     return map;
   }, [eventsSorted, currentYear, currentMonth]);
     
@@ -263,12 +281,13 @@ const CalendarScreen = () => {
         const daySchedules = getSchedulesForDay(clickedDate);
     
     if (daySchedules.length === 1) {
-      // 일정이 하나면 상세로 이동 (날짜 파라미터 전달)
-      const y = clickedDate.getFullYear();
-      const m = String(clickedDate.getMonth() + 1).padStart(2, '0');
-      const da = String(clickedDate.getDate()).padStart(2, '0');
-      const q = `${y}-${m}-${da}`;
-      router.push(`/calendar/detail?date=${q}`);
+      // 일정이 하나면 상세로 이동: diaryId 필수
+      const only = daySchedules[0];
+      if (only.diaryId == null) {
+        console.warn('diaryId가 없어 상세 페이지로 이동할 수 없습니다.', only);
+        return;
+      }
+      router.push(`/calendar/detail?diaryId=${only.diaryId}`);
       return;
     }
     if (daySchedules.length >= 2) {
@@ -392,43 +411,119 @@ const CalendarScreen = () => {
                     })}
                     {/* 주차 단위 텍스트 오버레이 (가운데 정렬, 오버플로우 방지) - 그리드 내부에 절대 배치 */}
                     <div className="pointer-events-none absolute inset-0 overflow-hidden grid grid-cols-7 auto-rows-[120px] pt-2">
-                    {events.map((ev, eventIndex) => {
-                        const start = ev.start.getDate();
-                        const end = ev.end.getDate();
-                        const segments: ReactNode[] = [];
-                        let cursor = start;
+                    {(() => {
+                        // 각 날짜별로 일정을 그룹화
+                        const eventsByDay: Record<string, Array<{event: any, position: number}>> = {};
                         
-                        // 각 일정마다 다른 세로 위치
-                        const topOffset = 28 + (eventIndex * 26);
+                        // 전체 일정을 시작일 기준으로 정렬하고 position 할당
+                        const globalEventPositions = new Map<string, number>();
+                        const globalUsedPositions = new Set<number>();
                         
-                        while (cursor <= end) {
-                          const linear = firstDayOfWeek + cursor - 1; // 0-based 전체 인덱스
-                            const week = Math.floor(linear / 7) + 1; // 1-based grid row
-                            const col = (linear % 7) + 1; // 1-based grid col
-                            const maxSpan = 7 - col + 1; // 남은 컬럼 수
-                            const remain = end - cursor + 1; // 남은 일수
-                            const span = Math.min(maxSpan, remain);
-                            const endCol = col + span - 1;
-                            // 텍스트 병합 영역 (여유 있으면 가운데, 아니면 왼쪽 정렬로 잘림)
-                            const shouldCenter = span >= 3; // 3칸 이상이면 가운데 정렬
-                            const derived = getDerivedEventColor(ev);
-                            const isPast = derived === 'text-sub-200';
-                            const bgColor = isPast ? 'bg-sub-100' : 'bg-brand-100';
-                            const borderColor = isPast ? 'border-sub-200' : 'border-brand-200';
-                            const textColor = 'text-gray-800';
-                          // 하루 최대 3개 제한: 이 날에 포함되는 상위 3개 안에 들지 않으면 렌더링 스킵
-                          const dayDate = new Date(currentYear, currentMonth, cursor);
-                          const topSet = topEventsByDay[dateKey(dayDate)];
-                          const renderThis = topSet ? topSet.has(ev.id) : true;
-                            if (renderThis) segments.push(
-                                <div key={`txt-${ev.id}-${week}-${col}`} style={{ gridColumn: `${col} / ${endCol + 1}`, gridRow: week, marginTop: `${topOffset}px` }} className={`h-[22px] flex items-center ${shouldCenter ? 'justify-center' : 'justify-start'} px-1 overflow-hidden w-full max-w-full ${bgColor} rounded border ${borderColor}` }>
-                                    <span className={`text-xs ${textColor} font-pretendard font-medium whitespace-nowrap overflow-hidden text-ellipsis px-1`}>{ev.title}</span>
-                                </div>
-                            );
-                            cursor += span;
+                        eventsSorted.slice(0, 3).forEach((ev, index) => {
+                            let bestPosition = 0;
+                            
+                            if (!globalUsedPositions.has(0)) {
+                                bestPosition = 0; // 맨위
+                            } else if (!globalUsedPositions.has(1)) {
+                                bestPosition = 1; // 중간
+                            } else {
+                                bestPosition = 2; // 맨아래
+                            }
+                            
+                            globalUsedPositions.add(bestPosition);
+                            globalEventPositions.set(ev.id, bestPosition);
+                        });
+                        
+                        // 모든 일정을 날짜별로 분류
+                        for (let day = 1; day <= monthEnd.getDate(); day++) {
+                            const dayDate = new Date(currentYear, currentMonth, day);
+                            const dayKey = dateKey(dayDate);
+                            eventsByDay[dayKey] = [];
+                            
+                            // 해당 날짜에 포함되는 일정들 찾기 (시작일 기준 오름차순 정렬)
+                            const dayEvents = eventsSorted.filter(ev => {
+                                const start = new Date(Math.max(ev.start.getTime(), monthStart.getTime()));
+                                const end = new Date(Math.min(ev.end.getTime(), monthEnd.getTime()));
+                                return dayDate >= new Date(start.getFullYear(), start.getMonth(), start.getDate()) && 
+                                       dayDate <= new Date(end.getFullYear(), end.getMonth(), end.getDate());
+                            }).sort((a, b) => {
+                                // 시작일 기준 오름차순 정렬 (빠른 일정이 먼저)
+                                const startDiff = a.start.getTime() - b.start.getTime();
+                                if (startDiff !== 0) return startDiff;
+                                // 시작일이 같으면 종료일 기준 내림차순
+                                const endDiff = b.end.getTime() - a.end.getTime();
+                                if (endDiff !== 0) return endDiff;
+                                // 종료일도 같으면 id 기준
+                                return a.id.localeCompare(b.id);
+                            }).slice(0, 3);
+                            
+                            // 각 일정에 해당 날짜에서 최적의 position 할당
+                            const dayUsedPositions = new Set<number>();
+                            dayEvents.forEach((ev) => {
+                                const globalPosition = globalEventPositions.get(ev.id) ?? 0;
+                                let actualPosition = globalPosition;
+                                
+                                // 해당 날짜에서 실제로 비어있는 position 찾기
+                                if (dayUsedPositions.has(actualPosition)) {
+                                    // 원래 position이 차있으면 다른 비어있는 position 찾기
+                                    if (!dayUsedPositions.has(0)) {
+                                        actualPosition = 0; // 맨위
+                                    } else if (!dayUsedPositions.has(1)) {
+                                        actualPosition = 1; // 중간
+                                    } else if (!dayUsedPositions.has(2)) {
+                                        actualPosition = 2; // 맨아래
+                                    }
+                                }
+                                
+                                dayUsedPositions.add(actualPosition);
+                                eventsByDay[dayKey].push({
+                                    event: ev,
+                                    position: actualPosition
+                                });
+                            });
                         }
-                        return segments;
-                    })}
+                        
+                        // 모든 일정을 렌더링 (연속된 바로)
+                        const allSegments: ReactNode[] = [];
+                        
+                        events.forEach((ev) => {
+                            const start = ev.start.getDate();
+                            const end = ev.end.getDate();
+                            let cursor = start;
+                            
+                            // 이 일정의 position을 첫 번째 날짜에서 계산 (모든 날짜에서 동일하게 사용)
+                            const firstDayDate = new Date(currentYear, currentMonth, cursor);
+                            const firstDayKey = dateKey(firstDayDate);
+                            const firstDayEventData = eventsByDay[firstDayKey]?.find(item => item.event.id === ev.id);
+                            const globalTopOffset = firstDayEventData ? 28 + (firstDayEventData.position * 26) : 28;
+                            
+                            while (cursor <= end) {
+                                const linear = firstDayOfWeek + cursor - 1;
+                                const week = Math.floor(linear / 7) + 1;
+                                const col = (linear % 7) + 1;
+                                const maxSpan = 7 - col + 1;
+                                const remain = end - cursor + 1;
+                                const span = Math.min(maxSpan, remain);
+                                const endCol = col + span - 1;
+                                const shouldCenter = span >= 3;
+                                const derived = getDerivedEventColor(ev);
+                                const isPast = derived === 'text-sub-200';
+                                const bgColor = isPast ? 'bg-sub-100' : 'bg-brand-100';
+                                const borderColor = isPast ? 'border-sub-200' : 'border-brand-200';
+                                const textColor = 'text-gray-800';
+
+                                allSegments.push(
+                                    <div key={`txt-${ev.id}-${week}-${col}`} style={{ gridColumn: `${col} / ${endCol + 1}`, gridRow: week, marginTop: `${globalTopOffset}px` }} className={`h-[22px] flex items-center ${shouldCenter ? 'justify-center' : 'justify-start'} px-1 overflow-hidden w-full max-w-full ${bgColor} rounded border ${borderColor}` }>
+                                        <span className={`text-xs ${textColor} font-pretendard font-medium whitespace-nowrap overflow-hidden text-ellipsis px-1`}>{ev.title}</span>
+                                    </div>
+                                );
+                                
+                                cursor += span; // 연속된 일정은 span만큼 건너뛰기
+                            }
+                        });
+                        
+                        return allSegments;
+                    })()}
                     </div>
                 </div>
             </div>
@@ -478,17 +573,22 @@ const CalendarScreen = () => {
                                   key={index} 
                                   className="w-full p-4 bg-gray-50 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-gray-100"
                                   onClick={() => {
-                                    const y = modalDate.getFullYear();
-                                    const m = String(modalDate.getMonth() + 1).padStart(2, '0');
-                                    const da = String(modalDate.getDate()).padStart(2, '0');
-                                    const q = `${y}-${m}-${da}`;
                                     setShowScheduleModal(false);
-                                    router.push(`/calendar/detail?date=${q}&start=${encodeURIComponent(schedule.startDate)}&end=${encodeURIComponent(schedule.endDate)}`);
+                                    if ((schedule as any).diaryId == null) {
+                                      console.warn('diaryId가 없어 상세 페이지로 이동할 수 없습니다.', schedule);
+                                      return;
+                                    }
+                                    router.push(`/calendar/detail?diaryId=${(schedule as any).diaryId}`);
                                   }}
                                 >
                                     {/* 일정 아이콘 */}
-                                    <div className="w-9 h-9 bg-brand-200 rounded-full flex items-center justify-center">
-                                        <div className="w-6 h-6 bg-brand-500 rounded-full"></div>
+                                    <div className="w-9 h-9 flex items-center justify-center">
+                                        <Image
+                                            src="/images/illust/cats/heartCat.png"
+                                            alt="schedule icon"
+                                            width={36}
+                                            height={36}
+                                        />
                                     </div>
                                     
                                     {/* 일정 정보 */}

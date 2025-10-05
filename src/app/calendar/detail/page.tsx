@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/ui/Header';
+import Button from '@/components/ui/Button';
 import Image from 'next/image';
 import Input from '@/components/ui/Input';
 import { WaypointItem } from '@/types/waypoint';
@@ -16,12 +17,30 @@ interface DiaryDetailItem {
   memo?: string | null;
   mainStickerUrl?: string | null;
   waypointId?: number | null;
+  stickerListResponse?: {
+    stickerResponses: Array<{
+      id: number;
+      imageUrl: string;
+      main: boolean;
+    }>;
+  };
+  waypointItemTop3ListResponse?: {
+    items: Array<{
+      id: number;
+      name: string;
+      address: string;
+      imageUrl?: string;
+      memo?: string;
+      itemOrder: number;
+    }>;
+  };
 }
 
 export default function CalendarDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const dateParam = searchParams.get('date'); // YYYY-MM-DD
+  const dateParam = searchParams.get('date');
+  const diaryIdParam = searchParams.get('diaryId');
   const startParam = searchParams.get('start');
   const endParam = searchParams.get('end');
 
@@ -51,6 +70,27 @@ export default function CalendarDetailPage() {
 
   useEffect(() => {
     const run = async () => {
+      // diaryId로 단건 상세 조회 우선
+      if (diaryIdParam) {
+        try {
+          setIsLoading(true);
+          const res = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary/${diaryIdParam}`, {
+            method: 'GET',
+          });
+          if (!res.ok) throw new Error('일정 상세 조회 실패');
+          const data = await res.json();
+          console.log('🆔 Diary 단건 상세 응답', data);
+          setDetail(data as DiaryDetailItem);
+          return;
+        } catch (e) {
+          console.error(e);
+          setDetail(null);
+          return;
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
       if (!dateParam) {
         router.replace('/calendar');
         return;
@@ -91,7 +131,9 @@ export default function CalendarDetailPage() {
           if (exact) candidates = [exact];
         }
 
-        setDetail(candidates[0] ?? null);
+        const selectedDetail = candidates[0] ?? null;
+
+        setDetail(selectedDetail);
       } catch (e) {
         console.error(e);
         setDetail(null);
@@ -100,49 +142,52 @@ export default function CalendarDetailPage() {
       }
     };
     run();
-  }, [dateParam, startParam, endParam, router]);
+  }, [dateParam, startParam, endParam, diaryIdParam, router]);
 
-  // 상세 정보 결정 후 웨이포인트 아이템 가져오기
+  // 상세 정보 결정 후: 응답 내 waypointItemTop3ListResponse 사용
   useEffect(() => {
-    const fetchWaypointItems = async (waypointId: number) => {
-      try {
-        setIsLoadingWaypointItems(true);
-        const response = await apiWithAuth(`/api/waypoint/${waypointId}`, {
-          method: 'GET',
-        });
-        if (!response.ok) return;
-        const data = await response.json();
-        const items: WaypointItem[] = data.waypointInfoResponse || [];
-        setSelectedWaypointItems(items);
-
-        // 구글 이미지 URL 가져오기 (최소 지연)
-        if (items.length > 0) {
-          const imagePromises = items.map(async (item) => {
-            try {
-              const imageUrl = await getPlaceImageUrl(item.name);
-              return { itemId: item.itemId, imageUrl };
-            } catch {
-              return { itemId: item.itemId, imageUrl: '' };
-            }
-          });
-          const results = await Promise.all(imagePromises);
-          const map: Record<number, string> = {};
-          results.forEach(({ itemId, imageUrl }) => {
-            map[itemId] = imageUrl || '/images/illust/cats/backgroundCat.png';
-          });
-          setItemImageUrls(map);
-        }
-      } finally {
-        setIsLoadingWaypointItems(false);
-      }
-    };
-
-    if (detail?.waypointId) {
-      fetchWaypointItems(detail.waypointId);
-    } else {
+    const itemsFromDetail = detail?.waypointItemTop3ListResponse?.items || [];
+    if (!detail) {
       setSelectedWaypointItems([]);
+      setItemImageUrls({});
+      return;
     }
-  }, [detail?.waypointId]);
+    
+    setIsLoadingWaypointItems(true);
+    
+    // 목록 매핑 (WaypointItem 타입에 맞춤)
+    const mapped: WaypointItem[] = itemsFromDetail.map((it) => ({
+      itemId: it.id,
+      name: it.name,
+      imageUrl: it.imageUrl || '',
+      address: it.address,
+      memo: it.memo || '',
+      order: it.itemOrder,
+    }));
+    setSelectedWaypointItems(mapped);
+    
+    // 이미지 매핑(응답 imageUrl 우선, 없으면 구글 플레이스 보조)
+    const doImages = async () => {
+      const entries = await Promise.all(
+        mapped.map(async (m) => {
+          if (m.imageUrl) {
+            return [m.itemId, m.imageUrl] as const;
+          }
+          try {
+            const url = await getPlaceImageUrl(m.name);
+            return [m.itemId, url || '/images/illust/cats/backgroundCat.png'] as const;
+          } catch (e) {
+            return [m.itemId, '/images/illust/cats/backgroundCat.png'] as const;
+          }
+        })
+      );
+      const map: Record<number, string> = {};
+      entries.forEach(([id, url]) => (map[id] = url));
+      setItemImageUrls(map);
+      setIsLoadingWaypointItems(false);
+    };
+    void doImages();
+  }, [detail]);
 
   return (
     <div className="w-full min-h-screen relative bg-white overflow-hidden">
@@ -179,24 +224,42 @@ export default function CalendarDetailPage() {
               <div className="flex items-center gap-7">
                 <span className="w-7 text-gray-700 text-sm">시작</span>
                 <div className="flex-1">
-                  <Input
-                    type="text"
-                    variant="disabled"
-                    value={new Date(detail.startDate).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }).replace(/\./g, '/').replace(/\s/g, '')}
-                    readOnly
-                  />
+                <Input
+                  type="text"
+                  variant="disabled"
+                  value={new Date(detail.startDate)
+                    .toLocaleDateString('ko-KR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      weekday: 'short',
+                    })
+                    .replace(/\.\s*/g, '/')     
+                    .replace(/\/\s*\(/, ' (')  
+                  }
+                  readOnly
+                />
                 </div>
               </div>
 
               <div className="flex items-center gap-7">
                 <span className="w-7 text-gray-700 text-sm">종료</span>
                 <div className="flex-1">
-                  <Input
-                    type="text"
-                    variant="disabled"
-                    value={new Date(detail.endDate).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' }).replace(/\./g, '/').replace(/\s/g, '')}
-                    readOnly
-                  />
+                <Input
+                  type="text"
+                  variant="disabled"
+                  value={new Date(detail.endDate)
+                    .toLocaleDateString('ko-KR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      weekday: 'short',
+                    })
+                    .replace(/\.\s*/g, '/')     
+                    .replace(/\/\s*\(/, ' (')  
+                  }
+                  readOnly
+                />
                 </div>
               </div>
             </div>
@@ -207,25 +270,8 @@ export default function CalendarDetailPage() {
               <div style={{width: '100px', height: '100px', background: '#F9F9F9', borderRadius: 8, border: '1px #EEEEEE solid'}} />
             </div>
 
-            {/* 일정 */}
-            <div className="flex flex-col gap-3">
-              <span className="text-gray-700 text-base font-pretendard font-semibold leading-[19.2px]">일정</span>
-            </div>
-
-            {/* 메모 */}
-            <div className="flex flex-col gap-3">
-              <span className="text-gray-700 text-base font-pretendard font-semibold leading-[19.2px]">메모</span>
-              <Input
-                type="text"
-                variant="textareaDisabled"
-                value={detail.memo || '메모가 없습니다.'}
-                readOnly
-                rows={4}
-              />
-            </div>
-
-            {/* 일정(웨이포인트) */}
-            <div className="flex flex-col gap-3">
+             {/* 일정(웨이포인트) */}
+             <div className="flex flex-col gap-3">
               <span className="text-gray-700 text-base font-pretendard font-semibold leading-[19.2px]">일정</span>
               {isLoadingWaypointItems ? (
                 <div className="py-2 text-gray-500 text-sm">장소를 불러오는 중...</div>
@@ -262,26 +308,42 @@ export default function CalendarDetailPage() {
                 <div className="py-2 text-gray-500 text-sm">등록된 장소가 없습니다.</div>
               )}
             </div>
+
+            {/* 메모 */}
+            <div className="flex flex-col gap-3">
+              <span className="text-gray-700 text-base font-pretendard font-semibold leading-[19.2px]">메모</span>
+              <Input
+                type="text"
+                variant="textareaDisabled"
+                value={detail.memo || '메모가 없습니다.'}
+                readOnly
+                rows={4}
+              />
+            </div>
           </div>
         )}
       </div>
 
       {/* 하단 버튼 */}
-      <div className="absolute bottom-5 left-5 right-5 flex gap-3">
-        <button 
-          type="button"
-          onClick={() => router.back()}
-          className="flex-1 py-4 bg-gray-100 rounded-lg flex items-center justify-center"
+      <div className="absolute bottom-5 left-5 right-5 grid grid-cols-[132px,1fr] gap-3 items-stretch">
+        <Button
+          kind="functional"
+          styleType="outline"
+          tone="gray"
+          fullWidth
+          onClick={() => {/* TODO: delete schedule */}}
         >
-          <span className="text-gray-700 text-sm font-pretendard">삭제하기</span>
-        </button>
-        <button 
-          type="button"
+          삭제하기
+        </Button>
+        <Button
+          kind="functional"
+          styleType="fill"
+          tone="brand"
+          fullWidth
           onClick={() => router.push('/calendar/create')}
-          className="flex-1 py-4 bg-brand-500 rounded-lg flex items-center justify-center"
         >
-          <span className="text-white text-sm font-pretendard font-semibold">일정 수정하기</span>
-        </button>
+          일정 수정하기
+        </Button>
       </div>
     </div>
   );

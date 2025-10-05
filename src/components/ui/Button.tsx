@@ -65,7 +65,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
       brand:
         'bg-gray-100 border border-brand-500 text-brand-500 font-semibold hover:bg-brand-50 active:bg-brand-100',
       gray:
-        'bg-gray-100 border border-gray-400 text-gray-700 font-normal hover:bg-gray-50 active:bg-gray-100',
+        'bg-white border border-[#CCCCCC] text-gray-700 font-normal hover:bg-gray-50 active:bg-gray-100',
       sub: 'bg-gray-300 border border-gray-400 text-gray-500 font-normal hover:bg-gray-300 active:bg-gray-400',
     };
 
