@@ -10,10 +10,39 @@ import { handleImageUpload } from '@/utils/imageUtils';
 import { useAuthStore, apiWithAuth } from '@/hooks/auth/useAuth';
 import Notification from '@/components/ui/Notification';
 
+// localStorage 키
+const HIGHLIGHT_DRAFT_KEY = 'highlight_upload_draft';
+
+// 태그 카테고리 정의
+const tagCategories = [
+  {
+    name: '분위기',
+    tags: ['조용한', '활기찬', '아늑한', '모던한', '감성적인', '힙한', '고급스러운', '캐주얼한']
+  },
+  {
+    name: '용도/목적',
+    tags: ['데이트', '기념일', '카페투어', '맛집 투어', '사진찍기 좋은', '산책하기 좋은', '야경명소', '브런치', '디저트 맛집', '술 한잔']
+  },
+  {
+    name: '실용성',
+    tags: ['주차 편함', '대중교통 편함', '예약 필수', '웨이팅 필수', '포장 가능', '24시간', '반려동물 동반', '단체석 있음']
+  },
+  {
+    name: '가격대',
+    tags: ['가성비', '합리적', '고가', '저렴함', '무료', '세트메뉴 있음', '할인 이벤트', '쿠폰 사용가능']
+  },
+  {
+    name: '특징',
+    tags: ['인스타 감성', '뷰 맛집', '숨은 맛집', '핫플', '현지인 추천', '조용한 데이트', '프라이빗', '루프탑', '오션뷰', '시그니처 메뉴']
+  }
+];
+
+const MAX_TAGS = 5;
+
 function HighlightUploadContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedTags, setSelectedTags] = useState<string[]>(['가격이 싸요', '교통이 편리해요']);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -30,17 +59,48 @@ function HighlightUploadContent() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // 태그를 API 키워드로 매핑
-  const tagToKeywordMap: Record<string, string> = {
-    '맛있어요': 'taste',
-    '가격이 싸요': 'cheap',
-    '사장님이 친절해요': 'kindness',
-    '교통이 편리해요': 'convenient',
-    '분위기가 좋아요': 'atmosphere'
-  };
-
-  // 태그 목록을 매핑에서 추출
-  const quickReviewTags = Object.keys(tagToKeywordMap);
+  // localStorage에서 임시 저장된 데이터 불러오기
+  useEffect(() => {
+    const savedDraft = localStorage.getItem(HIGHLIGHT_DRAFT_KEY);
+    if (savedDraft) {
+      try {
+        const draft = JSON.parse(savedDraft);
+        
+        // 사진 데이터 복원 (Base64에서 File 객체로 변환)
+        if (draft.photos && draft.photos.length > 0) {
+          const restoredPhotos = draft.photos.map((photo: { name: string; type: string; data: string; preview: string }) => {
+            // Base64를 Blob으로 변환
+            const byteString = atob(photo.data.split(',')[1]);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let i = 0; i < byteString.length; i++) {
+              ia[i] = byteString.charCodeAt(i);
+            }
+            const blob = new Blob([ab], { type: photo.type });
+            const file = new File([blob], photo.name, { type: photo.type });
+            
+            return {
+              file,
+              preview: photo.preview
+            };
+          });
+          
+          setFormData(prev => ({
+            ...prev,
+            photos: restoredPhotos,
+            name: draft.name || prev.name,
+            description: draft.description || prev.description
+          }));
+        }
+        
+        if (draft.selectedTags) {
+          setSelectedTags(draft.selectedTags);
+        }
+      } catch (error) {
+        console.error('임시 저장 데이터 복원 실패:', error);
+      }
+    }
+  }, []);
 
   // URL 파라미터에서 주소와 가게명 받아오기
   useEffect(() => {
@@ -60,12 +120,42 @@ function HighlightUploadContent() {
     }
   }, [searchParams]);
 
+  // 폼 데이터가 변경될 때마다 localStorage에 저장
+  useEffect(() => {
+    if (formData.photos.length > 0 || formData.description || formData.name) {
+      const draftData = {
+        name: formData.name,
+        description: formData.description,
+        selectedTags,
+        photos: formData.photos.map(photo => ({
+          name: photo.file.name,
+          type: photo.file.type,
+          data: photo.preview, // Base64 미리보기 URL 그대로 저장
+          preview: photo.preview
+        }))
+      };
+      
+      localStorage.setItem(HIGHLIGHT_DRAFT_KEY, JSON.stringify(draftData));
+    } else if (formData.photos.length === 0 && !formData.description && !formData.name) {
+      // 모든 데이터가 비어있으면 localStorage 정리
+      localStorage.removeItem(HIGHLIGHT_DRAFT_KEY);
+    }
+  }, [formData.photos, formData.description, formData.name, selectedTags]);
+
   const handleTagToggle = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    );
+    setSelectedTags(prev => {
+      if (prev.includes(tag)) {
+        // 이미 선택된 태그 제거
+        return prev.filter(t => t !== tag);
+      } else {
+        // 최대 5개까지만 선택 가능
+        if (prev.length >= MAX_TAGS) {
+          showToast('error', `최대 ${MAX_TAGS}개까지만 선택할 수 있습니다.`);
+          return prev;
+        }
+        return [...prev, tag];
+      }
+    });
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -132,18 +222,12 @@ function HighlightUploadContent() {
     try {
       setIsUploading(true);
       
-      // 선택된 태그를 그대로 사용 (API에서 요구하는 형식)
-      const selectedTagsForApi = selectedTags.slice(0, 2); // 최대 2개로 제한
-      
-      // 태그를 API 키워드로 매핑
-      const mappedTags = selectedTagsForApi.map(tag => tagToKeywordMap[tag] || tag);
-      
       // 메타데이터 JSON 생성 (순서 명시)
       const metaData = {
         name: formData.name || formData.address.split(' ')[0] || formData.address, // 가게명 우선, 없으면 주소 첫 단어
         address: formData.address,
         description: formData.description,
-        tags: mappedTags
+        tags: selectedTags // 선택된 태그 그대로 전송
       };
 
       // JSON 문자열로 변환 (순서 보장)
@@ -156,6 +240,18 @@ function HighlightUploadContent() {
       const safeFileName = (uploadFile as File).name || 'photo.jpg';
       formDataToSend.append('image', uploadFile, safeFileName);
 
+      // 디버그: 서버에 최종 전송되는 페이로드 콘솔 출력
+      const debugPayload = {
+        name: metaData.name,
+        address: metaData.address,
+        description: metaData.description,
+        tags: metaData.tags,
+        imageFileName: safeFileName,
+      };
+      // 사용자가 확인하기 쉬운 형태로 출력
+      console.log('[하이라이트 전송 페이로드]', JSON.stringify(debugPayload, null, 2));
+      console.log('[하이라이트 meta JSON]', metaJsonString);
+
       // API 호출
       const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place`, {
         method: 'POST',
@@ -163,12 +259,20 @@ function HighlightUploadContent() {
       });
       
       if (response.ok) {
+        // 성공 시 localStorage 정리
+        localStorage.removeItem(HIGHLIGHT_DRAFT_KEY);
+        
         showToast('success', '하이라이트가 성공적으로 등록되었습니다!');
       
         setTimeout(() => router.push('/main'), 1500);
       } else {
-        const result = await response.json();
-        showToast('error', `등록 실패: ${result.error || '알 수 없는 오류가 발생했습니다.'}`);
+        let result: any = null;
+        try {
+          result = await response.json();
+        } catch {}
+        console.error('[하이라이트 전송 실패]', response.status, result);
+        const message = result && typeof result === 'object' && 'error' in result ? (result as any).error : '알 수 없는 오류가 발생했습니다.';
+        showToast('error', `등록 실패: ${message}`);
       }
       
     } catch {
@@ -333,18 +437,40 @@ function HighlightUploadContent() {
           </div>
 
           {/* 빠른 리뷰 */}
-          <div className="flex flex-col gap-4">
-            <span className="text-gray-700 text-base font-pretendard font-semibold leading-[19.2px]">빠른 리뷰</span>
-            <div className="flex flex-wrap gap-3">
-              {quickReviewTags.map((tag) => (
-                <Tag
-                  key={tag}
-                  type="review"
-                  onClick={() => handleTagToggle(tag)}
-                  variant={selectedTags.includes(tag) ? 'selected' : 'default'}
-                >
-                  {tag}
-                </Tag>
+          <div className="flex flex-col gap-5">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-700 text-base font-pretendard font-semibold leading-[19.2px]">
+                빠른 리뷰 (최대 {MAX_TAGS}개)
+              </span>
+              <span className="text-gray-500 text-sm font-pretendard font-normal">
+                {selectedTags.length}/{MAX_TAGS}
+              </span>
+            </div>
+
+            {/* 모든 카테고리 태그를 한 번에 표시 */}
+            <div className="flex gap-10 overflow-x-auto scrollbar-hide pb-1">
+              {tagCategories.map((category) => (
+                <div key={category.name} className="min-w-[140px] flex-shrink-0">
+                  <div className="text-gray-600 text-sm font-pretendard font-medium mb-6">
+                    {category.name}
+                  </div>
+                  <div className="flex flex-col gap-4">
+                    {category.tags.map((tag) => (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleTagToggle(tag)}
+                        className={`w-full text-center px-3 py-2 rounded-lg text-sm font-pretendard font-medium transition-all whitespace-nowrap border ${
+                          selectedTags.includes(tag)
+                            ? 'bg-brand-50 border-brand-300 text-brand-600'
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>
@@ -352,7 +478,7 @@ function HighlightUploadContent() {
       </div>
 
       {/* 하단 버튼 */}
-      <div className="px-6 pt-8">
+      <div className="px-6 py-8">
         <Button
           kind="functional"
           styleType={isFormValid ? "fill" : "outline"}

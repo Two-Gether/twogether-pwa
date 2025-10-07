@@ -74,44 +74,44 @@ const initializePlacesService = (): google.maps.places.PlacesService | null => {
   return placesService;
 };
 
-// 장소명으로 구글 플레이스 검색
+// 장소명으로 구글 플레이스 검색 (REST API 사용)
 export async function searchGooglePlace(placeName: string): Promise<GooglePlaceSearchResult | null> {
   try {
-    const service = initializePlacesService();
-    if (!service) {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
+    if (!apiKey) {
+      console.error('Google Places API 키가 없습니다.');
       return null;
     }
 
-    return new Promise((resolve) => {
-      const request: google.maps.places.TextSearchRequest = {
-        query: placeName
-      };
+    // REST API를 사용하여 검색 (photo_reference를 직접 받기 위해)
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(placeName)}&key=${apiKey}`;
+    
+    const response = await fetch(url);
+    if (!response.ok) {
+      console.error('Google Places API 요청 실패:', response.status);
+      return null;
+    }
 
-      service.textSearch(request, (results: google.maps.places.PlaceResult[] | null, status: google.maps.places.PlacesServiceStatus) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
-          const result = results[0];
-          resolve({
-            place_id: result.place_id || '',
-            name: result.name || '',
-            photos: result.photos?.map((photo: google.maps.places.PlacePhoto) => ({
-              photo_reference: photo.getUrl({ maxWidth: 400 }) || '',
-              height: 400,
-              width: 400
-            })),
-            formatted_address: result.formatted_address,
-            geometry: result.geometry?.location ? {
-              location: {
-                lat: result.geometry.location.lat(),
-                lng: result.geometry.location.lng()
-              }
-            } : undefined
-          });
-        } else {
-          resolve(null);
-        }
-      });
-    });
-  } catch {
+    const data = await response.json();
+    
+    if (data.status === 'OK' && data.results && data.results.length > 0) {
+      const result = data.results[0];
+      return {
+        place_id: result.place_id || '',
+        name: result.name || '',
+        photos: result.photos?.map((photo: { photo_reference: string; height: number; width: number }) => ({
+          photo_reference: photo.photo_reference,
+          height: photo.height,
+          width: photo.width
+        })),
+        formatted_address: result.formatted_address,
+        geometry: result.geometry
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Google Places 검색 에러:', error);
     return null;
   }
 }
@@ -213,45 +213,41 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
     // 1. 먼저 캐시 확인
     const cachedUrl = getCachedImageUrl(placeName);
     if (cachedUrl) {
+      console.log(`장소 "${placeName}" - 캐시된 이미지 URL 사용`);
       return cachedUrl;
     }
     
     // 2. 캐시에 없으면 API 호출
-    console.log(`🔍 구글 Places API 호출 - "${placeName}"`);
     const placeResult = await searchGooglePlace(placeName);
     
     if (!placeResult || !placeResult.photos || placeResult.photos.length === 0) {
+      console.log(`장소 "${placeName}" - 사진 없음, 기본 이미지 사용`);
       const fallbackUrl = '/images/illust/cats/backgroundCat.png';
       setCachedImageUrl(placeName, fallbackUrl);
       return fallbackUrl;
     }
 
-    // JavaScript SDK에서는 콜백 URL이 반환됨
-    const callbackUrl = placeResult.photos[0].photo_reference;
+    // REST API에서는 photo_reference를 직접 받음
+    const photoReference = placeResult.photos[0].photo_reference;
     
-    // 콜백 URL을 실제 이미지 URL로 변환
-    if (callbackUrl.includes('callback=none')) {
-      console.log(`장소 "${placeName}" - 콜백 URL을 실제 이미지 URL로 변환 중`);
-      const actualImageUrl = convertCallbackUrlToImageUrl(callbackUrl);
-      
-      if (actualImageUrl) {
-        console.log(`장소 "${placeName}" - 변환된 이미지 URL:`, actualImageUrl);
-        setCachedImageUrl(placeName, actualImageUrl);
-        return actualImageUrl;
-      } else {
-        console.log(`장소 "${placeName}" - URL 변환 실패, 대체 이미지 사용`);
-        const fallbackUrl = '/images/illust/cats/backgroundCat.png';
-        setCachedImageUrl(placeName, fallbackUrl);
-        return fallbackUrl;
-      }
+    // Photo API URL 생성
+    const imageUrl = getGooglePlacePhotoUrl(photoReference, 400);
+    
+    if (imageUrl) {
+      console.log(`장소 "${placeName}" - Photo API URL 생성:`, imageUrl);
+      setCachedImageUrl(placeName, imageUrl);
+      return imageUrl;
+    } else {
+      console.log(`장소 "${placeName}" - Photo API URL 생성 실패, 기본 이미지 사용`);
+      const fallbackUrl = '/images/illust/cats/backgroundCat.png';
+      setCachedImageUrl(placeName, fallbackUrl);
+      return fallbackUrl;
     }
-    
-    // 콜백 URL이 아닌 경우 그대로 반환
-    setCachedImageUrl(placeName, callbackUrl);
-    return callbackUrl;
   } catch (error) {
     console.error(`장소 "${placeName}" 이미지 가져오기 에러:`, error);
     const fallbackUrl = '/images/illust/cats/backgroundCat.png';
+    // 에러 발생 시에도 캐시에 저장 (반복 요청 방지)
+    setCachedImageUrl(placeName, fallbackUrl);
     return fallbackUrl;
   }
 }

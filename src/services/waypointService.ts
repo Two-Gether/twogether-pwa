@@ -56,7 +56,7 @@ export async function addLocationToWaypoint(
     console.log('메모 값:', memo, '타입:', typeof memo, '길이:', memo?.length);
     console.log('이미지 URL:', imageUrl);
     
-    const response = await fetch(`/api/waypoint/${waypointId}/items`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

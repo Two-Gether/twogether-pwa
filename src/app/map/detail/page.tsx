@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, Suspense, useCallback } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Header from '@/components/ui/Header';
 import { PlaceSearchResult } from '@/types/map';
@@ -32,6 +32,7 @@ interface PlaceDetail {
 
 function DetailPageContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { accessToken } = useAuthStore();
   const [placeDetail, setPlaceDetail] = useState<PlaceDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,11 +95,12 @@ function DetailPageContent() {
 
       const data: Highlight[] = await response.json();
 
-      // imageUrl과 description만 추출
+      // 필요한 필드 추출 (tags 포함)
       const highlightsData = data.map((item: Highlight) => ({
         id: item.id,
         imageUrl: item.imageUrl,
-        description: item.description
+        description: item.description,
+        tags: (item as any).tags || []
       }));
 
       setHighlights(highlightsData);
@@ -342,8 +344,6 @@ function DetailPageContent() {
         memo: memoText.trim() // 메모 텍스트 전송
       };
 
-      console.log('📤 웨이포인트 아이템 추가 데이터:', itemData);
-
       const response = await apiWithAuth(`/api/waypoint/${selectedWaypointId}/items`, {
         method: 'POST',
         headers: {
@@ -532,17 +532,33 @@ function DetailPageContent() {
               </div>
             ) : highlights.length > 0 ? (
               highlights.map((highlight) => (
-                <div key={highlight.id} className="w-[123px] h-[164px] relative flex-shrink-0">
+                <div
+                  key={highlight.id}
+                  className="w-[123px] h-[123px] relative flex-shrink-0 cursor-pointer"
+                  onClick={() => {
+                    try {
+                      const payload = {
+                        url: highlight.imageUrl,
+                        desc: highlight.description || '',
+                        tags: (highlight as any).tags || [],
+                      };
+                      if (typeof window !== 'undefined') {
+                        sessionStorage.setItem('HIGHLIGHT_VIEWER_DATA', JSON.stringify(payload));
+                      }
+                    } catch {}
+                    router.push('/highlight/photo');
+                  }}
+                >
                   <Image
                     src={highlight.imageUrl}
                     alt={highlight.description}
                     width={123}
-                    height={164}
+                    height={123}
                     className="w-full h-full object-cover rounded-lg"
                   />
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/70 rounded-lg" />
                   <div className="absolute inset-3 flex flex-col justify-end">
-                    <div className="text-white text-sm font-normal leading-[19.6px]">
+                    <div className="text-white text-sm font-normal leading-[19.6px] truncate whitespace-nowrap overflow-hidden text-ellipsis">
                       {highlight.description}
                     </div>
                   </div>

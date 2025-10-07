@@ -118,8 +118,11 @@ export const refreshToken = async (): Promise<boolean> => {
 export const apiWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
   const { accessToken } = useAuthStore.getState();
   
+  // FormData를 사용하는 경우 Content-Type을 자동 설정하지 않음 (브라우저가 boundary를 설정해야 함)
+  const isFormData = options.body instanceof FormData;
+  
   const headers = {
-    'Content-Type': 'application/json',
+    ...(!isFormData && { 'Content-Type': 'application/json' }),
     ...(accessToken && { Authorization: `Bearer ${accessToken}` }),
     ...options.headers,
   };
@@ -137,8 +140,9 @@ export const apiWithAuth = async (url: string, options: RequestInit = {}): Promi
       // 갱신 성공 시 원래 요청 재시도
       const { accessToken: newToken } = useAuthStore.getState();
       const retryHeaders = {
-        ...headers,
+        ...(!isFormData && { 'Content-Type': 'application/json' }),
         Authorization: `Bearer ${newToken}`,
+        ...options.headers,
       };
       
       response = await fetch(url, {
