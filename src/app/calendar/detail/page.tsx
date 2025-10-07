@@ -6,6 +6,7 @@ import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Button';
 import Image from 'next/image';
 import Input from '@/components/ui/Input';
+import DatePicker from '@/components/ui/DatePicker';
 import Notification from '@/components/ui/Notification';
 import { WaypointItem } from '@/types/waypoint';
 import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
@@ -52,6 +53,13 @@ export default function CalendarDetailPage() {
   const [itemImageUrls, setItemImageUrls] = useState<Record<number, string>>({});
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<{ title: string; startDate: string; endDate: string; memo: string }>({
+    title: '',
+    startDate: '',
+    endDate: '',
+    memo: '',
+  });
 
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message });
@@ -75,6 +83,54 @@ export default function CalendarDetailPage() {
     } catch (e) {
       console.error('일정 삭제 실패:', e);
       showToast('error', '일정 삭제에 실패했습니다.');
+    }
+  };
+
+  // 수정 완료 → PATCH
+  const handlePatch = async () => {
+    try {
+      const id = diaryIdParam;
+      if (!id) return;
+      // 빈 문자열은 null로, undefined는 제외하여 전송 (nullable 안전)
+      const rawPayload = {
+        title: editForm.title,
+        startDate: editForm.startDate,
+        endDate: editForm.endDate,
+        memo: editForm.memo,
+      } as Record<string, string | null | undefined>;
+
+      const payload: Record<string, unknown> = {};
+      Object.entries(rawPayload).forEach(([k, v]) => {
+        if (v === undefined) return;
+        if (typeof v === 'string') {
+          const vv = v.trim();
+          // 서버가 null 허용 시 빈 값은 null, 아니면 제외하고 싶으면 여기를 변경
+          payload[k] = vv === '' ? null : vv;
+        } else {
+          payload[k] = v;
+        }
+      });
+
+      // 디버그용: 최종 PATCH 페이로드 확인
+      console.log('[DIARY PATCH PAYLOAD]', payload);
+      const res = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        console.error('[DIARY PATCH ERROR]', res.status, text);
+        throw new Error(`수정 실패 (${res.status}) ${text}`);
+      }
+      const updated = await res.json().catch(() => null);
+      if (updated) setDetail(updated as DiaryDetailItem);
+      else setDetail((prev) => (prev ? { ...prev, ...payload } : prev));
+      setIsEditing(false);
+      showToast('success', '일정을 수정했어요.');
+    } catch (e) {
+      console.error('일정 수정 실패:', e);
+      showToast('error', '일정 수정에 실패했습니다.');
     }
   };
 
@@ -107,8 +163,13 @@ export default function CalendarDetailPage() {
           });
           if (!res.ok) throw new Error('일정 상세 조회 실패');
           const data = await res.json();
-          console.log('🆔 Diary 단건 상세 응답', data);
           setDetail(data as DiaryDetailItem);
+          setEditForm({
+            title: (data.title || '') as string,
+            startDate: (data.startDate || '') as string,
+            endDate: (data.endDate || '') as string,
+            memo: (data.memo || '') as string,
+          });
           return;
         } catch (e) {
           console.error(e);
@@ -162,6 +223,14 @@ export default function CalendarDetailPage() {
         const selectedDetail = candidates[0] ?? null;
 
         setDetail(selectedDetail);
+        if (selectedDetail) {
+          setEditForm({
+            title: selectedDetail.title || '',
+            startDate: selectedDetail.startDate || '',
+            endDate: selectedDetail.endDate || '',
+            memo: selectedDetail.memo || '',
+          });
+        }
       } catch (e) {
         console.error(e);
         setDetail(null);
@@ -243,9 +312,10 @@ export default function CalendarDetailPage() {
               </div>
               <Input
                 type="text"
-                variant="disabled"
-                value={detail.title || '-'}
-                readOnly
+                variant={isEditing ? 'placeholder' : 'disabled'}
+                value={isEditing ? editForm.title : (detail.title || '-')}
+                readOnly={!isEditing}
+                onChange={(e: any) => isEditing && setEditForm((f) => ({ ...f, title: e.target.value }))}
               />
             </div>
 
@@ -259,42 +329,38 @@ export default function CalendarDetailPage() {
               <div className="flex items-center gap-7">
                 <span className="w-7 text-gray-700 text-sm">시작</span>
                 <div className="flex-1">
-                <Input
-                  type="text"
-                  variant="disabled"
-                  value={new Date(detail.startDate)
-                    .toLocaleDateString('ko-KR', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit',
-                      weekday: 'short',
-                    })
-                    .replace(/\.\s*/g, '/')     
-                    .replace(/\/\s*\(/, ' (')  
-                  }
-                  readOnly
-                />
+                  {isEditing ? (
+                    <DatePicker value={editForm.startDate} onChange={(v) => setEditForm(f => ({ ...f, startDate: v }))} />
+                  ) : (
+                    <Input
+                      type="text"
+                      variant="disabled"
+                      value={new Date(detail.startDate)
+                        .toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' })
+                        .replace(/\.\s*/g, '/')
+                        .replace(/\/\s*\(/, ' (')}
+                      readOnly
+                    />
+                  )}
                 </div>
               </div>
 
               <div className="flex items-center gap-7">
                 <span className="w-7 text-gray-700 text-sm">종료</span>
                 <div className="flex-1">
-                <Input
-                  type="text"
-                  variant="disabled"
-                  value={new Date(detail.endDate)
-                    .toLocaleDateString('ko-KR', {
-                      year: 'numeric',
-                      month: '2-digit',
-                      day: '2-digit',
-                      weekday: 'short',
-                    })
-                    .replace(/\.\s*/g, '/')     
-                    .replace(/\/\s*\(/, ' (')  
-                  }
-                  readOnly
-                />
+                  {isEditing ? (
+                    <DatePicker value={editForm.endDate} onChange={(v) => setEditForm(f => ({ ...f, endDate: v }))} />
+                  ) : (
+                    <Input
+                      type="text"
+                      variant="disabled"
+                      value={new Date(detail.endDate)
+                        .toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', weekday: 'short' })
+                        .replace(/\.\s*/g, '/')
+                        .replace(/\/\s*\(/, ' (')}
+                      readOnly
+                    />
+                  )}
                 </div>
               </div>
             </div>
@@ -349,10 +415,11 @@ export default function CalendarDetailPage() {
               <span className="text-gray-700 text-base font-pretendard font-semibold leading-[19.2px]">메모</span>
               <Input
                 type="text"
-                variant="textareaDisabled"
-                value={detail.memo || '메모가 없습니다.'}
-                readOnly
+                variant={isEditing ? 'textarea' : 'textareaDisabled'}
+                value={isEditing ? editForm.memo : (detail.memo || '메모가 없습니다.')}
+                readOnly={!isEditing}
                 rows={4}
+                onChange={(e: any) => isEditing && setEditForm((f) => ({ ...f, memo: e.target.value }))}
               />
             </div>
           </div>
@@ -360,26 +427,22 @@ export default function CalendarDetailPage() {
       </div>
 
       {/* 하단 버튼 */}
-      <div className="absolute bottom-5 left-5 right-5 grid grid-cols-[132px,1fr] gap-3 items-stretch">
-        <Button
-          kind="functional"
-          styleType="outline"
-          tone="gray"
-          fullWidth
-          onClick={() => setShowDeleteModal(true)}
-        >
-          삭제하기
-        </Button>
-        <Button
-          kind="functional"
-          styleType="fill"
-          tone="brand"
-          fullWidth
-          onClick={() => router.push('/calendar/create')}
-        >
-          일정 수정하기
-        </Button>
-      </div>
+      {isEditing ? (
+        <div className="absolute bottom-5 left-5 right-5">
+          <Button kind="functional" styleType="fill" tone="brand" fullWidth onClick={handlePatch}>
+            수정 완료
+          </Button>
+        </div>
+      ) : (
+        <div className="absolute bottom-5 left-5 right-5 grid grid-cols-[132px,1fr] gap-3 items-stretch">
+          <Button kind="functional" styleType="outline" tone="gray" fullWidth onClick={() => setShowDeleteModal(true)}>
+            삭제하기
+          </Button>
+          <Button kind="functional" styleType="fill" tone="brand" fullWidth onClick={() => setIsEditing(true)}>
+            일정 수정하기
+          </Button>
+        </div>
+      )}
 
       {/* 삭제 확인 모달 */}
       {showDeleteModal && (
