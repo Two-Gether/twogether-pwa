@@ -6,6 +6,7 @@ import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Button';
 import Image from 'next/image';
 import Input from '@/components/ui/Input';
+import Notification from '@/components/ui/Notification';
 import { WaypointItem } from '@/types/waypoint';
 import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
 import { apiWithAuth } from '@/hooks/auth/useAuth';
@@ -49,6 +50,33 @@ export default function CalendarDetailPage() {
   const [isLoadingWaypointItems, setIsLoadingWaypointItems] = useState(false);
   const [selectedWaypointItems, setSelectedWaypointItems] = useState<WaypointItem[]>([]);
   const [itemImageUrls, setItemImageUrls] = useState<Record<number, string>>({});
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+
+  const showToast = (type: 'success' | 'error', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 1500);
+  };
+
+  // 삭제 핸들러
+  const handleDelete = async () => {
+    try {
+      const id = diaryIdParam;
+      if (!id) return;
+      const res = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary/${id}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const body = await res.text().catch(() => '');
+        throw new Error(`삭제 실패 (${res.status}) ${body}`);
+      }
+      showToast('success', '일정을 삭제했어요.');
+      setTimeout(() => router.replace('/calendar'), 1200);
+    } catch (e) {
+      console.error('일정 삭제 실패:', e);
+      showToast('error', '일정 삭제에 실패했습니다.');
+    }
+  };
 
   // 헤더 날짜 포맷
   const headerTitle = useMemo(() => {
@@ -191,6 +219,13 @@ export default function CalendarDetailPage() {
 
   return (
     <div className="w-full min-h-screen relative bg-white overflow-hidden">
+      {toast && (
+        <div className="fixed top-4 left-0 right-0 z-50 p-4">
+          <Notification type={toast.type} onClose={() => setToast(null)}>
+            {toast.message}
+          </Notification>
+        </div>
+      )}
       {/* Header */}
       <Header title={headerTitle || '일정 상세'} showBackButton={true} />
 
@@ -331,7 +366,7 @@ export default function CalendarDetailPage() {
           styleType="outline"
           tone="gray"
           fullWidth
-          onClick={() => {/* TODO: delete schedule */}}
+          onClick={() => setShowDeleteModal(true)}
         >
           삭제하기
         </Button>
@@ -345,6 +380,38 @@ export default function CalendarDetailPage() {
           일정 수정하기
         </Button>
       </div>
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-5">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-lg" style={{ boxShadow: '2px 4px 8px rgba(0, 0, 0, 0.08)' }}>
+            <div className="flex flex-col items-center gap-8">
+              <div className="w-full flex flex-col items-center gap-4">
+                <div className="text-center text-gray-800 text-xl font-pretendard font-semibold leading-6">
+                  일정을 삭제하시겠어요?
+                </div>
+                <div className="text-center text-gray-500 text-sm font-pretendard font-normal leading-5">
+                  삭제하면 복구할 수 없습니다.
+                </div>
+              </div>
+              <div className="w-full flex items-center gap-4">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="w-24 py-4 bg-gray-200 rounded-lg flex justify-center items-center"
+                >
+                  <span className="text-center text-gray-700 text-sm font-pretendard font-normal leading-5">닫기</span>
+                </button>
+                <button
+                  onClick={() => { setShowDeleteModal(false); void handleDelete(); }}
+                  className="flex-1 py-4 bg-brand-500 rounded-lg flex justify-center items-center"
+                >
+                  <span className="text-center text-white text-sm font-pretendard font-semibold leading-5">삭제</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

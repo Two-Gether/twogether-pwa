@@ -415,24 +415,7 @@ const CalendarScreen = () => {
                         // 각 날짜별로 일정을 그룹화
                         const eventsByDay: Record<string, Array<{event: any, position: number}>> = {};
                         
-                        // 전체 일정을 시작일 기준으로 정렬하고 position 할당
-                        const globalEventPositions = new Map<string, number>();
-                        const globalUsedPositions = new Set<number>();
-                        
-                        eventsSorted.slice(0, 3).forEach((ev, index) => {
-                            let bestPosition = 0;
-                            
-                            if (!globalUsedPositions.has(0)) {
-                                bestPosition = 0; // 맨위
-                            } else if (!globalUsedPositions.has(1)) {
-                                bestPosition = 1; // 중간
-                            } else {
-                                bestPosition = 2; // 맨아래
-                            }
-                            
-                            globalUsedPositions.add(bestPosition);
-                            globalEventPositions.set(ev.id, bestPosition);
-                        });
+                        // 전역 position 복잡도 제거: 각 날짜(day) 내부에서 0,1,2 순으로 위에서부터 배치
                         
                         // 모든 일정을 날짜별로 분류
                         for (let day = 1; day <= monthEnd.getDate(); day++) {
@@ -457,29 +440,9 @@ const CalendarScreen = () => {
                                 return a.id.localeCompare(b.id);
                             }).slice(0, 3);
                             
-                            // 각 일정에 해당 날짜에서 최적의 position 할당
-                            const dayUsedPositions = new Set<number>();
-                            dayEvents.forEach((ev) => {
-                                const globalPosition = globalEventPositions.get(ev.id) ?? 0;
-                                let actualPosition = globalPosition;
-                                
-                                // 해당 날짜에서 실제로 비어있는 position 찾기
-                                if (dayUsedPositions.has(actualPosition)) {
-                                    // 원래 position이 차있으면 다른 비어있는 position 찾기
-                                    if (!dayUsedPositions.has(0)) {
-                                        actualPosition = 0; // 맨위
-                                    } else if (!dayUsedPositions.has(1)) {
-                                        actualPosition = 1; // 중간
-                                    } else if (!dayUsedPositions.has(2)) {
-                                        actualPosition = 2; // 맨아래
-                                    }
-                                }
-                                
-                                dayUsedPositions.add(actualPosition);
-                                eventsByDay[dayKey].push({
-                                    event: ev,
-                                    position: actualPosition
-                                });
+                            // 각 날짜에서 위부터 0,1,2 순서
+                            dayEvents.forEach((ev, idx) => {
+                                eventsByDay[dayKey].push({ event: ev, position: idx });
                             });
                         }
                         
