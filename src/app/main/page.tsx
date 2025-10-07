@@ -301,7 +301,15 @@ function MainPageContent() {
                   const status = getScheduleStatus(schedule.startDate, schedule.endDate);
                   return { ...schedule, status };
                 })
-                .filter((schedule) => schedule.status.status !== 'past'); // 지난 일정 제외
+                .filter((schedule) => schedule.status.status !== 'past') // 지난 일정 제외
+                .sort((a, b) => {
+                  // 진행중인 일정을 먼저 표시
+                  if (a.status.status === 'ongoing' && b.status.status !== 'ongoing') return -1;
+                  if (a.status.status !== 'ongoing' && b.status.status === 'ongoing') return 1;
+                  // 그 다음 daysLeft 오름차순 정렬 (가까운 일정이 먼저)
+                  return a.status.daysLeft - b.status.daysLeft;
+                })
+                .slice(0, 3); // 최대 3개만 표시
               
               return upcomingSchedules.length > 0 ? (
                 upcomingSchedules.map((schedule, index) => (

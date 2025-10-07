@@ -7,6 +7,7 @@ import Script from 'next/script';
 import { useEffect } from 'react';
 import { Capacitor } from '@capacitor/core';
 import TokenRefreshOverlay from '@/components/TokenRefreshOverlay';
+import AuthInitializer from '@/components/AuthInitializer';
 // import { useAuthStore } from '@/hooks/auth/useAuth';
 
 const geistSans = Geist({
@@ -172,6 +173,7 @@ const RootLayout = ({
           strategy="afterInteractive"
         />
         <QueryClientProvider client={queryClient}>
+          <AuthInitializer />
           <div className="mobile-app-container">
             {children}
           </div>

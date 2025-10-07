@@ -39,20 +39,22 @@ export async function addLocationToWaypoint(
       };
     }
 
-    // 이미지 URL은 null로 설정 (API 호출용)
-    const imageUrl = null;
+    // 구글 Places API로 이미지 URL 가져오기
+    const { getPlaceImageUrl } = await import('@/utils/googlePlacesApi');
+    const imageUrl = await getPlaceImageUrl(locationInfo.placeName);
 
     // 웨이포인트에 아이템 추가
     const requestData = {
       name: locationInfo.placeName,
       address: locationInfo.address,
-      imageUrl: imageUrl, // null로 설정
+      imageUrl: imageUrl || null, // 구글 Places에서 가져온 이미지 URL
       memo: memo, // 사용자가 입력한 메모
     };
     
     console.log('웨이포인트 API 호출 시작...');
     console.log('전송할 데이터:', JSON.stringify(requestData, null, 2));
     console.log('메모 값:', memo, '타입:', typeof memo, '길이:', memo?.length);
+    console.log('이미지 URL:', imageUrl);
     
     const response = await fetch(`/api/waypoint/${waypointId}/items`, {
       method: 'POST',

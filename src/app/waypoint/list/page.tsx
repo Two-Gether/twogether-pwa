@@ -5,7 +5,6 @@ import Header from '@/components/ui/Header';
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { WaypointItem } from '@/types/waypoint';
-import { getPlaceImageUrl } from '@/utils/googlePlacesApi';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { getAuthToken } from '@/auth';
 import { apiWithAuth } from '@/hooks/auth/useAuth';
@@ -112,25 +111,15 @@ function WaypointDetailContent() {
           })));
         }
         
-        // 각 장소의 이미지를 구글 플레이스에서 가져오기
+        // 백엔드에서 받은 이미지 URL 사용
         if (data.waypointInfoResponse && data.waypointInfoResponse.length > 0) {
-          const imagePromises = data.waypointInfoResponse.map(async (item) => {
-            try {
-              const imageUrl = await getPlaceImageUrl(item.name);
-              return { itemId: item.itemId, imageUrl };
-            } catch (error) {
-              console.error(`장소 ${item.name} 이미지 가져오기 실패:`, error);
-              return { itemId: item.itemId, imageUrl: '' };
-            }
-          });
-          
-          const imageResults = await Promise.all(imagePromises);
           const imageUrlMap: Record<number, string> = {};
-          imageResults.forEach(({ itemId, imageUrl }) => {
-            // 이미지 URL이 있으면 사용하고, 없으면 기본 이미지 사용
-            imageUrlMap[itemId] = imageUrl || '/images/illust/cats/backgroundCat.png';
+          data.waypointInfoResponse.forEach((item) => {
+            // 백엔드에서 제공한 imageUrl 사용, 없으면 기본 이미지
+            imageUrlMap[item.itemId] = item.imageUrl || '/images/illust/cats/backgroundCat.png';
           });
           setItemImageUrls(imageUrlMap);
+          console.log('✅ 백엔드에서 받은 이미지 URL 사용:', imageUrlMap);
         }
       } catch (error) {
         console.error('웨이포인트 상세 조회 에러:', error);

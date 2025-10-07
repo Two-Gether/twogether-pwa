@@ -330,13 +330,19 @@ function DetailPageContent() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
+      // 구글 Places API로 이미지 URL 가져오기
+      const { getPlaceImageUrl } = await import('@/utils/googlePlacesApi');
+      const imageUrl = await getPlaceImageUrl(placeDetail.place_name);
+
       // 웨이포인트에 추가할 아이템 데이터
       const itemData = {
         name: placeDetail.place_name,
         address: placeDetail.road_address_name || placeDetail.address_name,
-        imageUrl: null, // imageUrl은 null로 전송
+        imageUrl: imageUrl || null, // 구글 Places에서 가져온 이미지 URL
         memo: memoText.trim() // 메모 텍스트 전송
       };
+
+      console.log('📤 웨이포인트 아이템 추가 데이터:', itemData);
 
       const response = await apiWithAuth(`/api/waypoint/${selectedWaypointId}/items`, {
         method: 'POST',

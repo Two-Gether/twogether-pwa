@@ -23,6 +23,7 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
   const res = await fetch(`${API_BASE_URL}/member/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // refresh token 쿠키 저장을 위해 필수
     body: JSON.stringify(payload),
   });
   
@@ -51,6 +52,7 @@ export async function refreshTokenApi(): Promise<{ accessToken: string }> {
   const res = await fetch(`${API_BASE_URL}/member/token/refresh`, {
     method: 'POST',
     headers: token ? { Authorization: `Bearer ${token}` } : {},
+    credentials: 'include', // refresh token 쿠키 전송을 위해 필수
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');

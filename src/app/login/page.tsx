@@ -140,14 +140,14 @@ const LoginScreen = () => {
                         </div>
                     </div>
 
-                    <div className="mt-10">
+                    {/* <div className="mt-10">
                         <div className="flex items-center justify-center mb-6">
                             <div className="flex-1 h-px bg-gray-300"></div>
                             <span className="px-4 text-gray-500 font-pretendard text-sm">or</span>
                             <div className="flex-1 h-px bg-gray-300"></div>
                         </div>
 
-                        {/* <div className="flex justify-center space-x-4">
+                        <div className="flex justify-center space-x-4">
                             <Image 
                                 src="/images/social/kakao-logo.svg" 
                                 alt="Kakao Login" 
@@ -166,8 +166,8 @@ const LoginScreen = () => {
                                   onClick={() => handleSocialLogin('google')}
                               />
                             
-                        </div> */}
-                    </div>
+                        </div> 
+                    </div>*/}
                 </div>
             </div>
         </div>
