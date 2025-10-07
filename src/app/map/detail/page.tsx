@@ -220,7 +220,7 @@ function DetailPageContent() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await apiWithAuth('/api/waypoint', {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, {
         method: 'GET',
       });
 
@@ -274,7 +274,7 @@ function DetailPageContent() {
         throw new Error('인증 토큰이 없습니다. 로그인이 필요합니다.');
       }
 
-      const response = await apiWithAuth('/api/waypoint', {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -344,7 +344,7 @@ function DetailPageContent() {
         memo: memoText.trim() // 메모 텍스트 전송
       };
 
-      const response = await apiWithAuth(`/api/waypoint/${selectedWaypointId}/items`, {
+      const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${selectedWaypointId}/items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

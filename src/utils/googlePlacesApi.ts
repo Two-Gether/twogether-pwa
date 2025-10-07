@@ -84,7 +84,8 @@ export async function searchGooglePlace(placeName: string): Promise<GooglePlaceS
     }
 
     // REST API를 사용하여 검색 (photo_reference를 직접 받기 위해)
-    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(placeName)}&key=${apiKey}`;
+    // CORS 회피: next.config.ts rewrites(/api/google-maps → maps.googleapis.com) 경유
+    const url = `/api/google-maps/place/textsearch/json?query=${encodeURIComponent(placeName)}&key=${apiKey}`;
     
     const response = await fetch(url);
     if (!response.ok) {
@@ -178,8 +179,9 @@ function getCachedImageUrl(placeName: string): string | null {
     
     const cacheData: CacheData = JSON.parse(cache);
     const cached = cacheData[placeName];
-    
-    if (cached && Date.now() - cached.timestamp < CACHE_EXPIRY) {
+    // fallback 이미지는 캐시로 인정하지 않음 → 재조회 유도
+    const isFallback = cached?.url === '/images/illust/cats/backgroundCat.png';
+    if (cached && !isFallback && Date.now() - cached.timestamp < CACHE_EXPIRY) {
       return cached.url;
     }
     
@@ -197,10 +199,15 @@ function setCachedImageUrl(placeName: string, url: string): void {
     const cache = localStorage.getItem(CACHE_KEY);
     const cacheData: CacheData = cache ? JSON.parse(cache) : {};
     
-    cacheData[placeName] = {
-      url,
-      timestamp: Date.now()
-    };
+    // fallback 이미지는 캐시에 저장하지 않음
+    if (url === '/images/illust/cats/backgroundCat.png') {
+      delete cacheData[placeName];
+    } else {
+      cacheData[placeName] = {
+        url,
+        timestamp: Date.now()
+      };
+    }
     
     localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
   } catch {
@@ -222,9 +229,7 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
     
     if (!placeResult || !placeResult.photos || placeResult.photos.length === 0) {
       console.log(`장소 "${placeName}" - 사진 없음, 기본 이미지 사용`);
-      const fallbackUrl = '/images/illust/cats/backgroundCat.png';
-      setCachedImageUrl(placeName, fallbackUrl);
-      return fallbackUrl;
+      return '/images/illust/cats/backgroundCat.png';
     }
 
     // REST API에서는 photo_reference를 직접 받음
@@ -239,15 +244,10 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
       return imageUrl;
     } else {
       console.log(`장소 "${placeName}" - Photo API URL 생성 실패, 기본 이미지 사용`);
-      const fallbackUrl = '/images/illust/cats/backgroundCat.png';
-      setCachedImageUrl(placeName, fallbackUrl);
-      return fallbackUrl;
+      return '/images/illust/cats/backgroundCat.png';
     }
   } catch (error) {
     console.error(`장소 "${placeName}" 이미지 가져오기 에러:`, error);
-    const fallbackUrl = '/images/illust/cats/backgroundCat.png';
-    // 에러 발생 시에도 캐시에 저장 (반복 요청 방지)
-    setCachedImageUrl(placeName, fallbackUrl);
-    return fallbackUrl;
+    return '/images/illust/cats/backgroundCat.png';
   }
 }
