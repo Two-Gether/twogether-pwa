@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import CloseIcon from '@/components/icons/CloseIcon';
 import SirenIcon from '@/components/icons/SirenIcon';
 import Tag from '@/components/ui/Tag';
 import { useRouter, useSearchParams } from 'next/navigation';
 
-export default function HighlightPhotoPage() {
+function HighlightPhotoContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -142,5 +142,13 @@ export default function HighlightPhotoPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function HighlightPhotoPage() {
+  return (
+    <Suspense fallback={<div className="fixed inset-0 bg-black text-white flex items-center justify-center">로딩중...</div>}>
+      <HighlightPhotoContent />
+    </Suspense>
   );
 }

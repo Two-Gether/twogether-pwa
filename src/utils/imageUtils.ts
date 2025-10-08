@@ -1,6 +1,4 @@
 import EXIF from 'exif-js';
-// @ts-expect-error: heic-convert 타입 선언 파일이 없음
-import convert from 'heic-convert';
 
 export interface EXIFData {
   make?: string;
@@ -55,34 +53,7 @@ export const extractEXIFData = (file: File): Promise<EXIFData> => {
 
 
 // HEIC 파일을 JPEG로 변환하는 함수 (메타데이터 없이)
-export const convertHEICToJPEG = async (file: File): Promise<File> => {
-  try {
-    console.log('HEIC 파일을 JPEG로 변환 중... (메타데이터 없이)');
-    
-    // File을 ArrayBuffer로 변환
-    const arrayBuffer = await file.arrayBuffer();
-    const inputBuffer = Buffer.from(arrayBuffer);
-    
-    // heic-convert로 HEIC → JPEG 변환
-    const outputBuffer = await convert({
-      buffer: inputBuffer,
-      format: 'JPEG',
-      quality: 0.8
-    });
-    
-    // Buffer를 Blob으로 변환
-    const blob = new Blob([outputBuffer], { type: 'image/jpeg' });
-    
-    const convertedFile = new File([blob], file.name.replace(/\.(heic|heif)$/i, '.jpg'), {
-      type: 'image/jpeg',
-      lastModified: Date.now()
-    });
-
-    return convertedFile;
-  } catch {
-    throw new Error('HEIC 파일 변환에 실패했습니다.');
-  }
-};
+// HEIC 변환은 브라우저/웹뷰 환경 호환성 문제로 미사용 (원본 그대로 사용)
 
 // GPS 좌표를 주소로 변환하는 함수
 export const getAddressFromGPS = async (latitude: number, longitude: number): Promise<string | null> => {

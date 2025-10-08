@@ -17,9 +17,20 @@ interface DiarySchedule {
   diaryId?: number;
 }
 
+// 서버 월간 일정 응답 아이템(필요 필드만 최소 정의)
+type ApiDiaryOverview = {
+  title: string;
+  startDate: string;
+  endDate: string;
+  mainStickerUrl?: string;
+  diaryId?: number;
+  id?: number;
+  diaryID?: number;
+};
+
 const CalendarScreen = () => {
     const router = useRouter();
-    const [selectedDate, setSelectedDate] = useState<number | null>(null);
+    const [, setSelectedDate] = useState<number | null>(null);
     const [currentDate, setCurrentDate] = useState(new Date());
     const touchStartYRef = useRef<number | null>(null);
     
@@ -73,9 +84,13 @@ const CalendarScreen = () => {
             }
 
             const data = await response.json();
-            const list = (data.diaryMonthOverviewResponses || []).map((it: any) => ({
-                ...it,
-                diaryId: it.diaryId ?? it.id ?? it.diaryID,
+            const arr = (data.diaryMonthOverviewResponses ?? []) as ApiDiaryOverview[];
+            const list: DiarySchedule[] = arr.map((it) => ({
+              title: it.title,
+              startDate: it.startDate,
+              endDate: it.endDate,
+              mainStickerUrl: it.mainStickerUrl,
+              diaryId: it.diaryId ?? it.id ?? it.diaryID,
             }));
             setSchedules(list);
         } catch (error) {
@@ -355,9 +370,7 @@ const CalendarScreen = () => {
                                 </div>
                             );
                         }
-                        
-                        const isSelected = selectedDate === day;
-                        const dateColor = getDateColor(day);
+
                         // Day 셀 내부에서는 숫자만, 바는 주차 오버레이에서 처리
                         
                         if (isCurrentMonth && day === today) {
@@ -372,8 +385,6 @@ const CalendarScreen = () => {
                                     <div className="flex flex-col gap-1 items-center w-full">
                                         <div className="w-full flex justify-center">
                                             {(() => {
-                                                const ev = getEventForDay(new Date(currentYear,currentMonth,day));
-                                                const c = ev ? getDerivedEventColor(ev) : null;
                                                 return (
                                                     <div className={`w-full flex justify-center`}>
                                                         <div className="w-7 min-w-7 bg-brand-500 rounded text-white text-center text-sm font-pretendard font-normal leading-[19.6px]">
@@ -395,8 +406,6 @@ const CalendarScreen = () => {
                                     onClick={() => handleDateClick(day)}
                                 >
                                     {(() => {
-                                        const ev = getEventForDay(new Date(currentYear,currentMonth,day));
-                                        const c = ev ? getDerivedEventColor(ev) : null;
                                         return (
                                             <div className={`w-full flex justify-center`}>
                                                 <div className={`text-center text-sm font-pretendard font-normal leading-[19.6px] text-gray-800`}>
@@ -413,7 +422,7 @@ const CalendarScreen = () => {
                     <div className="pointer-events-none absolute inset-0 overflow-hidden grid grid-cols-7 auto-rows-[120px] pt-2">
                     {(() => {
                         // 각 날짜별로 일정을 그룹화
-                        const eventsByDay: Record<string, Array<{event: any, position: number}>> = {};
+                        const eventsByDay: Record<string, Array<{event: CalEvent, position: number}>> = {};
                         
                         // 전역 position 복잡도 제거: 각 날짜(day) 내부에서 0,1,2 순으로 위에서부터 배치
                         
@@ -537,11 +546,11 @@ const CalendarScreen = () => {
                                   className="w-full p-4 bg-gray-50 rounded-lg flex items-center gap-3 cursor-pointer hover:bg-gray-100"
                                   onClick={() => {
                                     setShowScheduleModal(false);
-                                    if ((schedule as any).diaryId == null) {
+                                    if ((schedule).diaryId == null) {
                                       console.warn('diaryId가 없어 상세 페이지로 이동할 수 없습니다.', schedule);
                                       return;
                                     }
-                                    router.push(`/calendar/detail?diaryId=${(schedule as any).diaryId}`);
+                                    router.push(`/calendar/detail?diaryId=${(schedule).diaryId}`);
                                   }}
                                 >
                                     {/* 일정 아이콘 */}

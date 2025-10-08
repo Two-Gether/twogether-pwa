@@ -38,7 +38,7 @@ function DetailPageContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [kakaoApiResponse, setKakaoApiResponse] = useState<PlaceSearchResult | null>(null);
   const [placeImageUrl, setPlaceImageUrl] = useState<string>('');
-  const [highlights, setHighlights] = useState<Array<{ id: number; imageUrl: string; description: string }>>([]);
+  const [highlights, setHighlights] = useState<Array<{ id: number; imageUrl: string; description: string; tags: string[] }>>([]);
   const [isLoadingHighlights, setIsLoadingHighlights] = useState(false);
   
   // 웨이포인트 모달 관련 상태
@@ -100,7 +100,7 @@ function DetailPageContent() {
         id: item.id,
         imageUrl: item.imageUrl,
         description: item.description,
-        tags: (item as any).tags || []
+        tags: item.tags || []
       }));
 
       setHighlights(highlightsData);
@@ -540,7 +540,7 @@ function DetailPageContent() {
                       const payload = {
                         url: highlight.imageUrl,
                         desc: highlight.description || '',
-                        tags: (highlight as any).tags || [],
+                        tags: highlight.tags || [],
                       };
                       if (typeof window !== 'undefined') {
                         sessionStorage.setItem('HIGHLIGHT_VIEWER_DATA', JSON.stringify(payload));

@@ -83,9 +83,8 @@ export async function searchGooglePlace(placeName: string): Promise<GooglePlaceS
       return null;
     }
 
-    // REST API를 사용하여 검색 (photo_reference를 직접 받기 위해)
-    // CORS 회피: next.config.ts rewrites(/api/google-maps → maps.googleapis.com) 경유
-    const url = `/api/google-maps/place/textsearch/json?query=${encodeURIComponent(placeName)}&key=${apiKey}`;
+    // 정적(export) 환경에서도 동작하도록 절대 URL 사용
+    const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(placeName)}&key=${apiKey}`;
     
     const response = await fetch(url);
     if (!response.ok) {

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { forwardRef } from 'react';
+import Image from 'next/image';
 
 type InputType = 'text' | 'icon' | 'password';
 type TextVariant = 'placeholder' | 'disabled' | 'default' | 'textarea' | 'textareaDisabled' | 'focus';
@@ -125,9 +126,11 @@ const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
             className={`absolute inset-y-0 right-0 flex items-center pr-4 ${iconColor} ${onIconClick ? 'cursor-pointer' : ''}`}
             onClick={onIconClick}
           >
-            <img 
+            <Image 
               src={iconType === 'close' ? "/images/common/close.svg" : "/images/common/search.svg"} 
               alt={iconType === 'close' ? "Close" : "Search"} 
+              width={14}
+              height={14}
               className="w-3.5 h-3.5" 
             />
           </div>

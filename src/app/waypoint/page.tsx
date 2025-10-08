@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getAuthToken } from '@/auth';
-import { Waypoint, CreateWaypointResponse } from '@/types/waypoint';
+import { Waypoint } from '@/types/waypoint';
 
 export default function WaypointPage() {
   const router = useRouter();

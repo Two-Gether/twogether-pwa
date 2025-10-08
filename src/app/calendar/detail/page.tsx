@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/ui/Header';
 import Button from '@/components/ui/Button';
@@ -38,7 +38,7 @@ interface DiaryDetailItem {
   };
 }
 
-export default function CalendarDetailPage() {
+function CalendarDetailContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const dateParam = searchParams.get('date');
@@ -273,7 +273,7 @@ export default function CalendarDetailPage() {
           try {
             const url = await getPlaceImageUrl(m.name);
             return [m.itemId, url || '/images/illust/cats/backgroundCat.png'] as const;
-          } catch (e) {
+          } catch {
             return [m.itemId, '/images/illust/cats/backgroundCat.png'] as const;
           }
         })
@@ -315,7 +315,7 @@ export default function CalendarDetailPage() {
                 variant={isEditing ? 'placeholder' : 'disabled'}
                 value={isEditing ? editForm.title : (detail.title || '-')}
                 readOnly={!isEditing}
-                onChange={(e: any) => isEditing && setEditForm((f) => ({ ...f, title: e.target.value }))}
+                onChange={(e) => isEditing && setEditForm((f) => ({ ...f, title: e.target.value }))}
               />
             </div>
 
@@ -419,7 +419,7 @@ export default function CalendarDetailPage() {
                 value={isEditing ? editForm.memo : (detail.memo || '메모가 없습니다.')}
                 readOnly={!isEditing}
                 rows={4}
-                onChange={(e: any) => isEditing && setEditForm((f) => ({ ...f, memo: e.target.value }))}
+                onChange={(e) => isEditing && setEditForm((f) => ({ ...f, memo: e.target.value }))}
               />
             </div>
           </div>
@@ -476,6 +476,14 @@ export default function CalendarDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function CalendarDetailPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center">로딩중...</div>}>
+      <CalendarDetailContent />
+    </Suspense>
   );
 }
 

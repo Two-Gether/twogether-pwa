@@ -60,30 +60,30 @@ const LoginScreen = () => {
         }
     };
 
-    const handleKakaoLogin = async () => {
-        try {
-            await startKakaoLogin('/main');
-        } catch (error) {
-            window.alert('카카오 로그인 실패: ' + (error as Error).message);
-        }
-    };
+    // const handleKakaoLogin = async () => {
+    //     try {
+    //         await startKakaoLogin('/main');
+    //     } catch (error) {
+    //         window.alert('카카오 로그인 실패: ' + (error as Error).message);
+    //     }
+    // };
 
 
-    const handleGoogleLogin = async () => {
-        try {
-            await googleLogin();
-        } catch (error) {
-            window.alert('구글 로그인 실패: ' + (error as Error).message);
-        }
-    };
+    // const handleGoogleLogin = async () => {
+    //     try {
+    //         await googleLogin();
+    //     } catch (error) {
+    //         window.alert('구글 로그인 실패: ' + (error as Error).message);
+    //     }
+    // };
 
-    const handleSocialLogin = (provider: 'kakao' | 'google') => {
-        if (provider === 'kakao') {
-            handleKakaoLogin();
-        } else if (provider === 'google') {
-            handleGoogleLogin();
-        }
-    };
+    // const handleSocialLogin = (provider: 'kakao' | 'google') => {
+    //     if (provider === 'kakao') {
+    //         handleKakaoLogin();
+    //     } else if (provider === 'google') {
+    //         handleGoogleLogin();
+    //     }
+    // };
 
     const handleSignup = () => {
         router.push('/signup');

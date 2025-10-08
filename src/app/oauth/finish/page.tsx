@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { exchangeOTC } from '@/api/auth';
 import { useAuthStore } from '@/hooks/auth/useAuth';
 
-export default function OAuthFinishPage() {
+function OAuthFinishContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { login } = useAuthStore();
@@ -121,5 +121,13 @@ export default function OAuthFinishPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OAuthFinishPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-100 flex items-center justify-center">로딩중...</div>}>
+      <OAuthFinishContent />
+    </Suspense>
   );
 }
