@@ -22,6 +22,7 @@ function MainPageContent() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [schedules, setSchedules] = useState<DiaryMonthOverviewResponse[]>([]);
   const [isLoadingSchedules, setIsLoadingSchedules] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
 
   // 주소에서 괄호 부분 제거하는 함수
   const removeParentheses = (address: string): string => {
@@ -104,6 +105,42 @@ function MainPageContent() {
       setIsLoadingRecommendations(false);
     }
   }, []);
+
+  // 앱 종료 처리 함수
+  const handleExitApp = useCallback(() => {
+    setShowExitModal(false);
+    // PWA의 경우 뒤로 가기로 앱 종료 처리
+    if (window.history.length <= 1) {
+      window.close();
+    } else {
+      // history를 모두 비우고 현재 페이지 유지
+      window.history.pushState(null, '', '/main');
+    }
+  }, []);
+
+  // 뒤로 가기 방어 로직
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // 현재 페이지를 history에 추가하여 뒤로 가기 시 로그인 페이지로 가지 않도록 처리
+    const handlePopState = (e: PopStateEvent) => {
+      // 뒤로 가기를 막고 현재 페이지 유지
+      e.preventDefault();
+      
+      // 모달 표시
+      setShowExitModal(true);
+      // 현재 페이지 유지
+      window.history.pushState(null, '', '/main');
+    };
+
+    // 페이지 진입 시 history state 설정
+    window.history.pushState(null, '', '/main');
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     // 인증되지 않은 사용자는 로그인 페이지로 리다이렉트
@@ -196,9 +233,9 @@ function MainPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
+    <div className="min-h-screen bg-gray-100 flex flex-col relative">
       <MainHeader />
-      <div className="px-5 pt-6 flex-1">
+      <div className="px-5 pt-6 flex-1 pb-24">{/* pb-24로 Footer 공간 확보 */}
         {/* Relationship Status Card */}
         {user?.relationshipStartDate ? (
           <div className="mb-6 p-5 bg-gray-200 rounded-lg border border-gray-300 relative">
@@ -420,8 +457,6 @@ function MainPageContent() {
         </button>
       </div>
       
-      <Footer />
-      
       <style jsx>{`
         .overflow-x-auto::-webkit-scrollbar {
           height: 4px; /* 스크롤바 높이 */
@@ -450,6 +485,49 @@ function MainPageContent() {
           </Notification>
         </div>
       )}
+
+      {/* 앱 종료 확인 모달 */}
+      {showExitModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-5">
+          <div 
+            className="w-full max-w-sm bg-white rounded-2xl p-5 shadow-lg"
+            style={{
+              boxShadow: '2px 4px 8px rgba(0, 0, 0, 0.08)'
+            }}
+          >
+            <div className="flex flex-col items-center gap-8">
+              <div className="w-full flex flex-col items-center gap-4">
+                <div className="text-center text-gray-800 text-xl font-pretendard font-semibold leading-6">
+                  앱을 종료하시겠어요?
+                </div>
+                <div className="text-center text-gray-500 text-sm font-pretendard font-normal leading-5">
+                  종료하면 앱이 닫힙니다.
+                </div>
+              </div>
+              <div className="w-full flex items-center gap-4">
+                <button
+                  onClick={() => setShowExitModal(false)}
+                  className="w-24 py-4 bg-gray-200 rounded-lg flex justify-center items-center"
+                >
+                  <span className="text-center text-gray-700 text-sm font-pretendard font-normal leading-5">
+                    닫기
+                  </span>
+                </button>
+                <button
+                  onClick={handleExitApp}
+                  className="flex-1 py-4 bg-brand-500 rounded-lg flex justify-center items-center"
+                >
+                  <span className="text-center text-white text-sm font-pretendard font-semibold leading-5">
+                    종료
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      <Footer />
     </div>
   );
 }

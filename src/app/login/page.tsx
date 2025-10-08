@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuthStore } from '@/hooks/auth/useAuth';
@@ -14,8 +14,15 @@ const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const router = useRouter();
-    const { login } = useAuthStore();
+    const { login, isAuthenticated, accessToken } = useAuthStore();
     const { googleLogin } = useGoogleAuth();
+
+    // 이미 인증된 사용자는 메인 페이지로 리다이렉트
+    useEffect(() => {
+      if (isAuthenticated && accessToken) {
+        router.replace('/main');
+      }
+    }, [isAuthenticated, accessToken, router]);
 
     const handleLogin = async () => {
         if (!email || !password) {

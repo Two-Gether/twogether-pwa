@@ -8,9 +8,21 @@ export default function Footer() {
   const router = useRouter();
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
+  const [safeBottomValue, setSafeBottomValue] = useState('0px');
 
   useEffect(() => {
     setMounted(true);
+    
+    // 실시간 safe-bottom 값 확인
+    const updateSafeBottom = () => {
+      const value = getComputedStyle(document.documentElement).getPropertyValue('--safe-bottom');
+      setSafeBottomValue(value || '0px');
+    };
+    
+    updateSafeBottom();
+    const interval = setInterval(updateSafeBottom, 1000);
+    
+    return () => clearInterval(interval);
   }, []);
 
   const isActive = (path: string) => {
@@ -26,7 +38,14 @@ export default function Footer() {
 
   if (!mounted) {
     return (
-      <div className="fixed bottom-0 left-0 right-0 bg-white px-4 py-2" style={{ borderTop: '1px #EEEEEE solid'}}>
+      <div 
+        className="absolute bottom-0 left-0 right-0 bg-white px-4 z-50" 
+        style={{ 
+          borderTop: '1px #EEEEEE solid',
+          paddingTop: '8px',
+          paddingBottom: 'calc(8px + var(--safe-bottom, 0px))'
+        }}
+      >
         <div className="flex justify-around items-center">
           <div className="w-6 h-6" />
           <div className="w-6 h-6" />
@@ -39,7 +58,18 @@ export default function Footer() {
   }
 
   return (
-    <div className="bg-white px-4 py-2" style={{ borderTop: '1px #EEEEEE solid'}}>
+    <div 
+      className="absolute bottom-0 left-0 right-0 bg-white px-4 z-50" 
+      style={{ 
+        borderTop: '1px #EEEEEE solid',
+        paddingTop: '8px',
+        paddingBottom: 'calc(8px + var(--safe-bottom, 0px))'
+      }}
+    >
+      {/* 실시간 디버그 정보 (개발용) */}
+      <div className="text-xs text-center text-red-500 mb-1">
+        Safe-Bottom: {safeBottomValue}
+      </div>
       <div className="flex justify-around items-center">
         <button
           onClick={() => router.push('/main')}
