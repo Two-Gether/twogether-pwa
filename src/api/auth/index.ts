@@ -61,20 +61,8 @@ export async function refreshTokenApi(): Promise<{ accessToken: string }> {
   return res.json();
 }
 
-// 카카오 로그인 API
-export async function startKakaoLogin(returnUrl: string = '/main'): Promise<void> {
-  // 서버에서 카카오 인증 완료 후 ${FRONT_URL}/oauth/finish?otc=<OTC>&return=<returnUrl>로 리다이렉트
-  const loginUrl = `${API_BASE_URL}/member/oauth/kakao/start?returnUrl=${encodeURIComponent(returnUrl)}`;
-  console.log('Starting Kakao login with URL:', loginUrl);
-  console.log('API_BASE_URL:', API_BASE_URL);
-  window.location.href = loginUrl;
-}
-
-export interface OTCExchangeRequest {
-  otc: string;
-}
-
-export interface OTCExchangeResponse {
+// 카카오 로그인 응답 인터페이스
+export interface KakaoLoginResponse {
   accessToken: string;
   memberId: number;
   name: string;
@@ -85,26 +73,45 @@ export interface OTCExchangeResponse {
   relationshipStartDate: string | null;
 }
 
-export async function exchangeOTC(otc: string): Promise<OTCExchangeResponse> {
-  console.log('Exchanging OTC:', otc);
+// 카카오 로그인 - 인증 URL 받기
+export async function getKakaoAuthUrl(): Promise<string> {
+  console.log('카카오 인증 URL 요청...');
   
-  const res = await fetch(`${API_BASE_URL}/oauth/otc/exchange`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+  const res = await fetch(`${API_BASE_URL}/member/oauth/kakao/start`, {
+    method: 'GET',
     credentials: 'include',
-    body: JSON.stringify({ otc }),
   });
-  
-  console.log('OTC exchange response status:', res.status);
   
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    console.error('OTC exchange error response:', text);
+    console.error('카카오 URL 요청 실패:', text);
     throw new Error(text || `HTTP ${res.status}`);
   }
   
-  // 쿠키는 브라우저가 Set-Cookie 헤더를 통해 자동으로 저장 (credentials: 'include' 필요)
-  return res.json();
+  // 카카오 인증 URL 문자열 반환
+  const kakaoAuthUrl = await res.text();
+  console.log('카카오 인증 URL 받음:', kakaoAuthUrl);
+  
+  return kakaoAuthUrl;
+}
+
+// 카카오 로그인 완료 후 사용자 정보 가져오기 (폴링)
+export async function checkKakaoLoginStatus(): Promise<KakaoLoginResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/member/oauth/kakao/status`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    if (res.ok) {
+      const userData: KakaoLoginResponse = await res.json();
+      return userData;
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
 }
 
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useAuthStore } from '@/hooks/auth/useAuth';
-import { loginApi, startKakaoLogin } from '@/api/auth';
+import { loginApi, getKakaoAuthUrl, checkKakaoLoginStatus } from '@/api/auth';
 import { useGoogleAuth } from '@/hooks/auth/useGoogleAuth';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -13,6 +13,7 @@ const LoginScreen = () => {
     const [isPasswordVisible, setIsPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [isKakaoLoading, setIsKakaoLoading] = useState(false);
     const router = useRouter();
     const { login, isAuthenticated, accessToken } = useAuthStore();
     const { googleLogin } = useGoogleAuth();
@@ -60,13 +61,73 @@ const LoginScreen = () => {
         }
     };
 
-    // const handleKakaoLogin = async () => {
-    //     try {
-    //         await startKakaoLogin('/main');
-    //     } catch (error) {
-    //         window.alert('카카오 로그인 실패: ' + (error as Error).message);
-    //     }
-    // };
+    const handleKakaoLogin = async () => {
+        try {
+            // 1. 카카오 인증 URL 받기
+            const kakaoAuthUrl = await getKakaoAuthUrl();
+            
+            // 2. 새 창으로 카카오 인증 페이지 열기
+            const authWindow = window.open(
+                kakaoAuthUrl, 
+                'kakao_login', 
+                'width=500,height=600,scrollbars=yes'
+            );
+            
+            if (!authWindow) {
+                throw new Error('팝업이 차단되었습니다. 팝업 차단을 해제해주세요.');
+            }
+            
+            // 3. 로딩 상태로 전환 (사용자 정보 대기)
+            setIsKakaoLoading(true);
+            
+            // 4. 카카오 로그인 완료 대기 (폴링)
+            const pollInterval = setInterval(async () => {
+                const userData = await checkKakaoLoginStatus();
+                
+                if (userData) {
+                    clearInterval(pollInterval);
+                    authWindow.close();
+                    
+                    // Auth store에 사용자 정보와 토큰 저장
+                    login({
+                        user: {
+                            memberId: userData.memberId,
+                            nickname: userData.myNickname ?? "", 
+                            partnerId: userData.partnerId,
+                            partnerNickname: userData.partnerNickname,
+                            relationshipStartDate: userData.relationshipStartDate,
+                        },
+                        accessToken: userData.accessToken,
+                    });
+                    
+                    setIsKakaoLoading(false);
+                    
+                    // 파트너 연결 여부에 따라 페이지 이동
+                    setTimeout(() => {
+                        if (userData.partnerId === null) {
+                            router.push('/connect');
+                        } else {
+                            router.push('/main');
+                        }
+                    }, 100);
+                }
+            }, 1000); // 1초마다 확인
+            
+            // 5. 타임아웃 (60초)
+            setTimeout(() => {
+                clearInterval(pollInterval);
+                if (authWindow && !authWindow.closed) {
+                    authWindow.close();
+                }
+                setIsKakaoLoading(false);
+            }, 60000);
+            
+        } catch (error) {
+            console.error('카카오 로그인 에러:', error);
+            window.alert('카카오 로그인 실패: ' + (error as Error).message);
+            setIsKakaoLoading(false);
+        }
+    };
 
 
     // const handleGoogleLogin = async () => {
@@ -77,17 +138,44 @@ const LoginScreen = () => {
     //     }
     // };
 
-    // const handleSocialLogin = (provider: 'kakao' | 'google') => {
-    //     if (provider === 'kakao') {
-    //         handleKakaoLogin();
-    //     } else if (provider === 'google') {
-    //         handleGoogleLogin();
-    //     }
-    // };
+    const handleSocialLogin = (provider: 'kakao' | 'google' | 'apple') => {
+        if (provider === 'kakao') {
+            handleKakaoLogin();
+        } else if (provider === 'google') {
+            handleGoogleLogin();
+        } else if (provider === 'apple') {
+            // TODO: Apple 로그인 구현
+            window.alert('Apple 로그인은 준비 중입니다.');
+        }
+    };
 
     const handleSignup = () => {
         router.push('/signup');
     };
+
+    // 카카오 로딩 화면
+    if (isKakaoLoading) {
+        return (
+            <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+                <div className="bg-white rounded-lg p-8 max-w-md w-full text-center shadow-lg">
+                    <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-yellow-500"></div>
+                    </div>
+                    
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                        카카오 로그인 중...
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                        카카오 인증을 진행하고 있습니다.
+                    </p>
+                    
+                    <div className="text-sm text-gray-500">
+                        잠시만 기다려주세요
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen flex items-center justify-center px-5 py-8 bg-gray-100">
@@ -147,7 +235,7 @@ const LoginScreen = () => {
                         </div>
                     </div>
 
-                    {/* <div className="mt-10">
+                    <div className="mt-10">
                         <div className="flex items-center justify-center mb-6">
                             <div className="flex-1 h-px bg-gray-300"></div>
                             <span className="px-4 text-gray-500 font-pretendard text-sm">or</span>
@@ -163,6 +251,14 @@ const LoginScreen = () => {
                                 className="cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() => handleSocialLogin('kakao')}
                             />
+                            <Image 
+                                src="/images/social/apple-logo.svg" 
+                                alt="Kakao Login" 
+                                width={48} 
+                                height={48} 
+                                className="cursor-pointer hover:opacity-80 transition-opacity"
+                                onClick={() => handleSocialLogin('apple')}
+                            />
                             {/* TODO: 구글 로그인 연동 예정
                               <Image 
                                   src="/images/social/google-logo.svg" 
@@ -172,9 +268,9 @@ const LoginScreen = () => {
                                   className="cursor-pointer hover:opacity-80 transition-opacity"
                                   onClick={() => handleSocialLogin('google')}
                               />
-                            
+                            */}
                         </div> 
-                    </div>*/}
+                    </div>
                 </div>
             </div>
         </div>
