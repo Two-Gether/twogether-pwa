@@ -16,7 +16,7 @@ const LoginScreen = () => {
     const [isKakaoLoading, setIsKakaoLoading] = useState(false);
     const router = useRouter();
     const { login, isAuthenticated, accessToken } = useAuthStore();
-    const { googleLogin } = useGoogleAuth();
+    // const { googleLogin } = useGoogleAuth();
 
     // 이미 인증된 사용자는 메인 페이지로 리다이렉트
     useEffect(() => {
