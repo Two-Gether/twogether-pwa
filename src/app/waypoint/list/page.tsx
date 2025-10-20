@@ -103,23 +103,31 @@ function WaypointDetailContent() {
           // order 필드 기준으로 오름차순 정렬
           const sortedItems = [...data.waypointInfoResponse].sort((a, b) => (a.order || 0) - (b.order || 0));
           data.waypointInfoResponse = sortedItems;
-          
-          console.log('정렬된 웨이포인트 아이템들:', sortedItems.map(item => ({ 
-            itemId: item.itemId, 
-            name: item.name, 
-            order: item.order 
-          })));
         }
         
-        // 백엔드에서 받은 이미지 URL 사용
+        // 구글 플레이스 이미지로 갱신 (항상 최신 URL 생성)
         if (data.waypointInfoResponse && data.waypointInfoResponse.length > 0) {
           const imageUrlMap: Record<number, string> = {};
-          data.waypointInfoResponse.forEach((item) => {
-            // 백엔드에서 제공한 imageUrl 사용, 없으면 기본 이미지
-            imageUrlMap[item.itemId] = item.imageUrl || '/images/illust/cats/backgroundCat.png';
-          });
+          try {
+            const { getPlaceImageUrl, clearPlaceImageCache } = await import('@/utils/googlePlacesApi');
+            await Promise.all(
+              data.waypointInfoResponse.map(async (item) => {
+                try {
+                  clearPlaceImageCache(item.name);
+                  const url = await getPlaceImageUrl(item.name);
+                  imageUrlMap[item.itemId] = url || '/images/illust/cats/backgroundCat.png';
+                } catch {
+                  imageUrlMap[item.itemId] = '/images/illust/cats/backgroundCat.png';
+                }
+              })
+            );
+          } catch {
+            // 유틸 불러오기 실패 시 백엔드 URL로 폴백
+            data.waypointInfoResponse.forEach((item) => {
+              imageUrlMap[item.itemId] = item.imageUrl || '/images/illust/cats/backgroundCat.png';
+            });
+          }
           setItemImageUrls(imageUrlMap);
-          console.log('✅ 백엔드에서 받은 이미지 URL 사용:', imageUrlMap);
         }
       } catch (error) {
         console.error('웨이포인트 상세 조회 에러:', error);
