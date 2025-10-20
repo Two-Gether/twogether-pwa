@@ -142,7 +142,7 @@ const LoginScreen = () => {
         if (provider === 'kakao') {
             handleKakaoLogin();
         } else if (provider === 'google') {
-            handleGoogleLogin();
+            // handleGoogleLogin();
         } else if (provider === 'apple') {
             // TODO: Apple 로그인 구현
             window.alert('Apple 로그인은 준비 중입니다.');
@@ -235,7 +235,7 @@ const LoginScreen = () => {
                         </div>
                     </div>
 
-                    <div className="mt-10">
+                    {/* <div className="mt-10">
                         <div className="flex items-center justify-center mb-6">
                             <div className="flex-1 h-px bg-gray-300"></div>
                             <span className="px-4 text-gray-500 font-pretendard text-sm">or</span>
@@ -268,9 +268,8 @@ const LoginScreen = () => {
                                   className="cursor-pointer hover:opacity-80 transition-opacity"
                                   onClick={() => handleSocialLogin('google')}
                               />
-                            */}
                         </div> 
-                    </div>
+                    </div> */}
                 </div>
             </div>
         </div>
