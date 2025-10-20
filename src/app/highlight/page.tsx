@@ -266,12 +266,12 @@ function HighlightUploadContent() {
       
         setTimeout(() => router.push('/main'), 1500);
       } else {
-        let result: any = null;
+        let result: unknown = null;
         try {
           result = await response.json();
         } catch {}
         console.error('[하이라이트 전송 실패]', response.status, result);
-        const message = result && typeof result === 'object' && 'error' in result ? (result as any).error : '알 수 없는 오류가 발생했습니다.';
+        const message = result && typeof result === 'object' && 'error' in result ? (result as { error: string }).error : '알 수 없는 오류가 발생했습니다.';
         showToast('error', `등록 실패: ${message}`);
       }
       

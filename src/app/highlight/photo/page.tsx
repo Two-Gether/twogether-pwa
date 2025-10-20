@@ -84,7 +84,7 @@ function HighlightPhotoContent() {
           aria-label="신고하기"
           className="p-2"
           onClick={() => {
-            const reportUrl = process.env.NEXT_PUBLIC_REPORT_URL || 'https://www.notion.so';
+            const reportUrl = "https://reflective-brush-deb.notion.site/292096f283e28087949cdb0c4b92f777?pvs=74";
             if (typeof window !== 'undefined') {
               window.open(reportUrl, '_blank');
             }

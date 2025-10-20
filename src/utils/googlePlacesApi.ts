@@ -76,24 +76,45 @@ const initializePlacesService = (): google.maps.places.PlacesService | null => {
 
 // 장소명으로 구글 플레이스 검색 (REST API 사용)
 export async function searchGooglePlace(placeName: string): Promise<GooglePlaceSearchResult | null> {
+  // 1) SDK 우선 (CORS 영향 없음)
+  try {
+    const service = initializePlacesService();
+    if (service) {
+      const sdkResult = await new Promise<GooglePlaceSearchResult | null>((resolve) => {
+        service.textSearch({ query: placeName }, (results: google.maps.places.PlaceResult[] | null, status: google.maps.places.PlacesServiceStatus) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+            const r = results[0];
+            resolve({
+              place_id: r.place_id || '',
+              name: r.name || '',
+              photos: r.photos?.map((p) => ({
+                // SDK는 실제 이미지 URL을 반환하므로 그대로 보관
+                photo_reference: p.getUrl({ maxWidth: 400 }) || '',
+                height: 400,
+                width: 400,
+              })),
+              formatted_address: r.formatted_address,
+              geometry: r.geometry as unknown as GooglePlaceSearchResult['geometry'],
+            });
+          } else {
+            resolve(null);
+          }
+        });
+      });
+      if (sdkResult) return sdkResult;
+    }
+  } catch {
+    // SDK 실패 시 REST 폴백으로 진행
+  }
+
+  // 2) REST 폴백 (개발/특정 환경에서만 성공 가능)
   try {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_PLACES_API_KEY;
-    if (!apiKey) {
-      console.error('Google Places API 키가 없습니다.');
-      return null;
-    }
-
-    // 정적(export) 환경에서도 동작하도록 절대 URL 사용
+    if (!apiKey) return null;
     const url = `https://maps.googleapis.com/maps/api/place/textsearch/json?query=${encodeURIComponent(placeName)}&key=${apiKey}`;
-    
     const response = await fetch(url);
-    if (!response.ok) {
-      console.error('Google Places API 요청 실패:', response.status);
-      return null;
-    }
-
+    if (!response.ok) return null;
     const data = await response.json();
-    
     if (data.status === 'OK' && data.results && data.results.length > 0) {
       const result = data.results[0];
       return {
@@ -102,16 +123,14 @@ export async function searchGooglePlace(placeName: string): Promise<GooglePlaceS
         photos: result.photos?.map((photo: { photo_reference: string; height: number; width: number }) => ({
           photo_reference: photo.photo_reference,
           height: photo.height,
-          width: photo.width
+          width: photo.width,
         })),
         formatted_address: result.formatted_address,
-        geometry: result.geometry
+        geometry: result.geometry,
       };
     }
-
     return null;
-  } catch (error) {
-    console.error('Google Places 검색 에러:', error);
+  } catch {
     return null;
   }
 }
@@ -213,6 +232,21 @@ function setCachedImageUrl(placeName: string, url: string): void {
   }
 }
 
+// 캐시에서 특정 장소의 이미지 URL 제거
+export function clearPlaceImageCache(placeName: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const cache = localStorage.getItem(CACHE_KEY);
+    if (!cache) return;
+    const cacheData: CacheData = JSON.parse(cache);
+    if (cacheData[placeName]) {
+      delete cacheData[placeName];
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    }
+  } catch {
+  }
+}
+
 // 장소명으로 대표사진 URL 가져오기
 export async function getPlaceImageUrl(placeName: string): Promise<string> {
   try {
@@ -231,11 +265,11 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
       return '/images/illust/cats/backgroundCat.png';
     }
 
-    // REST API에서는 photo_reference를 직접 받음
+    // REST/SDK 모두 대응: 완전한 URL이면 그대로 사용, 아니면 Photo API URL 생성
     const photoReference = placeResult.photos[0].photo_reference;
-    
-    // Photo API URL 생성
-    const imageUrl = getGooglePlacePhotoUrl(photoReference, 400);
+    const imageUrl = /^https?:\/\//.test(photoReference)
+      ? photoReference
+      : getGooglePlacePhotoUrl(photoReference, 400);
     
     if (imageUrl) {
       console.log(`장소 "${placeName}" - Photo API URL 생성:`, imageUrl);
