@@ -66,10 +66,6 @@ export default function Footer() {
         paddingBottom: 'calc(8px + var(--safe-bottom, 0px))'
       }}
     >
-      {/* 실시간 디버그 정보 (개발용) */}
-      <div className="text-xs text-center text-red-500 mb-1">
-        Safe-Bottom: {safeBottomValue}
-      </div>
       <div className="flex justify-around items-center">
         <button
           onClick={() => router.push('/main')}
