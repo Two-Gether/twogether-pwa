@@ -388,21 +388,6 @@ function MainPageContent() {
           <h2 className="text-xl text-gray-700 font-pretendard font-semibold leading-6 mb-4">
             오늘의 추천 장소/행사
           </h2>
-          
-          {/* API 장애 안내문 */}
-          <div className="w-full h-[314px] flex flex-col items-center justify-center bg-gray-50 rounded-lg border border-gray-200">
-            <div className="text-center px-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                서비스 점검 중
-              </h3>
-              <p className="text-sm text-gray-500 mb-4 leading-relaxed">
-                국가정보자원관리원 화재 사고로 인해<br/>
-                현재 추천 서비스가 일시적으로 중단되었습니다.
-              </p>
-            </div>
-          </div>
-
-          {/* 기존 추천 기능 주석 처리
           {isLoadingRecommendations ? (
             <div className="flex gap-3 overflow-x-auto w-full pb-2">
               {[...Array(3)].map((_, index) => (
@@ -430,7 +415,6 @@ function MainPageContent() {
                   }}
                 />
               ))}
-              
               {recommendations.length === 0 && (
                 <div className="w-full h-[314px] flex items-center justify-center text-gray-500">
                   추천 항목이 없습니다.
@@ -438,7 +422,6 @@ function MainPageContent() {
               )}
             </div>
           )}
-          */}
         </div>
       </div>
       
