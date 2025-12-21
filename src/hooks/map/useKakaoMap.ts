@@ -57,6 +57,11 @@ export const useKakaoMap = () => {
           console.log('📍 기본 위치 사용 (서울 시청)');
           setCurrentPosition({ lat: 37.5665, lng: 126.9780 });
           setIsLoading(false);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 300000
         }
       );
     } else {
@@ -167,14 +172,22 @@ export const usePlaceSearch = () => {
   // 사용자 현재 위치 가져오기
   const getUserLocation = useCallback(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
-        const lat = position.coords.latitude;
-        const lng = position.coords.longitude;
-        setUserLocation({ lat, lng });
-      }, () => {
-        // 받아올 수 없는 경우 서울역 좌표 사용
-        setUserLocation({ lat: 37.554678, lng: 126.970606 });
-      });
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setUserLocation({ lat, lng });
+        },
+        () => {
+          // 받아올 수 없는 경우 서울역 좌표 사용
+          setUserLocation({ lat: 37.554678, lng: 126.970606 });
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 20000,
+          maximumAge: 300000
+        }
+      );
     } else {
       // 받아올 수 없는 경우 서울역 좌표 사용
       setUserLocation({ lat: 37.554678, lng: 126.970606 });

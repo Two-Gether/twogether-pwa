@@ -47,8 +47,8 @@ export default function AddressSearchPage() {
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
+          timeout: 20000,
+          maximumAge: 300000
         }
       );
     } else {
