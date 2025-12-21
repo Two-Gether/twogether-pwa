@@ -67,40 +67,29 @@ const MapScreenContent = () => {
 
   // 사용자 현재 위치 가져오기 (웹/네이티브 공통)
   const getUserLocation = useCallback(async () => {
-    console.log('📍 [getUserLocation] 위치 정보 가져오기 시작');
-    console.log('📍 [getUserLocation] 플랫폼:', Capacitor.getPlatform());
     try {
       if (Capacitor.getPlatform() === 'android' || Capacitor.getPlatform() === 'ios') {
-        console.log('📍 [getUserLocation] 네이티브 환경 - Capacitor Geolocation 사용');
         const { Geolocation } = await import('@capacitor/geolocation');
         // 권한 요청은 최초 1회만 (우리 앱 내 안내 모달 확인 후)
         if (!hasAskedLocationPermission()) {
-          console.log('📍 [getUserLocation] 위치 권한 요청 중...');
           await Geolocation.requestPermissions();
         }
-        console.log('📍 [getUserLocation] getCurrentPosition 호출 중...');
         const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true });
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        console.log('📍 [getUserLocation] 위치 정보 획득 성공!');
-        console.log('📍 [getUserLocation] 위도:', lat);
-        console.log('📍 [getUserLocation] 경도:', lng);
-        console.log('📍 [getUserLocation] 전체 position 객체:', position);
         const createLatLng = () => {
           if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
             try {
               const kakaoLatLng = new window.kakao.maps.LatLng(lat, lng);
               setUserLocation(kakaoLatLng);
               setCurrentLocation({ lat, lng });
-              console.log('📍 [getUserLocation] Kakao LatLng 객체 생성 및 상태 업데이트 완료');
             } catch (error) {
-              console.error('📍 [getUserLocation] Kakao LatLng 객체 생성 실패:', error);
+              console.error('Kakao LatLng 객체 생성 실패:', error);
               const fallback = new window.kakao.maps.LatLng(37.554678, 126.970606);
               setUserLocation(fallback);
               setCurrentLocation({ lat: 37.554678, lng: 126.970606 });
             }
           } else {
-            console.log('📍 [getUserLocation] Kakao Maps SDK 대기 중...');
             setTimeout(createLatLng, 100);
           }
         };
@@ -108,9 +97,7 @@ const MapScreenContent = () => {
         return true;
       } else {
         // 웹 환경
-        console.log('📍 [getUserLocation] 웹 환경 - navigator.geolocation 사용');
         if (!navigator.geolocation) {
-          console.error('📍 [getUserLocation] Geolocation API를 지원하지 않습니다');
           throw new Error('Geolocation not supported');
         }
         
@@ -118,44 +105,20 @@ const MapScreenContent = () => {
         let permissionStatus: PermissionStatus | null = null;
         try {
           if ('permissions' in navigator) {
-            console.log('📍 [getUserLocation] 권한 상태 확인 중...');
             permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
-            console.log('📍 [getUserLocation] 권한 상태:', permissionStatus.state);
             // 권한이 거부된 경우
             if (permissionStatus.state === 'denied') {
-              console.error('📍 [getUserLocation] 위치 권한이 거부되었습니다');
               throw new Error('위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.');
             }
-          } else {
-            console.log('📍 [getUserLocation] Permissions API를 지원하지 않습니다');
           }
         } catch (permError) {
           // permissions API를 지원하지 않거나 에러가 발생한 경우 무시하고 계속 진행
-          console.log('📍 [getUserLocation] 권한 상태 확인 실패 (계속 진행):', permError);
         }
-        
-        console.log('📍 [getUserLocation] getCurrentPosition 호출 중...');
-        console.log('📍 [getUserLocation] 옵션:', { 
-          enableHighAccuracy: true, 
-          timeout: 20000, 
-          maximumAge: 300000 
-        });
         
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(
-            (pos) => {
-              console.log('📍 [getUserLocation] 위치 정보 획득 성공!');
-              console.log('📍 [getUserLocation] 위도:', pos.coords.latitude);
-              console.log('📍 [getUserLocation] 경도:', pos.coords.longitude);
-              console.log('📍 [getUserLocation] 정확도:', pos.coords.accuracy, 'm');
-              console.log('📍 [getUserLocation] 전체 position 객체:', pos);
-              resolve(pos);
-            },
+            resolve,
             (error) => {
-              console.error('📍 [getUserLocation] 위치 정보 획득 실패');
-              console.error('📍 [getUserLocation] 에러 코드:', error.code);
-              console.error('📍 [getUserLocation] 에러 메시지:', error.message);
-              console.error('📍 [getUserLocation] 전체 에러 객체:', error);
               // 권한 거부 에러인 경우 명확한 메시지 제공
               if (error.code === error.PERMISSION_DENIED) {
                 reject(new Error('위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.'));
@@ -172,22 +135,19 @@ const MapScreenContent = () => {
         });
         const lat = position.coords.latitude;
         const lng = position.coords.longitude;
-        console.log('📍 [getUserLocation] 최종 좌표 - 위도:', lat, '경도:', lng);
         const createLatLng = () => {
           if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
             try {
               const kakaoLatLng = new window.kakao.maps.LatLng(lat, lng);
               setUserLocation(kakaoLatLng);
               setCurrentLocation({ lat, lng });
-              console.log('📍 [getUserLocation] Kakao LatLng 객체 생성 및 상태 업데이트 완료');
             } catch (error) {
-              console.error('📍 [getUserLocation] Kakao LatLng 객체 생성 실패:', error);
+              console.error('Kakao LatLng 객체 생성 실패:', error);
               const fallback = new window.kakao.maps.LatLng(37.554678, 126.970606);
               setUserLocation(fallback);
               setCurrentLocation({ lat: 37.554678, lng: 126.970606 });
             }
           } else {
-            console.log('📍 [getUserLocation] Kakao Maps SDK 대기 중...');
             setTimeout(createLatLng, 100);
           }
         };
@@ -196,24 +156,15 @@ const MapScreenContent = () => {
       }
     } catch (err) {
       const error = err as GeolocationPositionError | Error;
-      console.error('📍 [getUserLocation] 현재 위치 가져오기 실패:', err);
-      console.error('📍 [getUserLocation] 에러 타입:', error.constructor.name);
-      if ('code' in error) {
-        console.error('📍 [getUserLocation] 에러 코드:', error.code);
-        console.error('📍 [getUserLocation] 에러 메시지:', error.message);
-      }
       
       // 권한 거부 에러인 경우 사용자에게 안내
       if (error instanceof Error && error.message.includes('권한')) {
-        console.error('📍 [getUserLocation] 권한 관련 에러 감지');
         showToast('위치 권한이 필요합니다. 브라우저 설정에서 위치 권한을 허용해주세요.', 'error');
       } else if ('code' in error && error.code === error.PERMISSION_DENIED) {
-        console.error('📍 [getUserLocation] 권한 거부 에러 감지');
         showToast('위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.', 'error');
       }
       
       // 에러 발생 시 기본 위치로 폴백
-      console.log('📍 [getUserLocation] 기본 위치로 폴백');
       const fallbackLat = 37.554678;
       const fallbackLng = 126.970606;
       if (window.kakao && window.kakao.maps && window.kakao.maps.LatLng) {
@@ -221,9 +172,8 @@ const MapScreenContent = () => {
           const fallback = new window.kakao.maps.LatLng(fallbackLat, fallbackLng);
           setUserLocation(fallback);
           setCurrentLocation({ lat: fallbackLat, lng: fallbackLng });
-          console.log('📍 [getUserLocation] 기본 위치 설정 완료:', fallbackLat, fallbackLng);
         } catch (fallbackError) {
-          console.error('📍 [getUserLocation] 기본 위치 설정 실패:', fallbackError);
+          console.error('기본 위치 설정 실패:', fallbackError);
         }
       }
       return false;
@@ -231,22 +181,14 @@ const MapScreenContent = () => {
   }, [hasAskedLocationPermission]);
 
   const handlePermissionConfirm = useCallback(async () => {
-    console.log('📍 [handlePermissionConfirm] 사용자가 위치 권한 확인 버튼 클릭');
     setShowLocationModal(false);
     try {
       localStorage.setItem('locationPermissionAsked', 'true');
-      console.log('📍 [handlePermissionConfirm] locationPermissionAsked를 localStorage에 저장');
-    } catch (error) {
-      console.error('📍 [handlePermissionConfirm] localStorage 저장 실패:', error);
-    }
-    console.log('📍 [handlePermissionConfirm] getUserLocation 호출');
+    } catch {}
     const ok = await getUserLocation();
     if (!ok) {
-      console.error('📍 [handlePermissionConfirm] 위치 정보 가져오기 실패');
       // 차단되었거나 실패한 경우 설정 유도 또는 메인 이동 안내를 고려
       setToast({ show: true, message: '현재 위치를 가져오지 못했습니다.', type: 'error' });
-    } else {
-      console.log('📍 [handlePermissionConfirm] 위치 정보 가져오기 성공');
     }
   }, [getUserLocation]);
 
@@ -492,17 +434,13 @@ const MapScreenContent = () => {
 
   // 컴포넌트 마운트 시: 최초 1회만 안내 모달 노출, 그 외엔 바로 시도
   useEffect(() => {
-    console.log('📍 [MapScreen] 컴포넌트 마운트 - 위치 권한 확인 시작');
     const checkLocationPermission = async () => {
       // 웹 환경에서 권한 상태 확인
       if (Capacitor.getPlatform() === 'web' && 'permissions' in navigator) {
-        console.log('📍 [MapScreen] 웹 환경 - 권한 상태 확인 중...');
         try {
           const permissionStatus = await navigator.permissions.query({ name: 'geolocation' as PermissionName });
-          console.log('📍 [MapScreen] 권한 상태:', permissionStatus.state);
           // 권한이 이미 거부된 경우
           if (permissionStatus.state === 'denied') {
-            console.error('📍 [MapScreen] 위치 권한이 거부되어 있음');
             showToast('위치 권한이 거부되었습니다. 브라우저 설정에서 위치 권한을 허용해주세요.', 'error');
             // 기본 위치로 설정
             const fallbackLat = 37.554678;
@@ -511,26 +449,19 @@ const MapScreenContent = () => {
               const fallback = new window.kakao.maps.LatLng(fallbackLat, fallbackLng);
               setUserLocation(fallback);
               setCurrentLocation({ lat: fallbackLat, lng: fallbackLng });
-              console.log('📍 [MapScreen] 기본 위치로 설정 완료');
             }
             return;
           }
         } catch (error) {
           // permissions API를 지원하지 않는 경우 무시하고 계속 진행
-          console.log('📍 [MapScreen] 권한 상태 확인 실패 (계속 진행):', error);
         }
       }
       
-      const hasAsked = hasAskedLocationPermission();
-      console.log('📍 [MapScreen] 이전에 권한 안내를 봤는지:', hasAsked);
-      
-      if (hasAsked) {
-        console.log('📍 [MapScreen] 이미 안내를 본 경우 - 즉시 위치 정보 요청');
+      if (hasAskedLocationPermission()) {
         setShowLocationModal(false);
         // 이미 안내를 본 경우, 즉시 현재 위치 시도 (OS 권한은 플랫폼이 관리)
         void getUserLocation();
       } else {
-        console.log('📍 [MapScreen] 처음 방문 - 위치 권한 안내 모달 표시');
         setShowLocationModal(true);
       }
     };
