@@ -231,7 +231,12 @@ const LoginScreen = () => {
                             >
                                 회원가입
                             </button>
-                            {/* <button className="text-gray-500 hover:underline font-pretendard text-sm">아이디/비밀번호 찾기</button> */}
+                            <button 
+                                onClick={() => router.push('/password/reset')} 
+                                className="text-gray-500 hover:underline font-pretendard text-sm"
+                            >
+                                비밀번호 찾기
+                            </button>
                         </div>
                     </div>
 

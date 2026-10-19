@@ -6,6 +6,7 @@ import { Check } from 'lucide-react';
 import Image from 'next/image';
 import { Header, Input, Button, Dropdown } from '@/components/ui';
 import Notification from '@/components/ui/Notification';
+import { PASSWORD_RULE } from '@/utils/validation';
 
 export default function SignupPage() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function SignupPage() {
 
   // 비밀번호 유효성 검사
   useEffect(() => {
-    const isValid = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
+    const isValid = PASSWORD_RULE.test(password);
     setPasswordValid(isValid);
   }, [password]);
 
@@ -160,8 +161,6 @@ export default function SignupPage() {
       }
 
       const data = await res.json();
-      console.log('Signup success:', data);
-      
       // 성공 시 처리
       showToast('success', '회원가입이 완료되었습니다!');
       
