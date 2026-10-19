@@ -119,9 +119,6 @@ function HighlightPhotoContent() {
 
       {/* 하단 캡션/태그 */}
       <div className="absolute left-0 right-0 bottom-0 z-20 p-4 pb-6 bg-gradient-to-t from-black/70 via-black/40 to-transparent">
-        <span className="hidden">
-          {(() => { try { console.log('[뷰어 태그]', JSON.parse(tagsParam)); } catch { console.log('[뷰어 태그]', tagsParam); } return null; })()}
-        </span>
         {tags.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-3">
             {tags.map((tag) => (

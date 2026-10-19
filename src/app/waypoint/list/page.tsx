@@ -214,21 +214,16 @@ function WaypointDetailContent() {
     
     // draggableId에서 실제 itemId 추출 (item-123 -> 123)
     const itemId = parseInt(result.draggableId.replace('item-', ''));
-    console.log('Parsed itemId:', itemId);
-    
     // 실제 순서 변경
     const newItems = Array.from(reorderedItems);
     const [movedItem] = newItems.splice(source.index, 1);
     newItems.splice(destination.index, 0, movedItem);
-    
-    console.log('New order:', newItems.map(item => item.name));
     setReorderedItems(newItems);
   };
 
   // 순서 변경 완료
   const handleReorderComplete = async () => {
     if (!waypointData || !waypointId) {
-      console.log('❌ waypointData 또는 waypointId가 없습니다:', { waypointData: !!waypointData, waypointId });
       return;
     }
 
@@ -236,7 +231,6 @@ function WaypointDetailContent() {
     const itemsToReorder = reorderedItems.length > 0 ? reorderedItems : waypointData.waypointInfoResponse;
     
     if (itemsToReorder.length === 0) {
-      console.log('❌ 재정렬할 아이템이 없습니다');
       return;
     }
 
@@ -250,9 +244,6 @@ function WaypointDetailContent() {
 
       // 새로운 순서대로 itemId 배열 생성
       const orderedIds = itemsToReorder.map(item => item.itemId);
-      console.log('📤 서버에 전송할 orderedIds:', orderedIds);
-      console.log('📤 waypointId:', waypointId);
-
       // API 모듈 사용
       const { updateWaypointItemsOrder } = await import('@/api/waypoint');
       await updateWaypointItemsOrder(parseInt(waypointId), { orderedIds });
@@ -419,7 +410,6 @@ function WaypointDetailContent() {
           <div className="flex-1 flex flex-col">
             {isReorderMode && reorderedItems && reorderedItems.length > 0 ? (
               (() => {
-                console.log('Rendering DragDropContext with items:', reorderedItems.map(item => ({ id: item.itemId, name: item.name })));
                 return (
                   <DragDropContext 
                     onDragStart={handleDragStart} 
@@ -438,7 +428,6 @@ function WaypointDetailContent() {
                     >
                       {reorderedItems.map((item, index) => {
                         const draggableId = `item-${item.itemId}`;
-                        console.log('Rendering draggable item:', { draggableId, index, itemId: item.itemId, name: item.name });
                         return (
                           <Draggable 
                             key={draggableId} 

@@ -253,7 +253,6 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
     // 1. 먼저 캐시 확인
     const cachedUrl = getCachedImageUrl(placeName);
     if (cachedUrl) {
-      console.log(`장소 "${placeName}" - 캐시된 이미지 URL 사용`);
       return cachedUrl;
     }
     
@@ -261,7 +260,6 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
     const placeResult = await searchGooglePlace(placeName);
     
     if (!placeResult || !placeResult.photos || placeResult.photos.length === 0) {
-      console.log(`장소 "${placeName}" - 사진 없음, 기본 이미지 사용`);
       return '/images/illust/cats/backgroundCat.png';
     }
 
@@ -272,11 +270,9 @@ export async function getPlaceImageUrl(placeName: string): Promise<string> {
       : getGooglePlacePhotoUrl(photoReference, 400);
     
     if (imageUrl) {
-      console.log(`장소 "${placeName}" - Photo API URL 생성:`, imageUrl);
       setCachedImageUrl(placeName, imageUrl);
       return imageUrl;
     } else {
-      console.log(`장소 "${placeName}" - Photo API URL 생성 실패, 기본 이미지 사용`);
       return '/images/illust/cats/backgroundCat.png';
     }
   } catch (error) {

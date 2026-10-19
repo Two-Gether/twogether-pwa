@@ -294,17 +294,9 @@ export default function AddressSearchPage() {
     // 도로명 주소를 우선으로 하고, 없으면 지번 주소, 그것도 없으면 장소명 사용
     const addressString = place.road_address_name || place.address_name || place.place_name;
     
-    console.log('🏪 선택된 장소 정보:', {
-      place_name: place.place_name,
-      road_address_name: place.road_address_name,
-      address_name: place.address_name,
-      addressString: addressString
-    });
-    
     // 잠시 로딩 상태를 보여준 후 페이지 이동
     setTimeout(() => {
       const url = `/highlight?address=${encodeURIComponent(addressString)}&name=${encodeURIComponent(place.place_name)}`;
-      console.log('🔗 이동할 URL:', url);
       router.push(url);
     }, 300);
   };

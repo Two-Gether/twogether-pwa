@@ -50,12 +50,6 @@ export async function addLocationToWaypoint(
       imageUrl: imageUrl || null, // 구글 Places에서 가져온 이미지 URL
       memo: memo, // 사용자가 입력한 메모
     };
-    
-    console.log('웨이포인트 API 호출 시작...');
-    console.log('전송할 데이터:', JSON.stringify(requestData, null, 2));
-    console.log('메모 값:', memo, '타입:', typeof memo, '길이:', memo?.length);
-    console.log('이미지 URL:', imageUrl);
-    
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/waypoint/${waypointId}/items`, {
       method: 'POST',
       headers: {

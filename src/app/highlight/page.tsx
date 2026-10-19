@@ -240,18 +240,6 @@ function HighlightUploadContent() {
       const safeFileName = (uploadFile as File).name || 'photo.jpg';
       formDataToSend.append('image', uploadFile, safeFileName);
 
-      // 디버그: 서버에 최종 전송되는 페이로드 콘솔 출력
-      const debugPayload = {
-        name: metaData.name,
-        address: metaData.address,
-        description: metaData.description,
-        tags: metaData.tags,
-        imageFileName: safeFileName,
-      };
-      // 사용자가 확인하기 쉬운 형태로 출력
-      console.log('[하이라이트 전송 페이로드]', JSON.stringify(debugPayload, null, 2));
-      console.log('[하이라이트 meta JSON]', metaJsonString);
-
       // API 호출
       const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/place`, {
         method: 'POST',

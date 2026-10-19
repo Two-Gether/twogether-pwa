@@ -58,8 +58,6 @@ export const extractEXIFData = (file: File): Promise<EXIFData> => {
 // GPS 좌표를 주소로 변환하는 함수
 export const getAddressFromGPS = async (latitude: number, longitude: number): Promise<string | null> => {
   try {
-    console.log(`GPS → 주소 변환 시도: ${latitude}, ${longitude}`);
-    
     const response = await fetch(
       `https://dapi.kakao.com/v2/local/geo/coord2address.json?x=${longitude}&y=${latitude}`,
       {
@@ -134,8 +132,6 @@ const compressImage = async (file: File, maxWidth: number = 1920, quality: numbe
 
 // 통합 이미지 처리 함수
 export const handleImageUpload = async (file: File): Promise<ProcessedImageResult> => {
-  console.log('이미지 업로드 처리 시작:', file.name, file.type);
-  
   // 지원되는 이미지 파일 타입 확인
   if (!file.type.startsWith('image/')) {
     throw new Error('이미지 파일만 업로드 가능합니다.');
