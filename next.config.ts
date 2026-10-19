@@ -22,6 +22,10 @@ const nextConfig: NextConfig = {
     // 빌드 시 ESLint 오류로 실패하지 않도록 (개발 중 any 등 빠른 우회)
     ignoreDuringBuilds: true,
   },
+  compiler: {
+    // 프로덕션 번들에서 console.error·warn 외 콘솔 출력 제거
+    removeConsole: { exclude: ['error', 'warn'] },
+  },
   
   // Google Maps JavaScript SDK 로드
   async rewrites() {

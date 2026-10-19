@@ -82,8 +82,7 @@ export default function ConnectPage() {
       setMyPartnerCode(trimmedCode);
       localStorage.setItem('partnerCode', JSON.stringify({ code: trimmedCode, timestamp: Date.now() }));
       showToast('연인 코드가 갱신되었습니다.', 'success');
-    } catch (error) {
-      console.log(error);
+    } catch {
       showToast('코드 갱신 실패', 'error');
     }
   };
@@ -127,8 +126,7 @@ export default function ConnectPage() {
           fetchPartnerCode();
         }, threeHours);
         
-      } catch (error) {
-        console.log(error);
+      } catch {
         setMyPartnerCode('조회 실패');
       }
     };
@@ -154,8 +152,7 @@ export default function ConnectPage() {
           // 3시간이 지났으면 새로 요청
           fetchPartnerCode();
         }
-      } catch (error) {
-        console.log('캐시된 코드 파싱 실패:', error);
+      } catch {
         fetchPartnerCode();
       }
     } else {
@@ -208,7 +205,6 @@ export default function ConnectPage() {
       }
     })
     .catch(error => {
-      console.log(error);
       const errorMsg = error.message || '연인 연동에 실패했어요.';
       
       // 실패 Toast 표시
@@ -237,21 +233,16 @@ export default function ConnectPage() {
       }
       
       const userData = await res.json();
-      console.log('=== 사용자 정보 새로고침 ===');
-      console.log('받아온 사용자 정보:', userData);
-      
       // 사용자 정보 업데이트
       updateUser(userData);
       
       // 파트너 아이디가 있으면 자동으로 main 페이지로 이동
       if (userData.partnerId) {
-        console.log('파트너가 연결되어 있습니다. main 페이지로 이동합니다.');
         showToast('파트너가 이미 연결되어 있습니다!', 'success');
         setTimeout(() => {
           router.push('/main');
         }, 1500);
       } else {
-        console.log('파트너가 연결되지 않았습니다.');
         showToast('사용자 정보가 새로고침되었습니다.', 'success');
       }
     } catch (error) {

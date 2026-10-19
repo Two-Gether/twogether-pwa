@@ -41,20 +41,16 @@ export const useKakaoMap = () => {
    * 현재 위치 가져오기
    */
   const getCurrentLocation = useCallback(() => {
-    console.log('📍 현재 위치 가져오기 시작');
-    
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          console.log('📍 현재 위치 획득:', { latitude, longitude });
           setCurrentPosition({ lat: latitude, lng: longitude });
           setIsLoading(false);
         },
         (error) => {
           console.error('위치 정보를 가져올 수 없습니다:', error);
           // 기본 위치 (서울 시청)
-          console.log('📍 기본 위치 사용 (서울 시청)');
           setCurrentPosition({ lat: 37.5665, lng: 126.9780 });
           setIsLoading(false);
         },
@@ -65,7 +61,6 @@ export const useKakaoMap = () => {
         }
       );
     } else {
-      console.log('Geolocation API 사용 불가, 기본 위치 사용');
       // 기본 위치 (서울 시청)
       setCurrentPosition({ lat: 37.5665, lng: 126.9780 });
       setIsLoading(false);

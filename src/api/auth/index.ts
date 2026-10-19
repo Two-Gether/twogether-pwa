@@ -17,9 +17,6 @@ export interface LoginResponse {
 }
 
 export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
-  console.log('API_BASE_URL:', API_BASE_URL);
-  console.log('Login payload:', payload);
-  
   const res = await fetch(`${API_BASE_URL}/member/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -27,12 +24,8 @@ export async function loginApi(payload: LoginRequest): Promise<LoginResponse> {
     body: JSON.stringify(payload),
   });
   
-  console.log('Response status:', res.status);
-  console.log('Response headers:', res.headers);
-  
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    console.error('Login error response:', text);
     throw new Error(text || `HTTP ${res.status}`);
   }
   return res.json();
@@ -75,7 +68,6 @@ export interface KakaoLoginResponse {
 
 // 카카오 로그인 - 인증 URL 받기
 export async function getKakaoAuthUrl(): Promise<string> {
-  console.log('카카오 인증 URL 요청...');
   
   const res = await fetch(`${API_BASE_URL}/member/oauth/kakao/start`, {
     method: 'GET',
@@ -84,15 +76,10 @@ export async function getKakaoAuthUrl(): Promise<string> {
   
   if (!res.ok) {
     const text = await res.text().catch(() => '');
-    console.error('카카오 URL 요청 실패:', text);
     throw new Error(text || `HTTP ${res.status}`);
   }
-  
   // 카카오 인증 URL 문자열 반환
-  const kakaoAuthUrl = await res.text();
-  console.log('카카오 인증 URL 받음:', kakaoAuthUrl);
-  
-  return kakaoAuthUrl;
+  return res.text();
 }
 
 // 카카오 로그인 완료 후 사용자 정보 가져오기 (폴링)
@@ -114,5 +101,49 @@ export async function checkKakaoLoginStatus(): Promise<KakaoLoginResponse | null
   }
 }
 
+// 비밀번호 재설정 - 인증 코드 메일 발송
+export async function forgotPasswordApi(email: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/member/password/forgot`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+}
 
+// 비밀번호 재설정 - 인증 코드 검증 후 resetTicket 발급
+export async function verifyPasswordResetCodeApi(email: string, code: string): Promise<string> {
+  const res = await fetch(`${API_BASE_URL}/member/password/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email, code }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+  const data: { resetTicket?: string } = await res.json();
+  if (!data.resetTicket) {
+    throw new Error('resetTicket missing in response');
+  }
+  return data.resetTicket;
+}
 
+// 비밀번호 재설정 - resetTicket과 새 비밀번호로 최종 변경
+export async function resetPasswordApi(email: string, resetTicket: string, newPassword: string): Promise<void> {
+  const res = await fetch(`${API_BASE_URL}/member/password/reset`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ email, resetTicket, newPassword }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(text || `HTTP ${res.status}`);
+  }
+}

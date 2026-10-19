@@ -93,9 +93,6 @@ export default function CreateEventPage() {
         waypointId: selectedWaypointId,
         memo: formData.memo
       };
-
-      console.log('일정 생성 요청:', requestData);
-
       const response = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary`, {
         method: 'POST',
         headers: {

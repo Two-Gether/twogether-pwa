@@ -112,7 +112,6 @@ function CalendarDetailContent() {
       });
 
       // 디버그용: 최종 PATCH 페이로드 확인
-      console.log('[DIARY PATCH PAYLOAD]', payload);
       const res = await apiWithAuth(`${process.env.NEXT_PUBLIC_API_BASE_URL}/diary/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
